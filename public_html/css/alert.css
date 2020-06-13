@@ -1,0 +1,75 @@
+.container-popup-alerts {
+	z-index: 2000;
+	position: fixed;
+	bottom: 50px;
+	right: 1vw;
+	width: 32vw;
+	box-sizing: border-box;
+}
+
+/*
+ * Outras variantes e posições
+ */
+	.container-popup-alerts-topleft,
+	.container-popup-alerts-topcenter,
+	.container-popup-alerts-topright,
+	.container-popup-alerts-bottomleft,
+	.container-popup-alerts-bottomcenter {
+		z-index: 2000;
+		position: fixed;
+		width: 32vw;
+		box-sizing: border-box;
+	}
+	.container-popup-alerts-topleft {
+		top: 70px;
+		left: 1vw;
+	}
+	.container-popup-alerts-topcenter {
+		top: 70px;
+		left: 34vw;
+	}
+	.container-popup-alerts-topright {
+		top: 70px;
+		right: 1vw;
+	}
+	.container-popup-alerts-bottomleft {
+		bottom: 50px;
+		left: 1vw;
+	}
+	.container-popup-alerts-bottomcenter {
+		bottom: 50px;
+		left: 34vw;
+    }
+    @media(max-width:991px) {
+        .container-popup-alerts-topleft,
+        .container-popup-alerts-topcenter,
+        .container-popup-alerts-topright {
+            width: 98vw;
+            left: 1vw;
+        }
+
+        .container-popup-alerts-bottomleft,
+        .container-popup-alerts-bottomcenter,
+        .container-popup-alerts {
+            width: 98vw;
+            left: 1vw;
+        }
+    }
+/*
+ * Fim das outras variantes e posições
+ */
+
+.container-popup-alerts > .alert,
+[class^="container-popup-alerts"] > .alert {
+	box-shadow: 2px 2px 5px #05050528;
+ }
+
+.alert-darkdark {
+	color: #eeeeee;
+    background-color: #303131;
+    border-color: #252525;
+}
+.alert-darkdark .close {
+	color: #eeeeee !important;
+	text-shadow: none;
+}

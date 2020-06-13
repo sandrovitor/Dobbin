@@ -1,0 +1,140 @@
+<!DOCTYPE HTML>
+<html lang="pt-br">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport">
+	<meta name="author" content="Sandro Mendonça">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+	<meta name="description" content="Sistema de Gestão de Clientes da DSSMART para Agências de Turismos.">
+	<title>SGCTur v0.0.1 (OFFLINE)</title>
+    {{styles.txt}}
+    <!--<link rel="stylesheet" href="/css/alert.css">-->
+    <link rel="icon" href="/media/images/logo64.png">
+    
+</head>
+
+<body>
+    <nav class="ds-navbar ">
+        <div class="ds-navbar-brand">
+            <strong>SGC Tur - Offline</strong>
+        </div>
+        <button class="btn btn-transparent rounded-0" style="margin-left: 1rem; font-size: .8rem; font-weight:bold;" data-sidebar-toggle>MENU</button>
+        
+    </nav>
+    <div id="main">
+        <section id="sidebar" class="show">
+            <div class="sidebar-content">
+                <h6 class="title">GERAL</h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#inicio">Início</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#busca">Busca/Pesquisa</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#clientes">Clientes</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#parceiros">Parceiros</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-footer">
+                
+            </div>
+        </section>
+        <section id="content" >
+            <div class="page-header">
+                <div class="container-fluid">
+                    <div class="page-header-content">
+                        <h1 class="page-header-title">Início</h1>
+                        <h5 class="page-header-description"></h5>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid pos-page-header tab-content" id="bodyContent">
+                <!--INICIO-->
+                <div id="inicio" class="tab-pane active">
+                    <div class="row">
+                        <div class="col-12 col-md-6 mx-auto">
+                            <div class="card">
+                                <div class="card-header">
+                                    Vamos começar!
+                                </div>
+                                <div class="card-body">
+                                    Aqui vai algumas informações úteis:
+                                    <ul>
+                                        <li>Nenhuma alteração será permitida aqui. Esse arquivo é somente para visualização dos dados.</li>
+                                        <li>A base de dados offline tem validade de 7 dias. Ao executar esse arquivo depois do prazo, ele irá apagar a base de dados antiga. Certifique-se de ter acesso a internet para sincronizar a base de dados novamente.</li>
+                                        
+                                    </ul>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--./INICIO-->
+
+                <!--BUSCA-->
+                <div id="busca" class="tab-pane fade">
+                    <div class="card">
+                        <div class="card-header">
+                            BUSCA/PESQUISA (offline)
+                        </div>
+                        <div class="card-body">
+                            <form action="javascript:busca()">
+                                <div class="form-group">
+                                    <label>Onde pesquisar:</label>
+                                    <select class="form-control form-control-sm form-control-solid" id="localBusca">
+                                        <option value="">Escolha uma base de dados:</option>
+                                        <option value="clientes">Clientes</option>
+                                        <option value="parceiros">Parceirros</option>
+                                    </select>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-8">
+                                        <input type="text" class="form-control form-control-sm form-control-solid" id="textoBusca" placeholder="O que procura?">
+                                    </div>
+                                    <div class="col-4">
+                                        <button type="submit" class="btn btn-block btn-sm btn-primary">Buscar...</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <hr>
+                            <div class="database">
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--./BUSCA-->
+
+                <!--CLIENTES-->
+                <div id="clientes" class="tab-pane fade">
+                    <div class="card">
+                        <div class="card-header">
+                            BASE DE DADOS - Cliente (offline)
+                        </div>
+                        <div class="card-body database">
+                            <i>Aguardando sincronização com o servidor.</i> <br><small>[Se a sincronização já foi realizada e essa mensagem não sumiu, é porque essa base de dados não está disponível.]</small>
+                        </div>
+                    </div>
+                </div>
+                <!--./CLIENTES-->
+
+                <!--PARCEIROS-->
+                <div id="parceiros" class="tab-pane fade">
+                    <div class="card">
+                        <div class="card-header">
+                            BASE DE DADOS - Parceiros (offline)
+                        </div>
+                        <div class="card-body database">
+                            <i>Aguardando sincronização com o servidor.</i> <br><small>[Se a sincronização já foi realizada e essa mensagem não sumiu, é porque essa base de dados não está disponível.]</small>
+                        </div>
+                    </div>
+                </div>
+                <!--./PARCEIROS-->
+            </div>
+        </section>
+    </div>
+
+    <!-- SCRIPT -->
+    {{scripts.txt}}
+
+    <script>
+    {{localscript}}
+    </script>

@@ -1,0 +1,195 @@
+const Dobbin = {
+    // Verifica se o valor é dinheiro.
+    isMoney: function (valor = '') {
+        if(typeof valor != 'string') {
+            console.log('Era esperado uma string.');
+            return false;
+        }
+        if(valor == '' || typeof valor != 'string') {
+            return false;
+        }
+
+        if(valor.length > 0) {
+            // Procura pontos.
+            if(valor.search(/\./gi) >= 0) {
+                // Remove os pontos
+                valor = valor.replace(/\./gi, '');
+            }
+
+            let patt = /(^[0-9]{1,}[,]{1}[0-9]{2}$|^([0-9]{1,})$)/gi;
+            if(patt.test(valor) == false) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    },
+
+    // Calcula diferença de dias.
+    diffDays: function(data1 = null, data2 = null) {
+        if(data1 == null || data2 == null) {
+            return false;
+        }
+    
+        if(data1 instanceof Date == false || data2 instanceof Date == false) {
+            console.log('Essa função nativa espera que os campos sejam do tipo Date.');
+            return false;
+        }
+    
+        let diffTime = Math.abs(data2 - data1);
+        let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return diffDays;
+    },
+
+    // Oculta CPF.
+    ocultaCPF: function(cpf) {
+        return cpf.substring(0,3)+'***.***-**';
+    },
+
+    // Oculta CNPJ.
+    ocultaCNPJ: function(cnpj) {
+        return cnpj.substring(0,2)+'.'+cnpj.substring(2,1)+'**.***/****-'+cnpj.substr(cnpj.length - 2);
+    },
+
+    // Formata Data e Hora: --/--/---- --:--:--
+    formataDataHora: function(dateObj, anulaTimezone = false) {
+        if(dateObj == 'Invalid Date') {
+            return '--/--/---- --:--:--';
+        }
+        var dia, mes, ano, hora, minuto, segundo;
+        
+        if(anulaTimezone == true) {
+            // Anula o timezone local.
+            let timezone = dateObj.getTimezoneOffset();
+            timezone = timezone/60;
+            dateObj.setHours(dateObj.getHours() + (timezone));
+        }
+    
+    
+        dia = dateObj.getDate();
+        mes = dateObj.getMonth();
+        ano = dateObj.getFullYear();
+        hora = dateObj.getHours();
+        minuto = dateObj.getMinutes();
+        segundo = dateObj.getSeconds();
+    
+        var data = '';
+    
+        if(dia < 10) {
+            data +='0';
+        }
+        data += dia+'/';
+    
+        if(mes+1 < 10) {
+            data += '0';
+        }
+        data += (mes+1)+'/'+ano+' ';
+    
+        if(hora < 10) {
+            data += '0';
+        }
+        data += hora+':';
+    
+        if(minuto < 10) {
+            data += '0';
+        }
+        data += minuto+':';
+    
+        if(segundo < 10) {
+            data += '0';
+        }
+        data += segundo;
+        
+        return data;
+    
+    },
+
+    // Formata Data: --/--/----
+    formataData: function(dateObj, anulaTimezone = false) {
+        if(dateObj == 'Invalid Date') {
+            return '--/--/----';
+        }
+        var dia, mes, ano, hora, minuto, segundo;
+        
+        if(anulaTimezone == true) {
+            // Anula o timezone local.
+            let timezone = dateObj.getTimezoneOffset();
+            timezone = timezone/60;
+            dateObj.setHours(dateObj.getHours() + (timezone));
+        }
+    
+        dia = dateObj.getDate();
+        mes = dateObj.getMonth();
+        ano = dateObj.getFullYear();
+    
+        var data = '';
+    
+        if(dia < 10) {
+            data +='0';
+        }
+        data += dia+'/';
+    
+        if(mes+1 < 10) {
+            data += '0';
+        }
+        data += (mes+1)+'/'+ano;
+        
+        return data;
+    
+    },
+
+    // Conversão: Centavo para Real
+    converteCentavoEmReal: function(centavos = 0) {
+        centavos = parseInt(centavos);
+        let real, cents, invert = false;
+    
+        // Trato sinal (se negativo)
+        if(centavos < 0) {
+            invert = true;
+            centavos = centavos*(-1);
+        }
+    
+        // Trato REAL
+        if(centavos >= 100) {
+            // Mais de 1 real.
+            real = Math.floor(centavos/100);
+            cents = centavos%100;
+        } else {
+            // Menos de 1 real.
+            real = 0;
+            cents = centavos;
+        }
+    
+        // Trato CENTAVOS
+        if(cents < 10) {
+            cents = '0'+cents;
+        }
+    
+        if(invert === false) {
+            return real+','+cents;
+        } else {
+            return '-'+real+','+cents;
+        }
+    },
+    
+    // Conversão: Real para Centavo
+    converteRealEmCentavo: function(valor = '0,00') {
+        if(Dobbin.isMoney(valor) == false) {
+            return false;
+        }
+    
+        if(valor.search(',') >= 0) {
+            // Tem vírgula. Remove virgula.
+            valor = valor.replace(',', '');
+            return parseInt(valor);
+        } else {
+            // Não tem virgula. Multiplica por 100.
+            valor = parseInt(valor)*100;
+            return valor;
+        }
+    },
+
+};

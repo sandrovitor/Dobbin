@@ -1,0 +1,2275 @@
+const PREFIX_POST = 'form/';
+var systemVersion = '';
+var dbLocal = {"clientesDB":[], "clientesDBHora":[], "usuariosDB":[], "usuariosDBHora":[]};
+var timeoutUpdate;
+var timerKEY1;
+var debugEnabled = false;
+var sidebarAlwaysShow = true;;
+
+var teste;
+
+function debugador(ev)
+{
+    if(debugEnabled == true) {
+        console.log('%c> Debugador do Dobbin iniciado...', 'font-size: 16px; letter-spacing: 1px; font-family: Courier,monospace;');
+        console.log('Evento:');
+        console.log(ev);
+        console.log('Resposta do servidor:');
+        console.log(ev.responseText);
+        console.log('%c> Debugador do Dobbin finalizado!', 'font-size: 16px; letter-spacing: 1px; font-family: Courier,monospace;');
+
+    }
+}
+
+function configLocalStorageStart() {
+    if(localStorage.Config !== undefined) {
+        let config = JSON.parse(localStorage.Config);
+
+        // Carrega os valores para suas variáveis.
+        sidebarAlwaysShow = config.sidebarAlwaysShow;
+        debugEnabled = config.debugEnabled;
+
+        // Faz algumas correções no sistema.
+        if(sidebarAlwaysShow == false) {
+            $('#sidebarFixedToggle').removeClass('alwaysShow');
+            $('#sidebarFixedToggle').html('<i class="fas fa-toggle-off"></i>');
+        }
+
+        if(debugEnabled == true){
+            console.log('Configuração do Dobbin carregada: ');
+            console.log(config);
+        }
+    } else {
+        // Define parâmetros iniciais do Dobbin.
+        let config = {
+            sidebarAlwaysShow: sidebarAlwaysShow,
+            debugEnabled: debugEnabled,
+        };
+
+        localStorage.Config = JSON.stringify(config);
+    }
+}
+
+function configLocalStorageSet(chave, valor) {
+    let config = JSON.parse(localStorage.Config);
+    // Define valor.
+    config[chave] = valor;
+
+    // Salva
+    localStorage.Config = JSON.stringify(config);
+
+    // Recarrega
+    configLocalStorageStart();
+}
+
+function loadLanding(href)
+{
+    if(href.charAt(0) == '#') {
+        href = href.substring(1, href.length);
+    }
+    $.post(href, function(res){
+        //console.log(res);
+        $('#content').fadeOut('fast', function(){
+            $('#bodyContent').html(res.page);
+            $('#content .page-header-title').html(res.title);
+            $('#content .page-header-description').html(res.description ? res.description : '');
+            $('#content').fadeIn('fast');
+            sidebarAutoHide();
+
+            $('[data-toggle="tooltip"]').tooltip();
+            $('[data-toggle="popover"]').popover({"html":true});
+        });
+    }, 'json')
+    .fail(function(ev, st){
+        //console.log(ev);
+        debugador(ev);
+        switch(ev.status) {
+            case 511:
+                window.location.replace('/login');
+                break;
+
+            case 404:
+                location.hash ='#inicio';
+                loadLanding(location.hash);
+        }
+
+        alerta('A página <i><strong>'+href.toUpperCase()+'</strong></i> está indisponível.', '', 'secondary');
+        if(st == 'parsererror') {
+            $('#bodyContent').html('<h3 class="my-4 p-3 rounded-sm bg-white">Erro <small>(informe ao desenvolvedor)</small>:</h3>'+ev.responseText);
+            $('#content').fadeIn('fast');
+            console.log(ev.responseText);
+        }
+        
+
+    });
+}
+
+function checkSystemUpdate()
+{
+    $.post('/checkversion', function(res){
+        if(systemVersion != res.version) {
+            alert('A plataforma tem uma nova versão disponível ['+systemVersion+' >> '+res.version+']! A página será atualizada imediatamente...');
+            location.reload();
+        } else {
+            //console.log('Verificando atualização: versão mais recente já instalada.');
+        }
+    }, 'json');
+
+    timeoutUpdate = setTimeout(checkSystemUpdate, 600000); // Verifica a cada 10min (600000ms).
+}
+/** DEPRECATED */
+function formataDataHora(dateObj, anulaTimezone = false) {
+    if(dateObj == 'Invalid Date') {
+        return '--/--/---- --:--:--';
+    }
+    var dia, mes, ano, hora, minuto, segundo;
+    
+    if(anulaTimezone == true) {
+        // Anula o timezone local.
+        let timezone = dateObj.getTimezoneOffset();
+        timezone = timezone/60;
+        dateObj.setHours(dateObj.getHours() + (timezone));
+    }
+
+
+	dia = dateObj.getDate();
+	mes = dateObj.getMonth();
+	ano = dateObj.getFullYear();
+	hora = dateObj.getHours();
+	minuto = dateObj.getMinutes();
+	segundo = dateObj.getSeconds();
+
+	var data = '';
+
+	if(dia < 10) {
+		data +='0';
+	}
+	data += dia+'/';
+
+	if(mes+1 < 10) {
+		data += '0';
+	}
+	data += (mes+1)+'/'+ano+' ';
+
+	if(hora < 10) {
+		data += '0';
+	}
+	data += hora+':';
+
+	if(minuto < 10) {
+		data += '0';
+	}
+	data += minuto+':';
+
+	if(segundo < 10) {
+		data += '0';
+	}
+	data += segundo;
+	
+	return data;
+
+}
+
+/** DEPRECATED */
+function formataData(dateObj, anulaTimezone = false) {
+    if(dateObj == 'Invalid Date') {
+        return '--/--/----';
+    }
+    var dia, mes, ano, hora, minuto, segundo;
+    
+    if(anulaTimezone == true) {
+        // Anula o timezone local.
+        let timezone = dateObj.getTimezoneOffset();
+        timezone = timezone/60;
+        dateObj.setHours(dateObj.getHours() + (timezone));
+    }
+
+	dia = dateObj.getDate();
+	mes = dateObj.getMonth();
+	ano = dateObj.getFullYear();
+
+	var data = '';
+
+	if(dia < 10) {
+		data +='0';
+	}
+	data += dia+'/';
+
+	if(mes+1 < 10) {
+		data += '0';
+	}
+	data += (mes+1)+'/'+ano;
+	
+	return data;
+
+}
+
+function converteCentavoEmReal(centavos = 0) {
+    centavos = parseInt(centavos);
+    let real, cents, invert = false;
+
+    // Trato sinal (se negativo)
+    if(centavos < 0) {
+        invert = true;
+        centavos = centavos*(-1);
+    }
+
+    // Trato REAL
+    if(centavos >= 100) {
+        // Mais de 1 real.
+        real = Math.floor(centavos/100);
+        cents = centavos%100;
+    } else {
+        // Menos de 1 real.
+        real = 0;
+        cents = centavos;
+    }
+
+    // Trato CENTAVOS
+    if(cents < 10) {
+        cents = '0'+cents;
+    }
+
+    if(invert === false) {
+        return real+','+cents;
+    } else {
+        return '-'+real+','+cents;
+    }
+}
+
+function converteRealEmCentavo(valor = '0,00') {
+    if(nativeIsMoney(valor) == false) {
+        return false;
+    }
+
+    if(valor.search(',') >= 0) {
+        // Tem vírgula. Remove virgula.
+        valor = valor.replace(',', '');
+        return parseInt(valor);
+    } else {
+        // Não tem virgula. Multiplica por 100.
+        valor = parseInt(valor)*100;
+        return valor;
+    }
+}
+
+function sidebarAutoHide()
+{
+    if($('body').outerWidth() > 576) {
+        // Tela grandes, verifica se é pra ocultar ou exibir.
+        
+        if(sidebarAlwaysShow == true) {
+            $('#sidebar').addClass('show');
+        } else {
+            $('#sidebar').removeClass('show');
+        }
+    } else {
+        // Tela pequenas, sempre oculta menu
+        $('#sidebar').removeClass('show');
+    }
+}
+
+function highlight(texto, destaque)
+{
+    // Encontra DESTAQUE dentro de TEXTO e destaca ele.
+
+    let regex = new RegExp(destaque, "ig");
+    
+    let novo = texto.replace(regex, function(x){
+        return '<span style="background-color:yellow">'+x+'</span>';
+    });
+    
+    
+    return novo;
+}
+
+function validaValorDinheiroOnChange(sender)
+{
+    let valor = $(sender).val();
+    if(valor.length > 0) {
+        // Procura pontos.
+        if(valor.search(/\./gi) >= 0) {
+            // Remove os pontos
+            valor = valor.replace(/\./gi, '');
+            $(sender).val(valor);
+        }
+
+        let patt = /(^[0-9]{1,4}[,]{1}[0-9]{2}$|^([0-9]{1,4})$)/gi;
+        if(patt.test(valor) == false) {
+            $(sender).addClass('is-invalid');
+            $(sender).focus();
+            return false;
+        } else {
+            $(sender).addClass('is-valid');
+        }
+    }
+    return true;
+}
+
+function resetValidaOnChange(sender)
+{
+    $(sender).removeClass('is-invalid').removeClass('is-valid');
+}
+
+/** FUNÇÕES NATIVAS DA PLATAFORMA */
+function nativePOSTFail(ev)
+{
+    $('#splash-screen').fadeOut();
+    switch(ev.status)
+    {
+        case 200:
+            alerta('O servidor recebeu a solicitação, mas respondeu de forma inesperada.', 'Eu não entendi...', 'info');
+            break;
+
+        case 403:
+            alerta('Essa operação foi recusada pelo servidor.', 'Negado!', 'danger');
+            break;
+
+        case 404:
+            alerta('O servidor retornou 404: CAMINHO NÃO ENCONTRADO. Tente novamente mais tarde..', 'Falha!', 'warning');
+            break;
+
+        default:
+            alerta('Não foi possível salvar/recuperar esses dados agora.', 'Falha na comunicação!', 'danger');
+            break;
+    }
+    
+    //console.log(ev);
+    debugador(ev);
+}
+
+function nativeIsMoney(valor = '')
+{
+    //console.log(typeof valor);
+    if(typeof valor != 'string') {
+        console.log('Era esperado uma string.');
+        return false;
+    }
+    if(valor == '' || typeof valor != 'string') {
+        return false;
+        
+    }
+
+    if(valor.length > 0) {
+        // Procura pontos.
+        if(valor.search(/\./gi) >= 0) {
+            // Remove os pontos
+            valor = valor.replace(/\./gi, '');
+        }
+
+        let patt = /(^[0-9]{1,}[,]{1}[0-9]{2}$|^([0-9]{1,})$)/gi;
+        if(patt.test(valor) == false) {
+            return false;
+        } else {
+            return true;
+        }
+    } else {
+        return false;
+    }
+}
+
+function nativeDiffDays(data1 = null, data2 = null)
+{
+    if(data1 == null || data2 == null) {
+        return false;
+    }
+
+    if(data1 instanceof Date == false || data2 instanceof Date == false) {
+        console.log('Essa função nativa espera que os campos sejam do tipo Date.');
+        return false;
+    }
+
+    let diffTime = Math.abs(data2 - data1);
+    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+}
+
+/** ./FUNÇÕES NATIVAS DA PLATAFORMA */
+
+/**
+ * MODAIS E PÁGINAS
+ */
+
+function loadCliente(id)
+{
+    $.post('/clientes/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let c = res.cliente;
+            $('[data-detalhes-nome]').text(c.nome);
+            $('[data-detalhes-id]').text(c.id);
+            $('[data-detalhes-email]').text(c.email);
+            $('[data-detalhes-tel]').text(c.telefone);
+            $('[data-detalhes-faixaetaria]').html(function(){
+                switch(c.faixa_etaria) {
+                    case '0-5': return '<span class="badge badge-info">0 - 5 ANOS</span>'; break;
+                    case '6-12': return '<span class="badge badge-primary">6 - 12 ANOS</span>'; break;
+                    case 'ADULTO': return '<span class="badge badge-dark">ADULTO</span>'; break;
+                    case '60+': return '<span class="badge badge-secondary">60+ ANOS</span>'; break;
+                    default: return '<span class="badge badge-secondary"> -- </span>'; break;
+                }
+            });
+            $('[data-detalhes-nascimento]').text(function(){
+                if(c.nascimento == '') {return '';} else {return Dobbin.formataData(new Date(c.nascimento+'T00:00:00-0300'));}
+            });
+            $('[data-detalhes-civil]').text(c.estado_civil.toUpperCase());
+            $('[data-detalhes-rg]').text(c.rg);
+            $('[data-detalhes-cpf]').text(c.cpf);
+            $('[data-detalhes-sangue]').text(c.sangue);
+            $('[data-detalhes-endereco]').text(c.endereco);
+            $('[data-detalhes-complemento]').text(c.complemento);
+            $('[data-detalhes-pontoref]').text(c.ponto_referencia);
+            $('[data-detalhes-bairro]').text(c.bairro);
+            $('[data-detalhes-cep]').text(c.cep);
+            $('[data-detalhes-cidade]').text(c.cidade);
+            $('[data-detalhes-estado]').text(c.estado);
+            $('[data-detalhes-alergia]').text(c.alergia);
+            $('[data-detalhes-emergencianome]').text(c.emergencia_nome);
+            $('[data-detalhes-emergenciatel]').text(c.emergencia_telefone);
+            $('[data-detalhes-taxaextracasal]').text(converteCentavoEmReal(c.taxa_extra_casal));
+            $('[data-detalhes-criadoem]').text(Dobbin.formataDataHora(new Date(c.criado_em)));
+            $('[data-detalhes-atualizadoem]').text(Dobbin.formataDataHora(new Date(c.atualizado_em)));
+
+
+            if(c.deletado_em == null) {
+                $('[data-detalhes-deletado]').hide();
+                $('[data-detalhes-deletado]').html();
+            } else {
+                $('[data-detalhes-deletado]').show();
+                $('[data-detalhes-deletado]').html('<span class="badge badge-danger" data-toggle="tooltip" title="Apagado por: '+c.usuario+' em '+Dobbin.formataDataHora(new Date(c.deletado_em))+'"><i class="fas fa-times"></i> APAGADO</span>');
+            }
+
+            if(c.titular == 0) { // TITULAR
+                $('#modalClienteDetalhes .tipoCliente').html('<span class="badge badge-dark">TITULAR</span>');
+                $('#modalClienteDetalhes ul.breadcrumb').hide();
+
+                if(c.dependentes.length == 0) {  // TITULAR SEM DEPENDENTE
+                    $('#modalClienteDetalhes .tipoCliente').
+                        attr('data-toggle', 'popover').
+                        attr('data-content', "Sem dependentes.").
+                        attr('data-trigger','hover focus').
+                        attr('onclick', "$('.listaDependentes').slideToggle(100);");
+                        $('.listaDependentes').html('Sem dependentes');
+                        $('.listaDependentes').hide();
+                } else { // TITULAR COM DEPENDENTE
+                    $('#modalClienteDetalhes .tipoCliente').
+                        attr('data-toggle', 'popover').
+                        attr('data-content', "Ver dependentes.").
+                        attr('data-trigger','hover focus').
+                        attr('onclick', "$('.listaDependentes').slideToggle(100);");
+                        $('.listaDependentes').html('<table class="table table-sm table-hover table-responsive table-bordered"><thead class="bg-dark text-white"><tr><th>Cód.</th><th>Nome</th><th></th></tr></thead><tbody></tbody></table>');
+                        $('.listaDependentes').html('<h6 class="font-weight-bold">DEPENDENTES:</h6><div class="d-flex flex-wrap flex-column flex-md-row border border-secondary p-2 bg-light shadow-sm"></div>');
+                        $('.listaDependentes').show();
+
+                        for(let i = 0; i < c.dependentes.length; i++) {
+                            let d = c.dependentes[i];
+                            $('.listaDependentes > div').
+                                append('<div onclick="$(this).parents(\'.modal\').eq(0).modal(\'hide\'); setTimeout(function(){loadCliente('+d.id+')}, 300);" '+
+                                    'class="border hover px-3 py-2 mb-2 shadow-sm bg-secondary text-white" style="cursor:pointer"> '+
+                                    '<strong class=" mr-2">'+d.nome+'</strong><small> [Cód.: '+d.id+']</small>'+
+                                    '</div>');
+                        }
+                }
+            } else { // DEPENDENTE
+                $('#modalClienteDetalhes ul.breadcrumb').
+                html('<li class="breadcrumb-item"><a href="javascript:void(0);" onclick="$(this).parents(\'.modal\').eq(0).modal(\'hide\'); setTimeout(function(){loadCliente('+c.titular+')}, 300);">Titular: '+c.titular_nome+'</a></li>').
+                append('<li class="breadcrumb-item active">'+c.nome+'</li>').
+                show();
+
+                $('#modalClienteDetalhes .tipoCliente').html('<span class="badge badge-secondary">DEPENDENTE</span>');
+                $('#modalClienteDetalhes .tipoCliente').attr('title', '').
+                    attr('data-toggle', 'popover').
+                    attr('data-content', "Clique para ver o TITULAR...").
+                    attr('data-trigger','hover focus').
+                    attr('onclick', "$(this).parents('.modal').eq(0).modal('hide'); setTimeout(function(){loadCliente("+c.titular+")}, 400);");
+                    $('.listaDependentes').html('');
+                    $('.listaDependentes').hide();
+            }
+
+            
+            $('#modalClienteDetalhes').modal('show');
+            $('[data-toggle="popover"]').popover({'html':true});
+            $('[data-toggle="tooltip"]').tooltip();
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
+function deleteCliente(id)
+{
+    let x = confirm('Tem certeza que deseja excluir esse cliente permanentemente?\n(Os clientes removidos vão para lixeira e são excluídos depois de 72h.)');
+    if(x === true) {
+        $.post(PREFIX_POST+'clientes/apagar/'+id, function(res){
+            if(res.success = true) {
+                alerta('Cliente foi excluído com sucesso.', 'Sucesso!', 'success');
+                if(typeof loadDatabaseClientes === 'function') {
+                    loadDatabaseClientes();
+                }
+                loadLanding(location.hash.substring(1, location.hash.length));
+            }
+        }, 'json').
+        fail(function(ev){
+            //console.log(ev);
+            debugador(ev);
+            alerta('Falha...','', 'warning');
+        });
+        return true;
+    }
+    return false;
+}
+
+function restauraCliente(id)
+{
+    $.post(PREFIX_POST+'clientes/restaurar/'+id, function(res){
+        if(res.success = true) {
+            alerta('Cliente foi restaurado com sucesso.', 'Sucesso!', 'success');
+            if(typeof loadDatabaseClientes === 'function') {
+                loadDatabaseClientes();
+            }
+            loadLanding(location.hash.substring(1, location.hash.length));
+        }
+    }, 'json').
+    fail(function(ev){
+        //console.log(ev);
+        debugador(ev);
+        alerta('Falha...','', 'warning');
+    });
+    return true;
+}
+
+function deleteClienteLixeira(id)
+{
+    if(id == '' || id == 0) {
+        return false;
+    }
+
+    $.post(PREFIX_POST+'clientes/apagarlixeira/'+id, function(res){
+        if(res.success = true) {
+            alerta('Cliente foi removido completamente.', 'Sucesso!', 'success');
+            if(typeof loadDatabaseClientes === 'function') {
+                loadDatabaseClientes();
+            }
+            loadLanding(location.hash.substring(1, location.hash.length));
+        }
+    }, 'json').
+    fail(function(ev){
+        //console.log(ev);
+        debugador(ev);
+        alerta('Falha...','', 'warning');
+    });
+    return true;
+}
+
+function editaCliente(id)
+{
+    $.post('/clientes/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let c = res.cliente;
+            $('strong[data-detalhes-nome]').text(c.nome);
+            $('input[data-detalhes-nome]').val(c.nome);
+            $('span[data-detalhes-id]').text(c.id);
+            $('input[data-detalhes-id]').val(c.id);
+            $('[data-detalhes-email]').val(c.email);
+            $('[data-detalhes-tel]').val(c.telefone);
+            $('[data-detalhes-nascimento]').val(c.nascimento);
+            $('[data-detalhes-civil]').val(c.estado_civil);
+            $('[data-detalhes-rg]').val(c.rg);
+            $('[data-detalhes-cpf]').val(c.cpf);
+            $('[data-detalhes-sangue]').val(c.sangue);
+            $('[data-detalhes-endereco]').val(c.endereco);
+            $('[data-detalhes-complemento]').val(c.complemento);
+            $('[data-detalhes-pontoref]').val(c.ponto_referencia);
+            $('[data-detalhes-bairro]').val(c.bairro);
+            $('[data-detalhes-cep]').val(c.cep);
+            $('[data-detalhes-cidade]').val(c.cidade);
+            $('[data-detalhes-estado]').val(c.estado);
+            $('[data-detalhes-alergia]').val(c.alergia);
+            $('[data-detalhes-emergencianome]').val(c.emergencia_nome);
+            $('[data-detalhes-emergenciatel]').val(c.emergencia_telefone);
+            $('[data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
+            $('[data-detalhes-titular]').val(function(){
+                if(c.titular != 0) {return c.titular;} else {return ''};
+            });
+
+            $('#modalClienteEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });;
+}
+
+function loadUsuario(id)
+{
+    $.post('/usuarios/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').val(res.usuario.nome);
+            $('#modalUsuarioDetalhes').find('[data-usuario-avatar]').attr('src', 'media/images/av/'+res.usuario.avatar);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').text(res.usuario.nome + ' ' + res.usuario.sobrenome);
+            $('#modalUsuarioDetalhes').find('[data-usuario-usuario]').text('@'+res.usuario.usuario);
+            $('#modalUsuarioDetalhes').find('[data-usuario-email]').text(res.usuario.email);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nivel]').text(res.usuario.nivel);
+            $('#modalUsuarioDetalhes').find('[data-usuario-id]').attr('data-usuario-id', res.usuario.id);
+            $('#modalUsuarioDetalhes').find('[data-usuario-criado]').text(Dobbin.formataDataHora(new Date(res.usuario.criado_em)));
+            $('#modalUsuarioDetalhes').find('[data-usuario-atualizado]').text(Dobbin.formataDataHora(new Date(res.usuario.atualizado_em)));
+            $('#modalUsuarioDetalhes').find('[data-usuario-logadoem]').text(Dobbin.formataDataHora(new Date(res.usuario.logado_em)));
+
+
+            $('#modalUsuarioDetalhes').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    },'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
+function editaUsuario(id)
+{
+    $.post('/usuarios/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            $('#modalUsuarioEditar').find('[data-usuario-nome]').val(res.usuario.nome);
+            $('#modalUsuarioEditar').find('[data-usuario-sobrenome]').val(res.usuario.sobrenome);
+            $('#modalUsuarioEditar').find('[data-usuario-email]').val(res.usuario.email);
+            $('#modalUsuarioEditar').find('[data-usuario-usuario]').val(res.usuario.usuario);
+            $('#modalUsuarioEditar').find('[data-usuario-nivel]').val(res.usuario.nivel);
+            $('#modalUsuarioEditar').find('[data-usuario-id]').val(res.usuario.id);
+            $('#modalUsuarioEditar').find('[data-usuario-avatar]').attr('src', '/media/images/av/'+res.usuario.avatar);
+
+
+            $('#modalUsuarioEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    },'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
+function deleteUsuario(id)
+{
+    let x = confirm('Tem certeza que deseja excluir esse usuário?\n(A operação não poderá ser desfeita.)');
+    if(x === true) {
+        $.post(PREFIX_POST+'usuarios/apagar/'+id, function(res){
+            if(res.success == true) {
+                alerta('Usuário removido.', 'Sucesso!', 'success');
+                loadLanding(location.hash.replace('#', ''));
+            }
+        }, 'json').
+        fail(function(ev){
+            //console.log(ev);
+            debugador(ev);
+            alerta('Falha...','', 'warning');
+        });
+    }
+}
+
+function loadMinhaConta(trig)
+{
+    $.post(PREFIX_POST+'minhaconta', function(res){
+        console.log(res);
+
+        $('#modalMinhaConta').find('[data-minhaconta-avatar]').attr('src', 'media/images/av/'+res.avatar);
+        $('#modalMinhaConta').find('[data-minhaconta-nome]').text(res.nome + ' ' + res.sobrenome);
+        $('#modalMinhaConta').find('[data-minhaconta-usuario]').text('@'+res.usuario);
+        $('#modalMinhaConta').find('[data-minhaconta-email]').text(res.email);
+        $('#modalMinhaConta').find('[data-minhaconta-nivel]').text(res.nivel);
+        $('#modalMinhaConta').find('[data-minhaconta-id]').attr('data-minhaconta-id', res.id);
+        $('#modalMinhaConta').find('[data-minhaconta-criado]').text(Dobbin.formataDataHora(new Date(res.criado_em)));
+        $('#modalMinhaConta').find('[data-minhaconta-atualizado]').text(Dobbin.formataDataHora(new Date(res.atualizado_em)));
+        $('#modalMinhaConta').find('[data-minhaconta-logadoem]').text(Dobbin.formataDataHora(new Date(res.logado_em)));
+
+        $('#modalMinhaContaEditar').find('[data-minhaconta-nome]').val(res.nome);
+        $('#modalMinhaContaEditar').find('[data-minhaconta-sobrenome]').val(res.sobrenome);
+        $('#modalMinhaContaEditar').find('[data-minhaconta-usuario]').val(res.usuario);
+        $('#modalMinhaContaEditar').find('[data-minhaconta-email]').val(res.email);
+        $('#modalMinhaContaEditar').find('[data-minhaconta-nivel]').val(res.nivel);
+        
+        $('#modalMinhaConta').modal('show'); 
+        $(trig).parents('.nav-dropdown:eq(0)').fadeOut(100);
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
+function editaMinhaConta()
+{
+    $('#modalMinhaConta').modal('hide');
+
+    $('#modalMinhaContaEditar').modal('show');
+}
+
+function alterarMinhaSenha()
+{
+    $('#modalMinhaConta').modal('hide');
+    $('#modalAlterarMinhaSenha').modal('show');
+}
+
+function loadMinhaContaFotoAlterar()
+{
+    let id = $('#modalMinhaConta').find('[data-minhaconta-id]').attr('data-minhaconta-id');
+    $('#modalMinhaConta').modal('hide');
+    $('#modalMinhaContaFotoAlterar').modal('show');
+    $('#modalMinhaContaFotoAlterar').find('[data-minhaconta-id]').attr('data-minhaconta-id', id);
+    
+    $('#modalMinhaContaFotoAlterar').find('[data-minhaconta-avatar]').
+    attr('src', $('#modalMinhaConta').find('[data-minhaconta-avatar]').attr('src'));
+
+}
+
+function setMinhaContaFoto(target)
+{
+    var formdata = new FormData($(target)[0]);
+
+    $.ajax({
+        url: PREFIX_POST+$(target).attr('action'),
+        method: "POST",
+        contentType: false,
+        dataType: "json",
+        processData: false,
+        cache: false,
+        data: formdata,
+        statusCode: {
+            403: function(){
+                alerta('Acesso negado.', 'Resposta do servidor:', 'warning');
+            },
+            404: function(){
+                alerta('Não encontrado.', 'Resposta do servidor:', 'warning');
+            },
+        },
+        success: function(res){
+            if(res.success) {
+                console.log('Sucesso');
+                alerta('Foto atualizada. Vamos atualizar tudo, espera um pouco...', 'Sucesso!', 'success');
+                setTimeout(function(){location.reload();}, 3000);
+            } else {
+                alerta(res.mensagem, 'Falha...', 'warning');
+            }
+        },
+        error: function(jqXHR){
+            console.log(jqXHR.responseText);
+        }
+    });
+
+    return false;
+}
+
+function delMinhaContaFoto()
+{
+    let id = $('#modalMinhaConta').find('[data-minhaconta-id]').attr('data-minhaconta-id');
+    $.post(PREFIX_POST+'minhaconta/avatar/apagar',function(res){
+        if(res.success) {
+            alerta('Foto removida. Vamos atualizar tudo, espera um pouco...', 'Sucesso!', 'success');
+            setTimeout(function(){location.reload();}, 3000);
+        } else {
+            alerta(res.mensagem, 'Falha.', 'warning');
+        }
+    }, 'json');
+}
+
+function janClienteSelect(target)
+{
+    if($(target).length == 0) {
+        alerta('Há algum erro lógico aqui... Informe ao desenvolvedor.');
+    } else {
+        //console.log(target);
+        $('#janClienteSelect').find('[data-selecionar]').attr('disabled','true');
+        $('#janClienteSelect [name="busca"]').next('.text-muted').html('');
+        $('#janClienteSelect [data-selecionar]').data('target', target);
+        $('#janClienteSelect table').remove();
+        $('#janClienteSelect form')[0].reset();
+
+
+
+        $('#janClienteSelect').modal('show');
+        //console.log($('#janClienteSelect [data-selecionar]').data('target'));
+        
+    }
+}
+
+function janParceirosSelect()
+{
+    //console.log(target);
+    $('#janParceirosSelect').find('[data-selecionar]').attr('disabled','true');
+    //$('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
+    $('#janParceirosSelect [name="busca"]').next().text('');
+
+    $('#janParceirosSelect table').remove();
+    $('#janParceirosSelect form')[0].reset();
+
+
+
+    $('#janParceirosSelect').modal('show');
+    //console.log($('#janClienteSelect [data-selecionar]').data('target'));
+        
+}
+
+function searchClienteNome(busca)
+{
+    let resultado;
+    $.post(PREFIX_POST+'clientes/buscar', {busca: busca}, function(res){
+        if(res.success == true) {
+            let r = res.clientes;
+            //console.log(res);
+            if($('#janClienteSelect').find('hr').siblings('table').length == 0) {
+                $('#janClienteSelect').find('hr').after('<table class="table table-selectable table-sm table-hover table-bordered small"><thead class="thead-dark"><tr><th>Cód.</th><th>Nome</th><th>Cidade/Estado</th></tr></thead><tbody></tbody></table>');
+                $('#janClienteSelect').find('table tbody').slideUp(300);
+            } else {
+                $('#janClienteSelect').find('table tbody').slideUp(300);
+                $('#janClienteSelect').find('table tbody').html('');
+            }
+
+            $('#janClienteSelect').find('[data-selecionar]').attr('disabled','true');
+            $('#janClienteSelect [name="busca"]').next('.text-muted').html('');
+
+            if(r.length == 0) {
+                $('#janClienteSelect').find('table tbody').append('<tr style="cursor:not-allowed" disabled><td colspan="3" disabled>Nada encontrado</td></tr>');
+            } else {
+                setTimeout(function(){
+                    for(let i = 0; i < r.length; i++) {
+                        $('#janClienteSelect').find('table tbody').append('<tr style="cursor:pointer" data-id="'+r[i].id+'"><td class="small">'+r[i].id+'</td><td>'+r[i].nome+'</td><td>'+r[i].cidade+'/'+r[i].estado+'</td></tr>');
+                    };
+
+                }, 200);
+            }
+
+            $('#janClienteSelect [name="busca"]').next('.text-muted').html('Registros encontrados: &nbsp; '+r.length);
+
+            $('#janClienteSelect').find('table tbody').slideDown(300);
+        } else {
+            alerta(res.mensagem, 'Ops, espera um pouco!',' warning');
+        }
+        
+    }, 'json');
+}
+
+function searchParceiroNome(busca)
+{
+    let resultado;
+    $.post(PREFIX_POST+'parceiros/buscar', {busca: busca}, function(res){
+        console.log(res);
+        
+        if(res.success == true) {
+            let r = res.parceiros;
+            let jan = $('#janParceirosSelect');
+            //console.log(res);
+            if(jan.find('hr').siblings('table').length == 0) {
+                jan.find('hr').after('<table class="table table-selectable table-sm table-hover table-bordered small"><thead class="thead-dark"><tr><th>Cód.</th><th>Parceiro</th><th>Serviços</th></tr></thead><tbody></tbody></table>');
+                jan.find('table tbody').slideUp(300);
+            } else {
+                jan.find('table tbody').slideUp(300);
+                jan.find('table tbody').html('');
+            }
+
+            jan.find('[data-selecionar]').attr('disabled','true');
+            jan.find('[name="busca"]').next('.text-muted').html('');
+
+            if(r.length == 0) {
+                jan.find('table tbody').append('<tr style="cursor:not-allowed" disabled><td colspan="3" disabled>Nada encontrado</td></tr>');
+            } else {
+                setTimeout(function(){
+                    let nome = '';
+                    let servicos;
+                    for(let i = 0; i < r.length; i++) {
+                        nome = '';
+                        if(r[i].nome_fantasia != '') {
+                            nome = '<strong>'+r[i].nome_fantasia+'</strong><br><small class="font-italic">'+r[i].razao_social+'</small>';
+                        } else {
+                            nome = '<strong>'+r[i].razao_social+'</strong>';
+                        }
+
+                        if(r[i].doc_tipo == 'CNPJ') {
+                            nome += '<br><small>CNPJ: '+Dobbin.ocultaCNPJ(r[i].doc_numero)+'</small>';
+                        } else {
+                            nome += '<br><small>CPF: '+Dobbin.ocultaCPF(r[i].doc_numero)+'</small>'
+                        }
+
+
+                        if(r[i].servicos.length == 0) {
+                            servicos = '<i>Nenhum</i>';
+                        } else {
+                            servicos = '';
+                            r[i].servicos.forEach(function(j){
+                                servicos += j.categoria+', ';
+                            });
+
+                            servicos = servicos.substr(0, servicos.length-2);
+                        }
+
+
+                        jan.find('table tbody').append('<tr style="cursor:pointer" data-id="'+r[i].id+'"><td class="small">'+r[i].id+'</td><td>'+nome+'</td><td>'+servicos+'</td></tr>');
+                    };
+                    nome = undefined;
+
+                }, 200);
+            }
+
+            jan.find('[name="busca"]').next('.text-muted').html('Registros encontrados: &nbsp; '+r.length);
+
+            jan.find('table tbody').slideDown(300);
+        } else {
+            alerta(res.mensagem, 'Ops, espera um pouco!',' warning');
+        }
+        
+    }, 'json');
+}
+
+function novoParceiro(sender)
+{
+    $.post(PREFIX_POST+$(sender).attr('action'), $(sender).serialize(), function(res){
+        console.log(res);
+        if(res.success == true) {
+            alerta('A parceria foi cadastrada. Aguarde alguns instantes, que vamos continuar...','Cadastrado!', 'success');
+            setTimeout(function(){
+                location.hash = 'parceiros/ver/'+res.parceiro.id;
+                loadLanding('parceiros/ver/'+res.parceiro.id);
+            }, 500);
+        } else {
+            alerta(res.mensagem, 'Falha...', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+    return false;
+}
+
+function janServicoAdd()
+{
+    $('#modalParceiroServicoAdd .beneficiosHospedagem :input').attr('disabled', true);
+    $('#modalParceiroServicoAdd .beneficiosTransporte :input').attr('disabled', true);
+    $('#modalParceiroServicoAdd').modal('show');
+}
+
+function parcAddCampoTarifario(sender)
+{
+    if($(sender).parent('.tarifario').find('[data-servico-tarifa]').length < 5) {
+        $(sender).before('<div data-servico-tarifa class="d-flex mb-2"><select class="form-control form-control-solid form-control-sm mr-1">'+
+            '<option value="0-5">0 - 5 ANOS</option><option value="6-12">6 - 12 ANOS</option><option value="ADULTO">ADULTO</option>'+
+            '<option value="CASAL">CASAL</option><option value="60+">60+ ANOS</option></select>'+
+            '<div class="input-group input-group-sm mr-1"><div class="input-group-prepend"><span class="input-group-text form-control-solid">R$</span></div>'+
+            '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)"></div>'+
+            '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>'+
+            '<button type="button" class="btn btn-sm btn-danger" onclick="parcDelCampoTarifario(this)"><i class="fas fa-trash"></i></button></div>');
+    } else {
+        alerta('Você já inseriu o máximo de 5 tarifas.', 'Não dá para fazer isso.', 'warning');
+    }
+}
+
+function parcDelCampoTarifario(sender)
+{
+    if($(sender).parents('.tarifario').find('[data-servico-tarifa]').length > 1) {
+        $(sender).parents('[data-servico-tarifa]').remove();
+        //console.log($(sender).parents('[data-servico-tarifa]'));
+    } else {
+        alerta('Você precisa definir pelo menos uma tarifa.', 'Não dá para fazer isso.', 'warning');
+    }
+}
+
+function parcInserirBeneficio(sender, target = null)
+{
+    let ben = $(sender).prev().val();
+
+
+    if(target == null) {
+        target = '.beneficios';
+    }
+
+    $(target).append('<div class="form-check-inline" style="display:none"><label class="form-check-label">'+
+        '<input type="checkbox" class="form-check-input" value="'+ben+'" checked="checked">'+ben+'</label></div>');
+    $(target).find('.form-check-inline').fadeIn();
+    $(sender).prev().val('');
+}
+
+function parcAddBeneficioPago(target)
+{
+    let alvo = $(target);
+    
+
+    alvo.append('<div class="beneficio d-flex mb-2" style="display:none"><input type="text" class="form-control form-control-sm form-control-solid mr-1" placeholder="Nome" data-beneficio-nome>'+
+    '<div class="input-group input-group-sm mr-1"><div class="input-group-prepend"><span class="input-group-text form-control-solid">R$</span></div>'+
+    '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" data-beneficio-valor>'+
+    '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div></div>'+
+    '<button class="btn btn-sm btn-danger" type="button" onclick="parcDelBeneficioPago(this);"><i class="fas fa-trash"></i></button></div>');
+
+    alvo.find('.beneficio').fadeIn();
+    
+}
+
+function parcDelBeneficioPago(sender)
+{
+    $(sender).parents('.beneficio').eq(0).remove();
+}
+
+function parcServicoNovo()
+{
+    //console.log(event);
+    let servico = {};
+    servico.categoria = $('#modalParceiroServicoAdd [name="categoria"]').find(':selected').val();
+    if(servico.categoria == 'Hospedagem') {
+        servico.tipo = $('#modalParceiroServicoAdd [name="tipoHospedagem"]').find(':selected').val();
+    } else if(servico.categoria == 'Transporte') {
+        servico.tipo = $('#modalParceiroServicoAdd [name="tipoTransporte"]').find(':selected').val();
+        servico.passageiros = $('#modalParceiroServicoAdd [name="passageiros"]').val();
+    } else {
+        servico.tipo = null;
+    }
+
+    servico.cidade = $('#modalParceiroServicoAdd [name="cidade"]').val();
+    servico.estado = $('#modalParceiroServicoAdd [name="estado"]').find(':selected').val();
+    servico.tarifario = [];
+    for(let i = 0; i < $('#modalParceiroServicoAdd .tarifario [data-servico-tarifa]').length; i++) {
+        servico.tarifario[i] = {
+            idade: $('#modalParceiroServicoAdd .tarifario [data-servico-tarifa]').eq(i).children('select').find(':selected').val(),
+            valor: $('#modalParceiroServicoAdd .tarifario [data-servico-tarifa]').eq(i).find('[name="valor"]').val()
+        };
+    }
+
+    // Beneficios gratis
+    servico.beneficiosGratis = [];
+
+    if(servico.categoria == 'Hospedagem') {
+        if($('#modalParceiroServicoAdd .beneficiosHospedagem .form-check-input:checked').length > 0) {
+            for(let i = 0; i < $('#modalParceiroServicoAdd .beneficiosHospedagem .form-check-input:checked').length; i++) {
+                servico.beneficiosGratis[i] = $('#modalParceiroServicoAdd .beneficiosHospedagem .form-check-input:checked').eq(i).val();
+            }
+        }
+    } else if(servico.categoria == 'Transporte') {
+        if($('#modalParceiroServicoAdd .beneficiosTransporte .form-check-input:checked').length > 0) {
+            for(let i = 0; i < $('#modalParceiroServicoAdd .beneficiosTransporte .form-check-input:checked').length; i++) {
+                servico.beneficiosGratis[i] = $('#modalParceiroServicoAdd .beneficiosTransporte .form-check-input:checked').eq(i).val();
+            }
+        }
+    }
+
+    // Outros beneficios inclusos
+    let j;
+    if(servico.beneficiosGratis == undefined) {
+        j = 0;
+    } else {
+        j = servico.beneficiosGratis.length;
+    }
+
+
+    if($('#modalParceiroServicoAdd .beneficiosOutros .form-check-input:checked').length > 0) {
+        for(let i = 0; i < $('#modalParceiroServicoAdd .beneficiosOutros .form-check-input:checked').length; i++) {
+            servico.beneficiosGratis[j+i] = $('#modalParceiroServicoAdd .beneficiosOutros .form-check-input:checked').eq(i).val();
+        }
+    }
+
+    // Beneficios pagos
+    servico.beneficiosPagos = [];
+
+    if($('#modalParceiroServicoAdd .beneficiosPagos .beneficio').length > 0)
+    {
+        for(let i = 0; i < $('#modalParceiroServicoAdd .beneficiosPagos .beneficio').length; i++) {
+            if(
+                $('#modalParceiroServicoAdd .beneficiosPagos .beneficio').eq(i).find('[data-beneficio-nome]').val().trim() == '' ||
+                $('#modalParceiroServicoAdd .beneficiosPagos .beneficio').eq(i).find('[data-beneficio-valor]').val() == ''
+            ) {
+                // Do nothing...
+            } else {
+                servico.beneficiosPagos[i] = {
+                    nome: $('#modalParceiroServicoAdd .beneficiosPagos .beneficio').eq(i).find('[data-beneficio-nome]').val(),
+                    valor: $('#modalParceiroServicoAdd .beneficiosPagos .beneficio').eq(i).find('[data-beneficio-valor]').val()
+                };
+            }
+        }
+    }
+    servico.PID = $('#modalParceiroServicoAdd [name="PID"]').val();
+    servico.obs = $('#modalParceiroServicoAdd [name="obs"]').val();
+
+
+    $.post(PREFIX_POST+'parceiros/'+servico.PID+'/novoservico',
+        {
+            servico: JSON.stringify(servico)
+        },
+        function(res){
+            if(res.success == true) {
+                alerta('Serviço incluído com sucesso. Atualizando dados do parceiro...', 'Sucesso!', 'success');
+                $('#modalParceiroServicoAdd').modal('hide');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function parcServicoDel(id, parceiro)
+{
+    let x = confirm('Tem certeza que deseja remover esse serviço?');
+
+    if(x == true) {
+        $.post(PREFIX_POST+'parceiros/'+parceiro+'/apagarservico/'+id, function(res){
+            if(res.success == true) {
+                alerta('Serviço removido...', 'Sucesso!', 'success');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+        fail(function(ev){
+            nativePOSTFail(ev);
+        });
+    }
+}
+
+function parcServicoEdita(id, parceiro)
+{
+    $.post('parceiros/ver/'+parceiro+'/servico/'+id, function(res){
+        if(res.success == true) {
+            let modal = $('#modalParceiroServicoEdita');
+            let servico = res.servico;
+            console.log(res.servico);
+            // Reseta os campos do modal.
+
+            // Exibe o modal.
+            modal.modal('show');
+            modal.find(':input[name="SID"]').val(servico.id);
+
+            // Preenche o modal com os valores.
+            modal.find('[name="categoria"]').val(servico.categoria).trigger('change');
+            if(servico.categoria == 'Hospedagem') {
+                modal.find('[name="tipoHospedagem"]').val(servico.tipo);
+                modal.find('[name="passageiros"]').val('');
+            } else if(servico.categoria == 'Transporte') {
+                modal.find('[name="tipoTransporte"]').val(servico.tipo);
+                modal.find('[name="passageiros"]').val(servico.passageiros);
+            }
+
+            modal.find('[name="cidade"]').val(servico.cidade);
+            modal.find('[name="estado"]').val(servico.estado);
+            modal.find('[name="tipoTransporte"]').val(servico.tipo);
+            // Tarifas
+            let tarifas = JSON.parse(servico.tarifas);
+            //console.log(tarifas);
+            if(modal.find('[data-servico-tarifa]').length > tarifas.length) {
+                // Mais campos do que valores.
+                for(let i = modal.find('[data-servico-tarifa]').length-1; i >= tarifas.length; i--) {
+                    modal.find('[data-servico-tarifa]').eq(i).find('button.btn-danger').click();
+                }
+            } else if(modal.find('[data-servico-tarifa]').length < tarifas.length) {
+                // Menos campos do que valores.
+                for(let i = modal.find('[data-servico-tarifa]').length; i < tarifas.length; i++) {
+                    modal.find('[data-servico-tarifa]').last().siblings('button.btn-primary').click();
+                }
+            }
+            // Preenche o valor das tarifas.
+            for(let i = 0; i < tarifas.length; i++) {
+                modal.find('[data-servico-tarifa]').eq(i).find('select').val(tarifas[i].idade);
+                modal.find('[data-servico-tarifa]').eq(i).find('[name="valor"]').val(converteCentavoEmReal(tarifas[i].valor)).trigger('change');
+            }
+
+            // Benefícios GRATUITOS
+            let benefGratis = JSON.parse(servico.benef_gratis);
+            modal.find('.beneficios > .beneficiosOutros').eq(0).find('.form-check-inline').remove();
+
+            //console.log(benefGratis);
+            benefGratis.forEach(function(b){
+                let ok = false;
+
+                if(servico.categoria == 'Hospedagem') {
+                    let opt = modal.find('.beneficios > .beneficiosHospedagem').find(':input[value="'+b+'"]');
+                    if(opt.length == 1)
+                    {
+                        opt.prop('checked', true);
+                        ok = true;
+                    }
+
+                    opt = undefined;
+                } else if(servico.categoria == 'Transporte') {
+                    let opt = modal.find('.beneficios > .beneficiosTransporte').find(':input[value="'+b+'"]');
+                    if(opt.length == 1)
+                    {
+                        opt.prop('checked', true);
+                        ok = true;
+                    }
+
+                    opt = undefined;
+                }
+
+                if(ok === false) {
+                    // Adiciona nos outros Benefícios
+                    let opt = modal.find('.beneficios').next();
+                    opt.children(':input[type="text"]').val(b);
+                    opt.children('button.btn-primary').trigger('click');
+                    
+
+                    opt = undefined;
+                }
+            });
+
+            // Benefícios PAGOS
+            let benefPago = JSON.parse(servico.benef_pago);
+
+            if(benefPago.length > modal.find('.beneficiosPagos > .beneficio').length) {
+                // Menos campos do que valores. Adiciona
+                for(let i = benefPago.length - modal.find('.beneficiosPagos > .beneficio').length; i > 0; i--) {
+                    modal.find('.beneficiosPagos').next().trigger('click');
+                }
+            } else if(benefPago.length < modal.find('.beneficiosPagos > .beneficio').length) {
+                // Mais campos do que valores. Remove
+                for(let i = modal.find('.beneficiosPagos > .beneficio').length - 1; i >= benefPago.length; i--) {
+                    modal.find('.beneficiosPagos .beneficio').eq(i).find('button.btn-danger').trigger('click');
+                }
+            }
+
+            for(let i = 0; i < benefPago.length; i++) {
+                modal.find('.beneficiosPagos .beneficio').eq(i).find('[data-beneficio-nome]').val(benefPago[i].nome);
+                modal.find('.beneficiosPagos .beneficio').eq(i).find('[data-beneficio-valor]').val(
+                    converteCentavoEmReal(benefPago[i].valor)
+                ).trigger('change');
+            }
+
+            // OBSERVAÇÕES
+            modal.find('textarea[name="obs"]').val(servico.obs_servico);
+
+        } else {
+            alerta(res.mensagem, 'Falha!', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function parcServicoSalvar() {
+    let servico = {};
+    servico.categoria = $('#modalParceiroServicoEdita [name="categoria"]').find(':selected').val();
+    if(servico.categoria == 'Hospedagem') {
+        servico.tipo = $('#modalParceiroServicoEdita [name="tipoHospedagem"]').find(':selected').val();
+    } else if(servico.categoria == 'Transporte') {
+        servico.tipo = $('#modalParceiroServicoEdita [name="tipoTransporte"]').find(':selected').val();
+        servico.passageiros = $('#modalParceiroServicoEdita [name="passageiros"]').val();
+    } else {
+        servico.tipo = null;
+    }
+
+    servico.cidade = $('#modalParceiroServicoEdita [name="cidade"]').val();
+    servico.estado = $('#modalParceiroServicoEdita [name="estado"]').find(':selected').val();
+    servico.tarifario = [];
+    for(let i = 0; i < $('#modalParceiroServicoEdita .tarifario [data-servico-tarifa]').length; i++) {
+        servico.tarifario[i] = {
+            idade: $('#modalParceiroServicoEdita .tarifario [data-servico-tarifa]').eq(i).children('select').find(':selected').val(),
+            valor: $('#modalParceiroServicoEdita .tarifario [data-servico-tarifa]').eq(i).find('[name="valor"]').val()
+        };
+    }
+
+    // Beneficios gratis
+    servico.beneficiosGratis = [];
+
+    if(servico.categoria == 'Hospedagem') {
+        if($('#modalParceiroServicoEdita .beneficiosHospedagem .form-check-input:checked').length > 0) {
+            for(let i = 0; i < $('#modalParceiroServicoEdita .beneficiosHospedagem .form-check-input:checked').length; i++) {
+                servico.beneficiosGratis[i] = $('#modalParceiroServicoEdita .beneficiosHospedagem .form-check-input:checked').eq(i).val();
+            }
+        }
+    } else if(servico.categoria == 'Transporte') {
+        if($('#modalParceiroServicoEdita .beneficiosTransporte .form-check-input:checked').length > 0) {
+            for(let i = 0; i < $('#modalParceiroServicoEdita .beneficiosTransporte .form-check-input:checked').length; i++) {
+                servico.beneficiosGratis[i] = $('#modalParceiroServicoEdita .beneficiosTransporte .form-check-input:checked').eq(i).val();
+            }
+        }
+    }
+
+    // Outros beneficios inclusos
+    let j;
+    if(servico.beneficiosGratis == undefined) {
+        j = 0;
+    } else {
+        j = servico.beneficiosGratis.length;
+    }
+
+
+    if($('#modalParceiroServicoEdita .beneficiosOutros .form-check-input:checked').length > 0) {
+        for(let i = 0; i < $('#modalParceiroServicoEdita .beneficiosOutros .form-check-input:checked').length; i++) {
+            servico.beneficiosGratis[j+i] = $('#modalParceiroServicoEdita .beneficiosOutros .form-check-input:checked').eq(i).val();
+        }
+    }
+
+    // Beneficios pagos
+    servico.beneficiosPagos = [];
+
+    if($('#modalParceiroServicoEdita .beneficiosPagos .beneficio').length > 0)
+    {
+        for(let i = 0; i < $('#modalParceiroServicoEdita .beneficiosPagos .beneficio').length; i++) {
+            if(
+                $('#modalParceiroServicoEdita .beneficiosPagos .beneficio').eq(i).find('[data-beneficio-nome]').val().trim() == '' ||
+                $('#modalParceiroServicoEdita .beneficiosPagos .beneficio').eq(i).find('[data-beneficio-valor]').val() == ''
+            ) {
+                // Do nothing...
+            } else {
+                servico.beneficiosPagos[i] = {
+                    nome: $('#modalParceiroServicoEdita .beneficiosPagos .beneficio').eq(i).find('[data-beneficio-nome]').val(),
+                    valor: $('#modalParceiroServicoEdita .beneficiosPagos .beneficio').eq(i).find('[data-beneficio-valor]').val()
+                };
+            }
+        }
+    }
+    servico.PID = $('#modalParceiroServicoEdita [name="PID"]').val();
+    servico.SID = $('#modalParceiroServicoEdita [name="SID"]').val();
+    servico.obs = $('#modalParceiroServicoEdita [name="obs"]').val();
+
+
+    $.post(PREFIX_POST+'parceiros/'+servico.PID+'/salvarservico/'+servico.SID,
+        {
+            servico: JSON.stringify(servico)
+        },
+        function(res){
+            if(res.success == true) {
+                alerta('Serviço salvo com sucesso. Atualizando dados do parceiro...', 'Sucesso!', 'success');
+                $('#modalParceiroServicoEdita').modal('hide');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function janParcFinanceiroAdd()
+{
+    $('#modalParceiroFinanceiroAdd').modal('show');
+}
+
+function parcFinanceiroNovo() {
+    let modal = $('#modalParceiroFinanceiroAdd');
+
+    for(let i = 0; i < modal.find('[required]').length; i++) {
+        if(modal.find('[required]').eq(i).val().trim() == '') {
+            modal.find('[required]').eq(i).focus();
+            alerta('Há campos em branco que precisam ser preenchidos.','Não é possível continuar...', 'info');
+            return false;
+        }
+    }
+
+    let financ = {
+        banco: modal.find('[name="banco"]').val(),
+        favorecido: modal.find('[name="favorecido"]').val(),
+        agencia: modal.find('[name="agencia"]').val(),
+        agencia_dv: modal.find('[name="agencia_dv"]').val(),
+        conta: modal.find('[name="conta"]').val(),
+        conta_dv: modal.find('[name="conta_dv"]').val(),
+        tipo_conta: modal.find('[name="tipo_conta"]').val(),
+        obs_financeiro: modal.find('[name="obs_financeiro"]').val(),
+        PID: modal.find('[name="PID"]').val(),
+    };
+
+    $.post(PREFIX_POST+'parceiros/'+financ.PID+'/novofinanceiro',
+        {
+            financeiro: JSON.stringify(financ)
+        },
+        function(res){
+            if(res.success == true) {
+                alerta('Financeiro incluído com sucesso. Atualizando dados do parceiro...', 'Sucesso!', 'success');
+                modal.modal('hide');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+
+}
+
+function parcFinanceiroEdita(id, parceiro) {
+    $.post('parceiros/ver/'+parceiro+'/financeiro/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let modal = $('#modalParceiroFinanceiroEdita');
+            let fin = res.financeiro;
+
+            // Preenche valores.
+            modal.find('[name="banco"]').val(fin.banco);
+            modal.find('[name="favorecido"]').val(fin.favorecido);
+            modal.find('[name="agencia"]').val(fin.agencia);
+            modal.find('[name="agencia_dv"]').val(fin.agencia_dv);
+            modal.find('[name="conta"]').val(fin.conta);
+            modal.find('[name="conta_dv"]').val(fin.conta_dv);
+            modal.find('[name="tipo_conta"]').val(fin.tipo_conta);
+            modal.find('[name="obs_financeiro"]').val(fin.obs_financeiro);
+            modal.find('[name="FID"]').val(fin.id);
+
+            modal.modal('show');
+        } else {
+            alerta(res.mensagem, 'Falha!', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function parcFinanceiroSalvar() {
+    let modal = $('#modalParceiroFinanceiroEdita');
+
+    for(let i = 0; i < modal.find('[required]').length; i++) {
+        if(modal.find('[required]').eq(i).val().trim() == '') {
+            modal.find('[required]').eq(i).focus();
+            alerta('Há campos em branco que precisam ser preenchidos.','Não é possível continuar...', 'info');
+            return false;
+        }
+    }
+
+    let financ = {
+        banco: modal.find('[name="banco"]').val(),
+        favorecido: modal.find('[name="favorecido"]').val(),
+        agencia: modal.find('[name="agencia"]').val(),
+        agencia_dv: modal.find('[name="agencia_dv"]').val(),
+        conta: modal.find('[name="conta"]').val(),
+        conta_dv: modal.find('[name="conta_dv"]').val(),
+        tipo_conta: modal.find('[name="tipo_conta"]').val(),
+        obs_financeiro: modal.find('[name="obs_financeiro"]').val(),
+        PID: modal.find('[name="PID"]').val(),
+        FID: modal.find('[name="FID"]').val(),
+    };
+
+    $.post(PREFIX_POST+'parceiros/'+financ.PID+'/salvarfinanceiro/'+financ.FID,
+        {
+            financeiro: JSON.stringify(financ)
+        },
+        function(res){
+            if(res.success == true) {
+                alerta('Financeiro alterado com sucesso. Atualizando dados do parceiro...', 'Sucesso!', 'success');
+                modal.modal('hide');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+
+}
+
+function parcFinanceiroDel(id, parceiro) {
+    let x = confirm('Tem certeza que deseja remover essa entrada dos dados financeiros?');
+
+    if(x == true) {
+        $.post(PREFIX_POST+'parceiros/'+parceiro+'/apagarfinanceiro/'+id, function(res){
+            if(res.success == true) {
+                alerta('Dado financeiro removido...', 'Sucesso!', 'success');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+        fail(function(ev){
+            nativePOSTFail(ev);
+        });
+    }
+}
+
+function parcHistoricoNovo(sender) {
+    let form = $(sender).parents('form');
+    let modal = $(sender).parents('.modal');
+    let parcid, detalhes, etapa;
+
+    parcid = form.find('[name="parcid"]').val();
+    detalhes = form.find('[name="detalhes"]').val();
+    etapa = form.find('[name="etapa"]').val();
+
+    $.post(PREFIX_POST+'parceiros/'+parcid+'/addhistorico',
+        {
+            detalhes: detalhes,
+            etapa: etapa
+        },
+        function(res){
+            if(res.success == true) {
+                alerta('Registro inserido com sucesso.', 'Sucesso!', 'success');
+                modal.modal('hide');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function parcHistoricoEdita(sender) {
+    let form = $(sender).parents('form');
+    let modal = $(sender).parents('.modal');
+    let parcid, detalhes, etapa, hid;
+
+    parcid = form.find('[name="parcid"]').val();
+    detalhes = form.find('[name="detalhes"]').val();
+    etapa = form.find('[name="etapa"]').val();
+    hid = form.find('[name="hid"]').val();
+
+    $.post(PREFIX_POST+'parceiros/'+parcid+'/editarhistorico/'+hid,
+        {
+            detalhes: detalhes,
+            etapa: etapa,
+            hid: hid
+        },
+        function(res){
+            if(res.success == true) {
+                alerta('Registro salvo com sucesso.', 'Sucesso!', 'success');
+                modal.modal('hide');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function parcHistoricoDelete(sender) {
+    let pid, hid;
+
+    if(sender == null || sender == undefined) {
+        return false;
+    }
+
+    pid = $(sender).data('pid');
+    hid = $(sender).data('hid');
+
+    if(pid == null || pid == undefined || hid == null || hid == undefined) {
+        return false;
+    }
+
+    $.post(PREFIX_POST+'parceiros/'+pid+'/apagarhistorico/'+hid,
+        function(res){
+            console.log(res);
+            if(res.success == true) {
+                $(sender).parents('tr').eq(0).next().remove();
+                $(sender).parents('tr').eq(0).remove();
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+            return true;
+        }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function roteiroAddParceiroNovoRoteiro(sender) {
+    let conteudo = sender.children('td:eq(1)').html();
+    let pid = sender.data('id');
+
+    // Verifica se esse parceiro já existe na lista.
+    if($('#listaParceiros').find('[data-parceiro][data-pid="'+pid+'"]').length == 0) {
+
+        $('#listaParceiros').append('<div data-parceiro data-pid="'+pid+'" class="border pl-2 pr-1 py-1 mr-2 d-flex">'+
+        '<div class="flex-grow-1 pr-2">'+
+        '<small>'+conteudo+'</small>'+
+        '</div>'+
+        '<button type="button" class="btn btn-sm btn-transparent align-self-stretch" onclick="$(this).parents(\'[data-parceiro]\').eq(0).fadeOut(200, function(){$(this).remove();})"><i class="fas fa-times"></i></button></div>');
+        
+        sender.parents('.modal').find('[data-dismiss="modal"]').trigger('click');
+    } else {
+        // Já existe.
+        alerta('Este parceiro já foi adicionado.','Tente outro.', 'warning');
+    }
+}
+
+function roteiroNovo(roteiro) {
+
+    $.post(PREFIX_POST+'roteiros/novo', {dados: JSON.stringify(roteiro)}, function(res){
+        if(res.success == true) {
+            alerta('Roteiro foi lançado com êxito.', 'Sucesso.', 'success');
+            loadLanding(location.hash);
+        } else {
+            alerta(res.mensagem, 'Ops, falha.', 'warning');
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function roteiroHistoricoNovo(sender) {
+    let form = $(sender).parents('form');
+    let modal = $(sender).parents('.modal');
+    let parcid, detalhes, etapa, roteiroid;
+
+    parcid = form.find('[name="parcid"]').val();
+    roteiroid = form.find('[name="roteiroid"]').val();
+    detalhes = form.find('[name="detalhes"]').val();
+    etapa = form.find('[name="etapa"]').val();
+
+    $.post(PREFIX_POST+'roteiros/'+roteiroid+'/addhistorico/'+parcid,
+        {
+            detalhes: detalhes,
+            etapa: etapa
+        },
+        function(res){
+            if(res.success == true) {
+                alerta('Registro inserido com sucesso.', 'Sucesso!', 'success');
+                modal.modal('hide');
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Falha!', 'warning');
+            }
+        }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+
+/**
+ * ./FIM MODAIS E PÁGINAS
+ */
+
+$(document).ready(function(){
+    // Auto start
+    console.log('%cPare agora!', 'font-size:50px; font-weight:bold; color:red; text-shadow: 1px 1px 0px black, 1px -1px 0px black, -1px 1px 0px black, -1px -1px 0px black');
+    console.log('%cEssa ferramenta do navegador pode expor os dados sensíveis da plataforma. Não utilize-a sem permissão, nem cole códigos não autorizados!', 'font-size: 20px;')
+    sidebarAutoHide();
+    $('[data-toggle="popover"]').popover({'html':true});
+    $('[data-toggle="tooltip"]').tooltip();
+    $('#splash-screen').fadeOut('fast');
+    systemVersion = $('[data-systemversion]:eq(0)').text();
+    console.log('%cDobbin v'+systemVersion, 'font-size: 30px; font-weight:bold;');
+    timeoutUpdate = setTimeout(checkSystemUpdate, 600000);
+    if(sessionStorage.debug == undefined || sessionStorage.debug == 'false') {
+        sessionStorage.debug = false;
+        debugEnabled = false;
+    } else {
+        debugEnabled = true;
+    }
+    
+    configLocalStorageStart();
+    
+
+
+    if(location.hash != '') {
+        loadLanding(location.hash.substring(1, location.hash.length));
+    } else {
+        loadLanding('inicio');
+    }
+    $(window).resize(function(){
+        sidebarAutoHide();
+    });
+
+    $(document).on('click', function(ev){
+        if($(ev.target).parents('#main').length > 0 && $('nav.ds-navbar .nav-dropdown').is(':visible')) {
+            $('nav.ds-navbar .nav-dropdown').fadeOut(200);
+        }
+        
+    });
+
+    // Alterna entre sempre exibir menu lateral e sempre ocultar menu lateral.
+    $(document).on('click', '#sidebarFixedToggle', function(ev){
+        if($(this).hasClass('alwaysShow')) {
+            // Já está ativo. Desativa agora
+            $(this).removeClass('alwaysShow');
+            $(this).html('<i class="fas fa-toggle-off"></i>');
+            $(this).attr('data-original-title', 'DESATIVADO. Clique para sempre exibir o menu.');
+            configLocalStorageSet('sidebarAlwaysShow', false);
+        } else {
+            // Está desativado. Ativa agora.
+            $(this).addClass('alwaysShow');
+            $(this).html('<i class="fas fa-toggle-on"></i>');
+            $(this).attr('data-original-title', 'ATIVADO. Clique para sempre ocultar o menu.');
+            configLocalStorageSet('sidebarAlwaysShow', true);
+        }
+        sidebarAutoHide();
+    });
+
+    $(document).on('click', '[data-sidebar-toggle]', function(ev){
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        if($('#sidebar').hasClass('show')) {
+            $('#sidebar').removeClass('show');
+        } else {
+            $('#sidebar').addClass('show');
+        }
+    });
+
+    $(document).on('click', '.nav .btn-dropdown', function(ev){
+        ev.stopPropagation();
+        let btn = $(this);
+
+        if(btn.siblings('ul').length > 0) {
+            let drop = btn.siblings('ul').eq(0);
+            //console.log(drop);
+            if(drop.css('display') == 'block') {
+                drop.slideUp('fast');
+                btn.css('transform', 'rotate(0deg)');
+            } else {
+                drop.slideDown('fast');
+                btn.css('transform', 'rotate(90deg)');
+            }
+        }
+    });
+
+    $(document).on('click', 'a', function(ev){
+        let href = $(this).attr('href');
+        if(href.charAt(0) == '#') {
+            loadLanding(href.substring(1, href.length));
+        }
+
+    });
+
+    $(document).on('submit', 'form', function(ev){
+        if($(this).data('manual') == undefined) { // Envio automático
+            ev.stopPropagation();
+            ev.preventDefault();
+            let form = $(this);
+            let href = $(this).attr('action');
+            $('#splash-screen').fadeIn();
+
+            if(href == undefined) {
+                // Do nothing..
+            } else if(href == '#' || href == '') {
+                alerta('Dados não foram enviados...', '', 'warning');
+            } else {
+                $.post(PREFIX_POST+href, $(this).serialize(), function(res){
+                    $('#splash-screen').fadeOut();
+                    if(res.success == true) {
+                        form[0].reset();
+
+                        // Apaga campos que devem ser apagados após a conclusão do envio.
+                        form.find('.emptyAfterSubmit').val('');
+
+                        alerta('Dados salvos.', '', 'success');
+                        $('#modalClienteEditar, #modalUsuarioEditar, #modalMinhaContaEditar, '+
+                        '#modalAlterarMinhaSenha').modal('hide');
+                    } else {
+                        alerta(res.mensagem, 'Erro: ', 'warning');
+                        console.log(res);
+                    }
+                }, 'json')
+                .fail(function(ev){
+                    nativePOSTFail(ev);
+                });
+            }
+        } else {
+            return true;
+        }
+    });
+
+    $(document).on('submit', 'form#buscarClientes', function(ev){
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        let form = $(this);
+        let href = 'clientes/buscar';
+        let valor = form.find('[name="busca"]').val().trim();
+
+        $.post(PREFIX_POST+href, {busca: valor}, function(res){
+            //console.log(res);
+            if(res.success == false) {
+                alerta('Não conseguimos recuperar a pesquisa. Erro do servidor: '+res.mensagem, 'Falha!', 'warning');
+            } else {
+                $('#retornoBusca').html('<table class="table table-bordered table-sm">'+
+                '<thead class="bg-dark text-white">'+
+                    '<tr><th>Cód.</th><th>Nome</th><th class="d-none d-lg-table-cell">Email</th><th>Cidade</th>'+
+                    '<th>Estado</th><th class="d-none d-lg-table-cell">Criado em</th><th></th></tr>'+
+                '</thead><tbody style="font-size: .9rem;"></tbody></table>');
+
+                $('#retornoBusca').prepend('<div class="mb-2">Total de registros: <span class="badge badge-info">'+res.clientes.length+'</span></div>');
+                if(res.clientes.length == 0) {
+                    $('#retornoBusca').find('table tbody').html('<tr><td class="text-center" colspan="7">Nada encontrado.</td></tr>');
+                } else {
+                    $('#retornoBusca').find('table tbody').html('');
+                    for(let i = 0; i < res.clientes.length; i++) {
+                        let criadoEm = new Date(res.clientes[i].criado_em);
+                        
+                        $('#retornoBusca').find('table tbody')
+                            .append('<tr>'+
+                            '<td>'+res.clientes[i].id+'</td>'+
+                            '<td>'+highlight(res.clientes[i].nome, valor)+'</td>'+
+                            '<td class="d-none d-lg-table-cell">'+highlight(res.clientes[i].email, valor)+'</td>'+
+                            '<td>'+highlight(res.clientes[i].cidade, valor)+'</td>'+
+                            '<td>'+res.clientes[i].estado+'</td>'+
+                            '<td class="d-none d-lg-table-cell">'+Dobbin.formataDataHora(criadoEm)+'</td>'+
+                            '<td><button type="button" class="btn btn-transparent btn-rounded btn-sm dropdown-toggle no-caret" data-toggle="dropdown"> <i class="fas fa-ellipsis-v fa-fw"></i> </button>'+
+                            '<div class="dropdown-menu">'+
+                                    '<button class="dropdown-item" onclick="loadCliente('+res.clientes[i].id+')"><i class="far fa-eye fa-fw mr-1"></i> Ver</button>'+
+                                    '<button class="dropdown-item" onclick="editaCliente('+res.clientes[i].id+')"><i class="fas fa-pencil-alt fa-fw mr-1"></i> Editar</button>'+
+                                    '<div class="dropdown-divider"></div>'+
+                                    '<button class="dropdown-item text-danger" onclick="deleteCliente('+res.clientes[i].id+')"><i class="fas fa-trash fa-fw mr-1"></i> Apagar</button>'+
+                            '</div></td>'+
+                            '</tr>');
+                    }
+
+
+                    if(res.mensagem != '') {
+                        $('#retornoBusca').append('<div class="alert alert-info">'+res.mensagem+'</div>')
+                    }
+                }
+            }
+        }, 'json').fail(function(ev){
+            nativePOSTFail(ev);
+        });
+    });
+
+    $(document).on('keyup', 'form#buscarClientes [name="busca"], form#buscarUsuarios [name="busca"]', function(ev){
+        let atual = $(this).val();
+        let novo = atual.replace(/[=;]/gi, function(x){return '';});
+        $(this).val(novo);
+    });
+
+    $(document).on('submit', 'form#buscarUsuarios', function(ev){
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        let form = $(this);
+        let href = 'usuarios/buscar';
+        let valor = form.find('[name="busca"]').val().trim();
+
+        $.post(PREFIX_POST+href, {busca: valor}, function(res){
+            //console.log(res);
+            if(res.success == false) {
+                alerta('Não conseguimos recuperar a pesquisa. Erro do servidor: '+res.mensagem, 'Falha!', 'warning');
+            } else {
+                $('#retornoBusca').html('<table class="table table-bordered table-sm">'+
+                '<thead class="bg-dark text-white">'+
+                    '<tr><th>Cód.</th><th class="">Perfil</th><th>Usuário</th><th>Nível</th>'+
+                    '<th class="d-none d-lg-table-cell">Criado em</th><th></th></tr>'+
+                '</thead><tbody style="font-size: .9rem;"></tbody></table>');
+
+                $('#retornoBusca').prepend('<div class="mb-2">Total de registros: <span class="badge badge-info">'+res.usuarios.length+'</span></div>');
+
+                if(res.usuarios.length == 0) {
+                    $('#retornoBusca').find('table tbody').html('<tr><td class="text-center" colspan="6">Nada encontrado.</td></tr>');
+                } else {
+                    $('#retornoBusca').find('table tbody').html('');
+                    for(let i = 0; i < res.usuarios.length; i++) {
+                        let criadoEm = new Date(res.usuarios[i].criado_em);
+                        
+                        $('#retornoBusca').find('table tbody')
+                            .append('<tr>'+
+                            '<td>'+res.usuarios[i].id+'</td>'+
+                            '<td><img src="/media/images/av/'+res.usuarios[i].avatar+'" height="50" style="border-radius: 50%;"></td>'+
+                            '<td>'+highlight(res.usuarios[i].nome, valor)+' '+highlight(res.usuarios[i].sobrenome, valor)+'<br>'+
+                            '<small class="font-italic">@'+highlight(res.usuarios[i].usuario, valor)+'</small></td>'+
+                            '<td>'+res.usuarios[i].nivel+'</td>'+
+                            '<td class="d-none d-lg-table-cell">'+Dobbin.formataDataHora(criadoEm)+'</td>'+
+                            '<td><button type="button" class="btn btn-transparent btn-rounded btn-sm dropdown-toggle no-caret" data-toggle="dropdown"> <i class="fas fa-ellipsis-v fa-fw"></i> </button>'+
+                            '<div class="dropdown-menu">'+
+                                    '<button class="dropdown-item" onclick="loadUsuario('+res.usuarios[i].id+')"><i class="far fa-eye fa-fw mr-1"></i> Ver</button>'+
+                                    '<button class="dropdown-item" onclick="editaUsuario('+res.usuarios[i].id+')"><i class="fas fa-pencil-alt fa-fw mr-1"></i> Editar</button>'+
+                                    '<div class="dropdown-divider"></div>'+
+                                    '<button class="dropdown-item text-danger" onclick="deleteUsuario('+res.usuarios[i].id+')"><i class="fas fa-trash fa-fw mr-1"></i> Apagar</button>'+
+                            '</div></td>'+
+                            '</tr>');
+                    }
+
+                    if(res.mensagem != '') {
+                        $('#retornoBusca').append('<div class="alert alert-info">'+res.mensagem+'</div>')
+                    }
+                }
+            }
+        }, 'json').
+        fail(function(ev){
+            alerta('Não foi possível recuperar esses dados agora.', 'Falha!', 'danger');
+            //console.log(ev);
+            debugador(ev);;
+        });
+    });
+
+    $(document).on('click', '.database .page-link', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        let pagelink = $(this);
+        let pagination = $(this).parents('.pagination');
+        
+        //console.log($(this));
+        if($(this).data('go-prev') != undefined) {
+            //console.log('Voltar');
+            let atual = parseInt($(this).parents('.database').eq(0).find('tbody.show').data('page'));
+            if(atual > 1) {
+                atual--;
+                $(this).parents('.database').eq(0).find('tbody.show').removeClass('show');
+                $(this).parents('.database').eq(0).find('[data-page="'+ atual +'"]').addClass('show');
+                
+            }
+        } else if($(this).data('go-next') != undefined) {
+            //console.log('Avançar');
+            let atual = parseInt($(this).parents('.database').eq(0).find('tbody.show').data('page'));
+            if(atual < $(this).parents('.database').eq(0).find('tbody').length) {
+                atual++;
+                $(this).parents('.database').eq(0).find('tbody.show').removeClass('show');
+                $(this).parents('.database').eq(0).find('[data-page="'+ atual +'"]').addClass('show');
+                
+            }
+        } else {
+            let pagina = $(this).data('goto');
+
+            // Verifica se página já está selecionada.
+            if($(this).parents('.database').eq(0).find('tbody[data-page="'+pagina+'"]').hasClass('show') == false) {
+                // Página não está selecionada.
+                $(this).parents('.database').eq(0).find('tbody.show').removeClass('show');
+                $(this).parents('.database').eq(0).find('tbody[data-page="'+pagina+'"]').addClass('show');
+            }
+        }
+
+        // Define estado da paginação.
+        let pagAtual = parseInt($(this).parents('.database').eq(0).find('tbody.show').data('page'));
+        let pagTotal = parseInt($(this).parents('.database').eq(0).find('tbody').length);
+
+        pagination.find('.active').removeClass('active');
+        pagination.find('[data-goto="'+pagAtual+'"]').parents('.page-item').addClass('active');
+
+        if(pagAtual == 1) {
+            pagination.find('[data-go-prev]').parents('.page-item').addClass('disabled');
+            pagination.find('[data-go-next]').parents('.page-item').removeClass('disabled');
+        }
+        if(pagAtual == pagTotal) {
+            pagination.find('[data-go-prev]').parents('.page-item').removeClass('disabled');
+            pagination.find('[data-go-next]').parents('.page-item').addClass('disabled');
+        }
+        if(pagAtual == 1 && pagAtual == pagTotal) {
+            pagination.find('[data-go-prev], [data-go-next]').parents('.page-item').addClass('disabled');
+        }
+        if(pagAtual > 1 && pagAtual < pagTotal){
+            pagination.find('[data-go-prev]').parents('.page-item').removeClass('disabled');
+            pagination.find('[data-go-next]').parents('.page-item').removeClass('disabled');
+        }
+    });
+
+    // Busca nome de cliente
+    $(document).on('keyup', '#janClienteSelect :input[name="busca"]', function(ev){
+        if(
+            (ev.keyCode >= 48 && ev.keyCode <= 90) ||  //[0-9a-z]
+            ev.keyCode == 8 || //[backspace]
+            ev.keyCode == 32 || //[space]
+            ev.keyCode == 46 || //[delete]
+            (ev.keyCode >= 96 && ev.keyCode <= 105) //[numpad 0-9]
+        ) {
+            clearTimeout(timerKEY1);
+            timerKEY1 = setTimeout(function(){
+                
+                if($(ev.target).val().trim().length >= 3) {
+                    searchClienteNome($(ev.target).val().trim());
+                } else {
+                    $('#janClienteSelect').find('[data-selecionar]').attr('disabled','true');
+                    $('#janClienteSelect [name="busca"]').next('.text-muted').html('');
+                    $('#janClienteSelect table').slideUp(300, function(){$(this).remove()});
+                }
+            }, 700);
+        }
+    });
+
+    // Busca nome do parceiro
+    $(document).on('keyup', '#janParceirosSelect :input[name="busca"]', function(ev){
+        if(
+            (ev.keyCode >= 48 && ev.keyCode <= 90) ||  //[0-9a-z]
+            ev.keyCode == 8 || //[backspace]
+            ev.keyCode == 32 || //[space]
+            ev.keyCode == 46 || //[delete]
+            (ev.keyCode >= 96 && ev.keyCode <= 105) //[numpad 0-9]
+        ) {
+            clearTimeout(timerKEY1);
+            timerKEY1 = setTimeout(function(){
+                
+                
+                if($(ev.target).val().trim().length >= 3) {
+                    searchParceiroNome($(ev.target).val().trim());
+                } else {
+                    $('#janParceirosSelect').find('[data-selecionar]').attr('disabled','true');
+                    $('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
+                    $('#janParceirosSelect table').slideUp(300, function(){$(this).remove()});
+                }
+            }, 700);
+        }
+    });
+
+    $(document).on('click', '#janClienteSelect table tbody tr, #janParceirosSelect table tbody tr', function(ev){
+        let tr = $(this);
+        let jan = tr.parents('.modal');
+
+        if($(this).attr('disabled') == false || $(this).attr('disabled') == undefined) {
+            $(this).parents('table').eq(0).find('.selecionado').removeClass('table-primary').removeClass('selecionado');
+            tr.addClass('table-primary').addClass('selecionado');
+            jan.find('[data-selecionar]').attr('disabled', false);
+        }
+    });
+
+    $(document).on('change', '[name|="pseudo"]', function(ev){
+        let tarNome = $(this).attr('name');
+        tarNome = tarNome.replace("pseudo-", "");
+        let tarObj = $(this).siblings('[name="'+tarNome+'"]');
+
+        tarObj.val($(this).val());
+        //console.log(tarNome);
+    });
+
+    $(document).on('click', '.toggleMinMax', function(ev){
+        if($(this).data('target') != undefined && $(this).data('target') != null && $(this).data('target') != '') {
+            let alvo = $(this).data('target');
+            if($(alvo).is(':visible')) {
+                $(alvo).slideUp();
+                $(this).html('<i class="fas fa-plus"></i>');
+            } else {
+                $(alvo).slideDown();
+                $(this).html('<i class="fas fa-minus"></i>');
+            }
+        }
+    });
+
+    $(document).on('change', '#modalParceiroServicoAdd [name="categoria"], #modalParceiroServicoEdita [name="categoria"]', function(ev){
+        let modal = $(this).parents('.modal');
+        if($(this).val() == 'Hospedagem') {
+            modal.find('[name="tipoHospedagem"]').parents('.form-group').eq(0).show();
+            modal.find('[name="tipoTransporte"]').parents('.form-group').eq(0).hide();
+            modal.find('.beneficiosHospedagem :input').prop('checked', false).attr('disabled', false);
+            modal.find('.beneficiosTransporte :input').prop('checked', false).attr('disabled', true);
+        } else if($(this).val() == 'Transporte') {
+            modal.find('[name="tipoHospedagem"]').parents('.form-group').eq(0).hide();
+            modal.find('[name="tipoTransporte"]').parents('.form-group').eq(0).show();
+            modal.find('.beneficiosHospedagem :input').prop('checked', false).attr('disabled', true);
+            modal.find('.beneficiosTransporte :input').prop('checked', false).attr('disabled', false);
+        } else {
+            modal.find('[name="tipoHospedagem"]').parents('.form-group').eq(0).hide();
+            modal.find('[name="tipoTransporte"]').parents('.form-group').eq(0).hide();
+            modal.find('.beneficiosHospedagem :input').prop('checked', false).attr('disabled', true);
+            modal.find('.beneficiosTransporte :input').prop('checked', false).attr('disabled', true);
+        }
+    });
+
+    $(document).on('click', '.bloco-acord .acord-header', function(ev){
+        let sender = $(ev.currentTarget);
+
+        if(sender.siblings('.acord-body').is(':visible')) {
+            // Oculta os detalhes
+            sender.siblings('.acord-body').slideUp('fast');
+            sender.parents('.bloco-acord').eq(0).removeClass('shadow-sm my-3');
+            sender.find('button').html('<i class="fas fa-angle-down"></i>');
+            sender.removeClass('py-3');
+        } else {
+            // Oculta todos os outros
+            sender.parents('.bloco-acord').siblings('.bloco-acord.shadow-sm.my-3').children('.acord-body').hide();
+            sender.parents('.bloco-acord').siblings('.bloco-acord.shadow-sm.my-3').children('.acord-header').find('button').html('<i class="fas fa-angle-down"></i>');
+            sender.parents('.bloco-acord').siblings('.bloco-acord.shadow-sm.my-3').children('.acord-header').removeClass('py-3');
+            sender.parents('.bloco-acord').siblings('.bloco-acord').removeClass('shadow-sm my-3');
+
+            // Exibe os detalhes
+            sender.siblings('.acord-body').slideDown('fast');
+            sender.parents('.bloco-acord').eq(0).addClass('shadow-sm my-3');
+            sender.find('button').html('<i class="fas fa-angle-up"></i>');
+            sender.addClass('py-3');
+            
+        }
+    });
+
+    // Adiciona contador aos TEXTAREA
+    $(document).on('change keyup', 'textarea[maxlength]', function(ev){
+        if($(this).prop('maxlength') != '' && $(this).prop('maxlength') > 0){
+            let caracteres = $(this).val().length;
+            let total = $(this).prop('maxlength');
+
+            if($(this).next('div[data-contador]').length == 0) {
+                $(this).after('<div data-contador class="small mt-1 text-right"></div>');
+            }
+
+            $(this).next('div[data-contador]').html(caracteres+'/'+total);
+        }
+    });
+
+    $(document).on('change', '#controlesLog select', function(ev){
+        let qtd = $('#controlesLog [name="qtd"]').val();
+        let pagina = $('#controlesLog [name="pagina"]').val();
+        location.hash = '#log/'+qtd+'/p/'+ pagina;
+        loadLanding(location.hash);
+    });
+
+    $(document).on('click', '#controlesLog [data-controle-prev], #controlesLog [data-controle-next]', function(ev){
+        let op = $('#controlesLog select[name="pagina"] > option:selected');
+        console.log(op);
+        if($(ev.currentTarget).data('controle-prev') != undefined) {
+            console.log('PREV');
+
+            // Prev
+            if(op.prev().length > 0) {
+                op.attr('selected', false);
+                op.prev().attr('selected', true);
+                $('#controlesLog select[name="pagina"]').trigger('change');
+            }
+        } else {
+            console.log('NEXT');
+            
+            // Next
+            if(op.next().length > 0) {
+                op.attr('selected', false);
+                op.next().attr('selected', true);
+                $('#controlesLog select[name="pagina"]').trigger('change');
+            }
+        }
+
+
+    });
+
+    // Simulação: exibe campo quantidade de dias.
+    $(document).on('change', '#simulacao [name="valor_tipo"], #roteironovo [name="valor_tipo"]', function(ev){
+        if($(ev.currentTarget).find(':selected').val() == 'dia' || $(ev.currentTarget).find(':selected').val() == 'pessoa_dia') {
+            $(ev.currentTarget).siblings('[data-valor-dias]').slideDown(100);
+            $(ev.currentTarget).siblings('[data-valor-dias]').children(':input').attr('required', true);
+        } else {
+            $(ev.currentTarget).siblings('[data-valor-dias]').slideUp(100);
+            $(ev.currentTarget).siblings('[data-valor-dias]').children(':input').attr('required', false);
+        }
+    });
+
+    // Botão de "Carregar mais" registros do histórico.
+    $(document). on('click', '#historico_negoc .loadMore', function(ev){
+        let btn = $(ev.currentTarget);
+        $.post(PREFIX_POST+'parceiros/'+btn.data('pid')+'/listahistorico/'+btn.data('qtd')+'/'+btn.data('start'), function(res){
+            console.log(res);
+            if(res.historico.length > 0) {
+                let temp1, temp2, temp3;
+                res.historico.forEach(function(h){
+                    console.log(h);
+                    let table = btn.parent().siblings('table');
+                    
+                    if(h.usuario_nome == null) {
+                        temp1 = '<i>Usuário removido</i>';
+                    } else {
+                        temp1 = h.usuario_nome;
+                    }
+
+                    if(h.roteiro_nome == null && parseInt(h.roteiro_id) == 0) {
+                        temp2 = '';
+                    } else if(h.roteiro_nome == null && parseInt(h.roteiro_id) > 0) {
+                        temp2 = ' &nbsp;|&nbsp; <strong>ROTEIRO:</strong> <i>Roteiro removido.</i>';
+                    } else {
+                        temp2 = ' &nbsp;|&nbsp; <strong>ROTEIRO:</strong> '+ h.roteiro_nome+' ('+Dobbin.formataData(new Date(h.data_ini))+')';
+                    }
+
+                    if(h.atualizado_em != null && h.atualizado_por != null) {
+                        temp3 = '<br><strong>[Atualizado por: '+h.atualizado_por_nome+' em '+Dobbin.formataDataHora(new Date(h.atualizado_em))+']</strong>';
+                    } else {
+                        temp3 = '';
+                    }
+
+                    table.find('tbody').append('<tr data-detalhes="'+h.detalhes+'" data-etapa="'+h.etapa+'"><td rowspan="2" class="font-monospace">'+Dobbin.formataDataHora(new Date(h.criado_em))+'</td>'+
+                    '<td class="font-weight-bold">'+h.etapa+'</td> <td>'+h.detalhes+'</td><td rowspan="2">'+
+                    '<div class="btn-group"> '+
+                    '<button type="button" class="btn btn-sm btn-primary" title="Editar registro." data-pid="'+btn.data('pid')+'" data-hid="'+h.id+'" dobbin-btn-editahistorico><i class="fas fa-pen"></i></button>'+
+                    '<button type="button" class="btn btn-sm btn-danger" title="Excluir registro." data-pid="'+btn.data('pid')+'" data-hid="'+h.id+'" onclick="parcHistoricoDelete(this)"><i class="fas fa-trash"></i></button>'+
+                    '</div> </td></tr>'+
+                    '<tr><td colspan="2"><strong>AUTOR:</strong> '+temp1+temp2+temp3+'</td></tr>')
+                });
+            }
+
+            if(res.historico.length < parseInt(btn.data('qtd')))
+            {
+                btn.parent().fadeOut(200, function(){btn.parent().remove();});
+            } else {
+                btn.data('start', parseInt(btn.data('start')) + parseInt(btn.data('qtd')));
+            }
+
+            
+        }, 'json').
+        fail(function(ev){
+            nativePOSTFail(ev);
+        });
+    });
+
+    /**
+     * VALIDAÇÃO AUTOMÁTICA
+     */
+    $(document).on('blur', '[data-validate-rg]', function(ev){
+        if($(this).val().trim().length !== 0 && $(this).val().trim().length !== 10) {
+            //ERRADO
+            $(this).addClass('border-danger');
+            if($(this).siblings('.invalid-feedback').length == 0) {
+                $(this).after('<div class="invalid-feedback d-block">O RG precisa ter 10 dígitos (ou deixe em branco).</div>');
+            }
+        } else {
+            $(this).removeClass('border-danger');
+            $(this).siblings('.invalid-feedback').remove();
+        }
+    });
+
+    $(document).on('blur', '[data-validate-cpf]', function(ev){
+        if($(this).val().trim().length !== 0 && $(this).val().trim().length !== 11) {
+            //ERRADO
+            $(this).addClass('border-danger');
+            if($(this).siblings('.invalid-feedback').length == 0) {
+                $(this).after('<div class="invalid-feedback d-block">O CPF precisa ter 11 dígitos (ou deixe em branco).</div>');
+            }
+        } else {
+            $(this).removeClass('border-danger');
+            $(this).siblings('.invalid-feedback').remove();
+        }
+    });
+
+    $(document).on('blur', '[data-validate-valor]', function(ev){
+        
+    });
+    
+    $(document).on('change', ':input[type="file"]', function(ev){
+        //console.log(ev);
+        let arq = $(ev.target)[0].files[0];
+        if(arq.size / 1024 > $(ev.target).attr('max-size')) {
+            alerta('Arquivo maior ['+(arq.size / 1024 / 1024)+'MB] que o permitido ['+($(ev.target).attr('max-size')/1024 )+'MB].');
+            $(ev.target).val('');
+        } else {
+            //console.log( arq.size / 1024 + 'KB');
+        }
+        //console.log($(ev.target)[0].files[0]);
+    });
+
+    $(document).on('blur', '[data-validate-password]', function(ev){
+        
+
+    });
+    /**
+     * ./VALIDAÇÃO AUTOMÁTICA
+     */
+});
