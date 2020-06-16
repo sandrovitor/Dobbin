@@ -208,6 +208,6 @@
         $('#modalRoteiroTarifas').modal('show');
         alerta('Informe as tarifas para este roteiro o mais breve possível.', 'Pendência...', 'light', 10000);
         @endif
-        $('#roteiroTitle').html(roteiro.nome+ ' <small>('+Dobbin.formataData(new Date(roteiro.data_ini))+' a '+Dobbin.formataData(new Date(roteiro.data_fim))+')</small>');
+        $('#roteiroTitle').html(roteiro.nome+ ' <small>('+Dobbin.formataData(new Date(roteiro.data_ini), true)+' a '+Dobbin.formataData(new Date(roteiro.data_fim), true)+')</small>');
     });
 </script>
