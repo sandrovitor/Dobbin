@@ -603,6 +603,11 @@ class SGCTUR extends Master
             ":complemento, :ponto_referencia, :bairro, :cep, :cidade, :estado, :sangue, :alergia, ".
             ":em_nome, :em_tel, :taxa_extra, :titular, NOW(), NOW())";
         $abc = $this->pdo->prepare($sql);
+        
+        // Faz o TRIM nos dados
+        foreach($dados as $key => $val) {
+            $dados[$key] = trim($val);
+        }
 
         $abc->bindValue(':nome', $dados['nome'], \PDO::PARAM_STR);
         $abc->bindValue(':email', $dados['email'], \PDO::PARAM_STR);
@@ -681,6 +686,11 @@ class SGCTUR extends Master
             ":complemento, :ponto_referencia, :bairro, :cep, :cidade, :estado, :sangue, :alergia, ".
             ":em_nome, :em_tel, NOW(), NOW())";
         $abc = $this->pdo->prepare($sql);
+
+        // Faz o TRIM nos dados
+        foreach($dados as $key => $val) {
+            $dados[$key] = trim($val);
+        }
 
         $abc->bindValue(':nome', $dados['nome'], \PDO::PARAM_STR);
         $abc->bindValue(':email', $dados['email'], \PDO::PARAM_STR);
@@ -802,6 +812,14 @@ class SGCTUR extends Master
         $senhaOptions = array(
             "cost" => $this->system->senha_cost
         );
+        // Faz o TRIM nos dados
+        foreach($dados as $key => $val) {
+            if($key == 'senha1' || $key == 'senha2') {
+
+            } else {
+                $dados[$key] = trim($val);
+            }
+        }
 
         $abc->bindValue(':nome', $dados['nome'], \PDO::PARAM_STR);
         $abc->bindValue(':sobrenome', $dados['sobrenome'], \PDO::PARAM_STR);
@@ -1063,6 +1081,11 @@ class SGCTUR extends Master
         try {
             $abc = $this->pdo->prepare('INSERT INTO `parc_empresa` (`id`, `razao_social`, `nome_fantasia`, `doc_tipo`, `doc_numero`, `endereco`, `cidade`, `estado`, `responsavel`, `criado_em`) '.
             'VALUES (NULL, :rs, :nf, :doctipo, :docnum, :endereco, :cidade, :estado, :resp, NOW())');
+
+            // Faz o TRIM nos dados
+            foreach($dados as $key => $val) {
+                $dados[$key] = trim($val);
+            }
 
             $abc->bindValue(':rs', $dados['razao_social'], \PDO::PARAM_STR);
             $abc->bindValue(':nf', $dados['fantasia'], \PDO::PARAM_STR);
@@ -1343,6 +1366,13 @@ class SGCTUR extends Master
         try {
             $abc = $this->pdo->prepare("INSERT INTO `roteiros` (`id`, `nome`, `data_ini`, `data_fim`, `passagens`, `qtd_coordenador`, `coordenador`, `clientes`, `despesas`, `parceiros`, `qtd_rateio`, `taxa_lucro`, `lucro_previsto`, `tarifa`, `reserva_qtd`, `reserva_obs`, `obs`, `criado_em`, `criado_por`, `atualizado_em`, `deletado_em`, `deletado_por`) VALUES ".
             "(NULL, :nome, :datai, :dataf, :pass, :qtd_coord, '', '', :despesas, :parceiros, :qtd_rateio, :taxa_lucro, :lucro_previsto, :tarifa, '', '', :obs, current_timestamp(), ".$_SESSION['auth']['id'].", current_timestamp(), NULL, NULL)");
+
+            // Faz o TRIM nas string dos dados
+            foreach($dados as $key => $val) {
+                if(is_string($val)) {
+                    $dados[$key] = trim($val);
+                }
+            }
 
             $abc->bindValue(':nome', $dados['nome'], \PDO::PARAM_STR);
             $abc->bindValue(':datai', $dados['data_ini'], \PDO::PARAM_STR);

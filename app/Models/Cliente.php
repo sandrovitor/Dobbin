@@ -225,7 +225,7 @@ class Cliente extends Master
         $campos = array();
         $sql = 'UPDATE clientes SET ';
         foreach($this->dadosNovo as $key => $val) {
-            $sql .= '`'.$key.'` = "'.$val.'",';
+            $sql .= '`'.$key.'` = "'.trim($val).'",';
 
             switch($key)
             {

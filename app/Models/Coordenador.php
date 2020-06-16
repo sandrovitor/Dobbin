@@ -198,7 +198,7 @@ class Coordenador extends Master
         $campos = array();
         $sql = 'UPDATE coordenadores SET ';
         foreach($this->dadosNovo as $key => $val) {
-            $sql .= '`'.$key.'` = "'.$val.'",';
+            $sql .= '`'.$key.'` = "'.trim($val).'",';
 
             switch($key)
             {

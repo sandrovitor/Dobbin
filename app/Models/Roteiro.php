@@ -249,13 +249,13 @@ class Roteiro extends Master
                         break;
 
                         case 'obs':
-                            $sql .= $key.' = "'.addslashes($val).'", ';
+                            $sql .= $key.' = "'.addslashes(trim($val)).'", ';
                         break;
 
 
                         // String ou booleano ou inteiro, armazena normal.
                         default:
-                            $sql .= $key.' = "'.$val.'", ';
+                            $sql .= $key.' = "'.trim($val).'", ';
                         break;
                     }
                     
