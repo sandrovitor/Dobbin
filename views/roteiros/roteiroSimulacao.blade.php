@@ -409,7 +409,7 @@ function calcular()
         switch(form.find('tr:not([data-example])').eq(i).find('[name="valor_tipo"] :selected').val()) {
             case 'total': // Valor integral. Sem alteração.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                 }
@@ -430,7 +430,7 @@ function calcular()
 
             case 'pessoa': // Valor por pessoa. Multiplica pelo total de passageiros e armazena valor integral.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                 }
@@ -458,7 +458,7 @@ function calcular()
 
             case 'dia': // Valor total do dia. Depende da quantidade de dias do roteiro.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                     return false;
@@ -496,7 +496,7 @@ function calcular()
 
             case 'pessoa_dia': // Valor por pessoa e por dia. Depende da quantidade de pessoas e dias do roteiro.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                     return false;
@@ -592,7 +592,7 @@ $(document).ready(function(){
 
                 return false;
             }
-            $('#simulacao [name="valor_dias"]').attr('max', nativeDiffDays( new Date($('#simulacao [name="data_ini"]').val()), new Date($('#simulacao [name="data_fim"]').val()) ) + 1);
+            $('#simulacao [name="valor_dias"]').attr('max', Dobbin.diffDays( new Date($('#simulacao [name="data_ini"]').val()), new Date($('#simulacao [name="data_fim"]').val()) ) + 1);
         } else {
             $('#simulacao [name="valor_dias"]').attr('max', '1');
         }

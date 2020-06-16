@@ -51,7 +51,7 @@ const Dobbin = {
 
     // Oculta CNPJ.
     ocultaCNPJ: function(cnpj) {
-        return cnpj.substring(0,2)+'.'+cnpj.substring(2,1)+'**.***/****-'+cnpj.substr(cnpj.length - 2);
+        return cnpj.substring(0,2)+'.'+cnpj.substring(2,3)+'**.***/****-'+cnpj.substr(cnpj.length - 2);
     },
 
     // Formata Data e Hora: --/--/---- --:--:--
@@ -192,4 +192,20 @@ const Dobbin = {
         }
     },
 
+    validaCamposRequired:function(formulario) {
+        if(formulario == '' || formulario == null || formulario == undefined) {
+            return false;
+        } else {
+            let form = $(formulario);
+            for(let i = 0; i < form.find('[required]').length; i++) {
+                if(form.find('[required]').eq(i).val() == '') {
+                    form.find('[required]').eq(i).focus();
+                    alerta('Preencha todos os campos requeridos.','Faltou um...', 'info');
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
 };

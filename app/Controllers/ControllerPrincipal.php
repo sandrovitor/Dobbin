@@ -4,6 +4,7 @@ Use eftec\bladeone\BladeOne;
 Use Cocur\Slugify\Slugify;
 Use SGCTUR\SGCTUR;
 Use SGCTUR\Cliente;
+Use SGCTUR\Coordenador;
 Use SGCTUR\Usuario;
 Use SGCTUR\Cryptor;
 Use SGCTUR\LOG;
@@ -252,7 +253,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros',
             'description' => 'Roteiros definidos e quantidade de vagas.',
-            'page' => $blade->run("roteiros", array(
+            'page' => $blade->run("roteiros.roteiros", array(
                 'listaRoteiros' => $listaRoteiros,
             ))
         );
@@ -268,7 +269,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Novo',
             'description' => 'Crie um novo roteiro.',
-            'page' => $blade->run("roteirosNovo", array(
+            'page' => $blade->run("roteiros.roteirosNovo", array(
                 
             ))
         );
@@ -284,7 +285,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Simulação',
             'description' => 'Simulação de roteiros, sem alterações.',
-            'page' => $blade->run("roteiroSimulacao", array(
+            'page' => $blade->run("roteiros.roteiroSimulacao", array(
                 
             ))
         );
@@ -298,6 +299,68 @@ class ControllerPrincipal
 
         $rot = new Roteiro($p['id']);
         $roteiro = $rot->getDados();
+        
+        if($roteiro === false || $roteiro->deletado_em !== null) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado!');
+            exit();
+        }
+
+        // Carrega parceiros
+        if($roteiro->parceiros == '') {
+            $roteiro->parceiros = array();
+        } else {
+            $parceiros = json_decode($roteiro->parceiros);
+            $parc_array = array();
+
+            if(is_array($parceiros)) {
+                foreach($parceiros as $a) {
+                    $par = new Parceiro($a);
+                    $x = $par->getDados();
+                    unset($x['financeiro'], $x['servico']);
+                    $x['geral']->historico = $par->getHistorico(50,0,$p['id']);
+                    array_push($parc_array, $x['geral']);
+                }
+    
+            }
+            
+            $roteiro->parceiros = $parc_array;
+        }
+
+        // Criado por
+        $u = new Usuario($roteiro->criado_por);
+        $u = $u->getDados();
+        if($u === false) {
+            $criado_por = '<img src="/media/images/av/user00.png" height="25" style="border-radius:50%" class="mr-1"> <i>Usuário removido</i>';
+        } else {
+            $criado_por = '<img src="/media/images/av/'.$u->avatar.'" height="25" style="border-radius:50%" class="mr-1"> <i>'.$u->nome .' '. $u->sobrenome.'</i>';
+        }
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > <span id="roteiroTitle"></span>',
+            'description' => 'Detalhes do roteiro.',
+            'page' => $blade->run("roteiros.roteirosVer", array(
+                'roteiro' => $roteiro,
+                'sgc' => new SGCTUR(),
+                'criado_por' => $criado_por
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosEditar($p)
+    {
+        self::validaConexao(2);
+
+        $rot = new Roteiro($p['id']);
+        $roteiro = $rot->getDados();
+        if($roteiro === false) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado!');
+            exit();
+        }
 
         // Carrega parceiros
         if($roteiro->parceiros == '') {
@@ -315,6 +378,69 @@ class ControllerPrincipal
 
             $roteiro->parceiros = $parc_array;
         }
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Editar',
+            'description' => 'Faça alterações no roteiro.',
+            'page' => $blade->run("roteiros.roteirosEditar", array(
+                'roteiro' => $roteiro,
+                'sgc' => new SGCTUR(),
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosLixeira($p)
+    {
+        self::validaConexao(2);
+        $sgc = new SGCTUR();
+
+        $listaRoteiros = $sgc->getRoteirosLixeira();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Lixeira',
+            'description' => 'Roteiros excluídos e estão aguardando para serem removidos por completo.',
+            'page' => $blade->run("roteiros.roteirosLixeira", array(
+                'roteiros' => $listaRoteiros,
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosLixeiraVer($p)
+    {
+        self::validaConexao(2);
+
+        $rot = new Roteiro($p['id']);
+        $roteiro = $rot->getDados();
+        
+        if($roteiro === false || $roteiro->deletado_em === null) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado!');
+            exit();
+        }
+
+        // Carrega parceiros
+        if($roteiro->parceiros == '') {
+            $roteiro->parceiros = array();
+        } else {
+            $parceiros = json_decode($roteiro->parceiros);
+            $parc_array = array();
+            foreach($parceiros as $a) {
+                $par = new Parceiro($a);
+                $x = $par->getDados();
+                unset($x['financeiro'], $x['servico']);
+                $x['geral']->historico = $par->getHistorico(50,0,$p['id']);
+                array_push($parc_array, $x['geral']);
+            }
+
+            $roteiro->parceiros = $parc_array;
+        }
+
         // Criado por
         $u = new Usuario($roteiro->criado_por);
         $u = $u->getDados();
@@ -324,14 +450,24 @@ class ControllerPrincipal
             $criado_por = '<img src="/media/images/av/'.$u->avatar.'" height="25" style="border-radius:50%" class="mr-1"> <i>'.$u->nome .' '. $u->sobrenome.'</i>';
         }
 
+        // Deletado por
+        $u = new Usuario($roteiro->criado_por);
+        $u = $u->getDados();
+        if($u === false) {
+            $deletado_por = '<img src="/media/images/av/user00.png" height="25" style="border-radius:50%" class="mr-1"> <i>Usuário removido</i>';
+        } else {
+            $deletado_por = '<img src="/media/images/av/'.$u->avatar.'" height="25" style="border-radius:50%" class="mr-1"> <i>'.$u->nome .' '. $u->sobrenome.'</i>';
+        }
+
         $blade = self::bladeStart();
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > <span id="roteiroTitle"></span>',
             'description' => 'Detalhes do roteiro.',
-            'page' => $blade->run("roteirosVer", array(
+            'page' => $blade->run("roteiros.roteirosLixeiraVer", array(
                 'roteiro' => $roteiro,
                 'sgc' => new SGCTUR(),
-                'criado_por' => $criado_por
+                'criado_por' => $criado_por,
+                'deletado_por' => $deletado_por
             ))
         );
 
@@ -480,6 +616,131 @@ class ControllerPrincipal
             }
         }
     }
+
+    /**
+     * 
+     * 
+     * COORDENADORES
+     * 
+     * 
+     */
+    static function coordenadores($p)
+    {
+        self::validaConexao(2);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores',
+            'description' => 'Gerencie seus coordenadores.',
+            'page' => $blade->run("coordenadores.coordenador", array(
+                'coordenadores' => $sgc->getCoordenadoresLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorNovo($p)
+    {
+        self::validaConexao(2);
+
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores > Novo',
+            'description' => 'Salve os dados dos seus coordenadores.',
+            'page' => $blade->run("coordenadores.coordenadorNovo", array(
+                
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorBuscar($p)
+    {
+        self::validaConexao();
+
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores > Buscar',
+            'description' => 'Localize seus coordenadores.',
+            'page' => $blade->run("coordenadores.coordenadorBuscar", array(
+                'coordenadores' => $sgc->getCoordenadoresLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
+                'totalCoordenadores' => $sgc->getCoordenadoresTotal()
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorDatabase($p)
+    {
+        self::validaConexao();
+
+        $sgc = new SGCTUR();
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores > Base de Dados',
+            'description' => 'Uma interface para sua base de dados dos seus coordenadores.',
+            'page' => $blade->run("coordenadores.coordenadorDatabase", array(
+                'totalCoordenadores' => $sgc->getCoordenadoresTotal()
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorLixeira($p)
+    {
+        self::validaConexao(2);
+
+        $sgc = new SGCTUR();
+        $x = $sgc->getCoordenadoresLixeira();
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores > Lixeira',
+            'description' => 'Coordenadores que foram excluídos e estão aguardando para serem removidos por completo.',
+            'page' => $blade->run("coordenadores.coordenadorLixeira", array(
+                'coordenadores' => $x['coordenadores'],
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorVer($p)
+    {
+        self::validaConexao(2);
+
+        $retorno = array(
+            'success' => false,
+            'mensagem' => '',
+        );
+        if(!isset($p['id']) || $p['id'] == '' || $p['id'] == 0) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado');
+            exit();
+        } else {
+            $coord = new Coordenador((int)$p['id']);
+            $dados = $coord->getDados();
+
+            if($dados === false) {
+                http_response_code(404);
+                $retorno['mensagem'] = Erro::getMessage(105);
+                return json_encode($retorno);
+            } else {
+                $retorno['success'] = true;
+                $retorno['coordenador'] = $dados;
+                return json_encode($retorno);
+            }
+        }
+    }
+
 
     /**
      * 

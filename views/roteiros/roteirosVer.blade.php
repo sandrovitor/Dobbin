@@ -11,8 +11,10 @@
                             </div>
                             <div class="card-body pt-3 pb-0 px-2">
                                 <div class="mb-3">
-                                    <button type="button" class="btn btn-sm btn-primary mr-2">Editar roteiro</button>
-                                    <button type="button" class="btn btn-sm btn-danger mr-2">Apagar roteiro</button>
+                                    <a href="#roteiros/editar/{{$roteiro->id}}" class="btn btn-sm btn-primary mr-2">Editar roteiro</a>
+                                    <button type="button" class="btn btn-sm btn-danger mr-2" onclick="roteiroApagar(this)" data-id="{{$roteiro->id}}">Apagar roteiro</button>
+                                    <button type="button" class="btn btn-sm btn-light mr-2 disabled" disabled>|</button>
+                                    <button type="button" class="btn btn-sm btn-dark mr-2" onclick="$('.modal.show').modal('hide'); $('#janCriarCopiaRoteiro').modal('show')" data-id="{{$roteiro->id}}">Criar cópia do roteiro</button>
                                 </div>
                             @php
                                 $partida = new DateTime($roteiro->data_ini);
@@ -65,6 +67,7 @@
                             <div class="card-body pt-3 pb-2 px-2">
                                 <div class="row">
                                     <div class="col-12">
+                                        <button type="button" class="btn btn-sm btn-info" onclick="$('.modal').modal('hide'); setTimeout(function(){$('#modalVerTarifas').modal('show');}, 200);"> Ver tarifas </button>
                                         <button type="button" class="btn btn-sm btn-primary" onclick="modalTarifaRoteiro()">Alterar tarifas do roteiro</button>
                                     </div>
                                 </div>
@@ -85,6 +88,10 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="mt-3">
+                                    <kbd>Em desenvolvimento...</kbd>
+                                    <pre>Essa seção só estará disponível quando esse aviso sumir.</pre>
+                                </div>
                             </div>
                         </div>
                         <div class="row">
@@ -97,6 +104,10 @@
                                         <div class="row">
                                             <div class="col-12">
                                                 
+                                                <div class="mt-3">
+                                                    <kbd>Em desenvolvimento...</kbd>
+                                                    <pre>Essa seção só estará disponível quando esse aviso sumir.</pre>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -111,6 +122,10 @@
                                         <div class="row">
                                             <div class="col-12">
                                                 
+                                                <div class="mt-3">
+                                                    <kbd>Em desenvolvimento...</kbd>
+                                                    <pre>Essa seção só estará disponível quando esse aviso sumir.</pre>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -567,15 +582,41 @@
     </div>
 </div>
 
-<div class="modal fade" id="">
+<div class="modal fade" id="modalVerTarifas">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 px-3 font-weight-bold">
-                Titulo do modal
+                Tarifas deste roteiro
                 <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
             </div>
             <div class="modal-body">
-            
+                <div class="row">
+                    <div class="col-12">
+                    <table class="table table-bordered table-sm">
+                        <thead class="thead-dark">
+                            <tr class="small">
+                                <th>Nome da tarifa</th>
+                                <th>Valor</th>
+                                <th>Quantidade de clientes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if($roteiro->tarifa == '')
+                            <tr colspan="3"><td class="py-2 text-center font-italic">Sem tarifas definidas</td></tr>
+                        @else
+                        @foreach($roteiro->tarifa as $t)
+                            <tr>
+                                <td>{{$t->nome}}</td>
+                                <td>{{'R$ '.$sgc->converteCentavoParaReal($t->valor)}}</td>
+                                <td>ADULTOS: {{$t->distr->adultos}}<br>CRIANÇAS: {{$t->distr->criancas}}</td>
+                            </tr>
+                        @endforeach
+                        @endif
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="modalTarifaRoteiro()">Alterar tarifas do roteiro</button>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>
@@ -583,6 +624,41 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="janCriarCopiaRoteiro">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3 font-weight-bold">
+                Criar cópia deste roteiro
+                <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
+            </div>
+            <div class="modal-body">
+                <form method="post">
+                    <div class="row">
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>Data de Partida</label>
+                                <input type="date" class="form-control form-control-sm form-control-solid" name="data_ini" value="{{$roteiro->data_ini}}" required>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>Data de Retorno</label>
+                                <input type="date" class="form-control form-control-sm form-control-solid" name="data_fim" value="{{$roteiro->data_fim}}" required>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="rid" value="{{$roteiro->id}}">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success btn-sm" onclick="roteiroCriarCopia(this)">Criar cópia</button>
+                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <div class="modal fade" id="">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -609,9 +685,11 @@
 
     function modalTarifaRoteiro()
     {
-        $('#modalRoteiroTarifas').modal('show');
+        $('.modal').modal('hide');
+        setTimeout(function(){$('#modalRoteiroTarifas').modal('show');}, 200);
         $('#modalRoteiroTarifas').find('[name="valor"]').trigger('change');
     }
+
     function addTarifaRoteiro(sender)
     {
         if($(sender).siblings('table').find('tr[data-example]').length == 0) {
@@ -679,7 +757,7 @@
     }
 
     $(document).ready(function(){
-        console.log(roteiro);
+        //console.log(roteiro);
         @if($roteiro->tarifa == '')
         $('#modalRoteiroTarifas').modal('show');
         alerta('Informe as tarifas para este roteiro o mais breve possível.', 'Pendência...', 'light', 10000);

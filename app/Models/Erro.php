@@ -68,6 +68,11 @@ class Erro
 
         // Roteiros
         240 => 'Não foi possível lançar esse roteiro na plataforma. Ocorreu algum erro ao salvar. Informe desenvolvedor.',
+        241 => 'Não foi possível alterar esse roteiro na plataforma. Ocorreu algum erro ao salvar. Informe desenvolvedor.',
+        242 => 'Não foi possível apagar esse roteiro na plataforma. Ocorreu algum erro na operação. Informe desenvolvedor.',
+        243 => 'Roteiro não existe.',
+        244 => 'Não foi possível restaurar esse roteiro. Ocorreu algum erro na operação. Informe desenvolvedor.',
+        245 => 'Não foi possível excluir definitivamente. Talvez o roteiro não exista, ou ele não esteja na lixeira ainda.',
     ];
 
     public static function getMessage(int $code)

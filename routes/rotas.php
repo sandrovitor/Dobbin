@@ -33,10 +33,21 @@ $router->map('POST', '/clientes/database', 'ControllerPrincipal#clientesDatabase
 $router->map('POST', '/clientes/lixeira', 'ControllerPrincipal#clientesLixeira');
 $router->map('POST', '/clientes/ver/[i:id]', 'ControllerPrincipal#clientesVer');
 
+
+$router->map('POST', '/coordenadores', 'ControllerPrincipal#coordenadores');
+$router->map('POST', '/coordenadores/novo', 'ControllerPrincipal#coordenadorNovo');
+$router->map('POST', '/coordenadores/buscar', 'ControllerPrincipal#coordenadorBuscar');
+$router->map('POST', '/coordenadores/database', 'ControllerPrincipal#coordenadorDatabase');
+$router->map('POST', '/coordenadores/lixeira', 'ControllerPrincipal#coordenadorLixeira');
+$router->map('POST', '/coordenadores/ver/[i:id]', 'ControllerPrincipal#coordenadorVer');
+
 $router->map('POST', '/roteiros', 'ControllerPrincipal#roteiros');
 $router->map('POST', '/roteiros/novo', 'ControllerPrincipal#roteirosNovo');
 $router->map('POST', '/roteiros/simulacao', 'ControllerPrincipal#roteirosSimulacao');
 $router->map('POST', '/roteiros/ver/[i:id]', 'ControllerPrincipal#roteirosVer');
+$router->map('POST', '/roteiros/editar/[i:id]', 'ControllerPrincipal#roteirosEditar');
+$router->map('POST', '/roteiros/lixeira', 'ControllerPrincipal#roteirosLixeira');
+$router->map('POST', '/roteiros/lixeira/ver/[i:id]', 'ControllerPrincipal#roteirosLixeiraVer');
 
 
 $router->map('POST', '/parceiros', 'ControllerPrincipal#parceiros');
@@ -74,6 +85,14 @@ $router->addRoutes(array(
     array('POST', $prefix.'clientes/restaurar/[i:id]', 'ControllerForm#clientesRestaurar'),
     array('POST', $prefix.'clientes/apagarlixeira/[i:id]', 'ControllerForm#clientesLixeiraApagar'),
 
+    array('POST', $prefix.'coordenadores/novo', 'ControllerForm#coordenadoresNovo'),
+    array('POST', $prefix.'coordenadores/buscar', 'ControllerForm#coordenadoresBuscar'),
+    array('POST', $prefix.'coordenadores/database', 'ControllerForm#coordenadoresLista'),
+    array('POST', $prefix.'coordenadores/salvar', 'ControllerForm#coordenadoresSalvar'),
+    array('POST', $prefix.'coordenadores/apagar/[i:id]', 'ControllerForm#coordenadoresApagar'),
+    array('POST', $prefix.'coordenadores/restaurar/[i:id]', 'ControllerForm#coordenadoresRestaurar'),
+    array('POST', $prefix.'coordenadores/apagarlixeira/[i:id]', 'ControllerForm#coordenadoresLixeiraApagar'), // IMPLANTANDO
+
     array('POST', $prefix.'usuarios/novo', 'ControllerForm#usuariosNovo'),
     array('POST', $prefix.'usuarios/buscar', 'ControllerForm#usuariosBuscar'),
     array('POST', $prefix.'usuarios/database', 'ControllerForm#usuariosLista'),
@@ -105,6 +124,11 @@ $router->addRoutes(array(
     array('POST', $prefix.'roteiros/novo', 'ControllerForm#roteirosNovo'),
     array('POST', $prefix.'roteiros/[i:id]/addhistorico/[i:parcid]', 'ControllerForm#roteirosHistoricoNovo'),
     array('POST', $prefix.'roteiros/[i:id]/tarifa/editar', 'ControllerForm#roteirosTarifaEdita'),
+    array('POST', $prefix.'roteiros/salvar/[i:id]', 'ControllerForm#roteirosSalvar'),
+    array('POST', $prefix.'roteiros/apagar/[i:id]', 'ControllerForm#roteirosApagar'),
+    array('POST', $prefix.'roteiros/restaurar/[i:id]', 'ControllerForm#roteirosRestaurar'),
+    array('POST', $prefix.'roteiros/apagarlixeira/[i:id]', 'ControllerForm#roteirosApagarLixeira'),
+    array('POST', $prefix.'roteiros/[i:id]/copiar', 'ControllerForm#roteiroCriarCopia'),
 
 
     

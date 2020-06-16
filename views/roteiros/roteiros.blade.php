@@ -10,6 +10,9 @@
     <div class="col-12 col-lg-4 mb-3">
         <a href="#roteiros/simulacao" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Simulação</a>
     </div>
+    <div class="col-12 col-sm-6 col-lg-4 mb-3">
+        <a href="#roteiros/lixeira" class="btn btn-block btn-danger rounded-0 shadow-sm font-weight-bold py-2">Lixeira</a>
+    </div>
 </div>
 <div class="row">
     <div class="col-12">
