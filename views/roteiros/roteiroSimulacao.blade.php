@@ -2,14 +2,14 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                Novo roteiro
+                Simular roteiros
             </div>
             <div class="card-body">
-                <form id="roteironovo">
+                <form id="simulacao">
                     <div class="border bloco-acord shadow-sm my-3">
                         <div class="acord-header d-flex justify-content-between">
                             <h6 class="text-uppercase my-1 font-weight-bold text-primary">
-                                Definições Gerais do Roteiro
+                                Definições Gerais
                             </h6>
                             <button type="button" class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-up"></i></button>
                         </div>
@@ -17,8 +17,8 @@
                             <div class="row">
                                 <div class="col-12 col-md-4 col-lg-4">
                                     <div class="form-group">
-                                        <label class="small">Nome do roteiro</label>
-                                        <input type="text" name="nome_pacote" class="form-control form-control-sm form-control-solid" value="" required>
+                                        <label class="small">Nome do pacote</label>
+                                        <input type="text" name="nome_pacote" class="form-control form-control-sm form-control-solid" value="SIMULAÇÃO">
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4 col-lg-4">
@@ -90,31 +90,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="border bloco-acord">
-                        <div class="acord-header d-flex justify-content-between">
-                            <h6 class="text-uppercase my-1 font-weight-bold text-primary">
-                                Parceiros do Roteiro
-                            </h6>
-                            <button type="button" class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
-                        </div>
-                        <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none;">
-                            <div class="row">
-                                <div class="col-12">
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="janParceirosSelect()"><i class="fas fa-plus fa-fw"></i> Adicionar parceiro</button>
-                                    
-                                    <div class="d-flex flex-wrap flex-column flex-md-row py-2 mt-2" id="listaParceiros">
-                                        
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12 text-right">
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="proximo(this)">Próximo</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-    
                     <div class="border bloco-acord">
                         <div class="acord-header d-flex justify-content-between">
                             <h6 class="text-uppercase my-1 font-weight-bold text-primary">
@@ -227,14 +202,20 @@
                             </div>
                         </div>
                     </div>
-                    <div class="border bloco-acord" id="roteiroNovoResumo" style="display:none;">
+                    <div class="border bloco-acord">
                         <div class="acord-header d-flex justify-content-between">
                             <h6 class="text-uppercase my-1 font-weight-bold text-primary">
-                                RESUMO
+                                RESULTADO
                             </h6>
                             <button type="button" class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
                         </div>
                         <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none;">
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="calcular()">Calcular resultado</button>
+                                </div>
+                            </div>
+                            <hr>
                             <div class="row">
                                 <div class="col-12">
                                     <table class="table table-sm table-bordered table-responsive-sm resultado-simu" >
@@ -266,21 +247,15 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                                    <strong>Clientes (poltronas) p/ rateio de despesas:</strong>
-                                                </td>
-                                                <td simu-rateio-qtd></td>
-                                            </tr>
-                                            <tr>
-                                                <td>
                                                     <strong>Valor p/ cliente:</strong><br>
-                                                    <span class="small">(Coordenador(es) isento(s))</span>
+                                                    <span class="small">(Coordenador isento)</span>
                                                 </td>
                                                 <td simu-desc-despesa></td>
                                             </tr>
                                             <tr>
                                                 <td>
                                                     <strong>Valor p/ cliente:</strong><br>
-                                                    <span class="small">(Coordenador(es) isento(s))</span>
+                                                    <span class="small">(Coordenador isento)</span>
                                                 </td>
                                                 <td simu-desc-despesa-lucro></td>
                                             </tr>
@@ -299,27 +274,32 @@
                                     </table>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <!--
+                    <div class="border bloco-acord">
+                        <div class="acord-header d-flex justify-content-between">
+                            <h6 class="text-uppercase my-1 font-weight-bold text-primary">
+                                Parte 4
+                            </h6>
+                            <button type="button" class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
+                        </div>
+                        <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none;">
                             <div class="row">
-                                <div class="col-6">
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="recomeco()"><i class="fas fa-angle-left mr-2"></i> Voltar e alterar</button>
-                                </div>
-                                <div class="col-6 text-right">
-                                    <button type="button" class="btn btn-sm btn-success" onclick="salvarRoteiro()">Salvar roteiro <i class="ml-2 fas fa-angle-right"></i></button>
+                                <div class="col-12">
+                                
                                 </div>
                             </div>
                         </div>
                     </div>
+                    -->
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-
-
 <script>
-var roteiro = undefined;
-
 function proximo(sender)
 {
     for(let i = 0; i < $(sender).parents('.acord-body').find('[required]').length; i++) {
@@ -375,7 +355,7 @@ function addDespesa(sender)
 function calcular()
 {
     let result = $('.resultado-simu');
-    let form = $('#roteironovo');
+    let form = $('#simulacao');
     //result.slideUp(100);
 
     // Validação!
@@ -393,12 +373,11 @@ function calcular()
     }
 
     // Nome da simulação.
-    $('[simu-nome]').html('<strong class="small">Nome do roteiro: </strong><br>'+ form.find('[name="nome_pacote"]').val() +' ('+
-        formataData(new Date(form.find('[name="data_ini"]').val()), true) +' a '+ formataData(new Date(form.find('[name="data_fim"]').val()), true)+')');
+    $('[simu-nome]').html('<strong class="small">Nome da simulação: </strong><br>'+ form.find('[name="nome_pacote"]').val());
 
     // Data da viagem
-    $('[simu-ida]').html('<strong class="small">PARTIDA: </strong><br> '+ formataData(new Date(form.find('[name="data_ini"]').val()), true));
-    $('[simu-volta]').html('<strong class="small">RETORNO: </strong><br> '+ formataData(new Date(form.find('[name="data_fim"]').val()), true));
+    $('[simu-ida]').html('<strong class="small">PARTIDA: </strong><br> '+ Dobbin.formataData(new Date(form.find('[name="data_ini"]').val()), true));
+    $('[simu-volta]').html('<strong class="small">RETORNO: </strong><br> '+ Dobbin.formataData(new Date(form.find('[name="data_fim"]').val()), true));
 
     let clientes = parseInt(form.find('[name="passagens"]').val());
     let coord = parseInt(form.find('[name="qtd_coord"]').val());
@@ -406,19 +385,18 @@ function calcular()
     let dias_total;
     let rateio_qtd;
 
-    let tipo_rateio = $('#roteironovo [name="tipo_rateio"]:checked').val();
+    let tipo_rateio = $('#simulacao [name="tipo_rateio"]:checked').val();
     switch(tipo_rateio) {
         case 'automatico66': rateio_qtd = Math.ceil(clientes*0.66666); break;
-        case 'personalizado': rateio_qtd = $('#roteironovo [name="rateio_qtd"]').val(); break;
+        case 'personalizado': rateio_qtd = $('#simulacao [name="rateio_qtd"]').val(); break;
         case 'automatico': default: rateio_qtd = clientes; break;
     }
     
 
     $('[simu-total-pass]').text(passagens);
     $('[simu-desc-pass]').html('<ul><li><b>Clientes:</b> '+clientes+'</li> <li><b>Coordenadores:</b> '+coord+'</li></ul>');
-    $('[simu-rateio-qtd]').html(rateio_qtd);
 
-    let despesa = [];
+    let valores = [];
     let despesa_total = 0;
     let temp1, temp2;
 
@@ -431,17 +409,15 @@ function calcular()
         switch(form.find('tr:not([data-example])').eq(i).find('[name="valor_tipo"] :selected').val()) {
             case 'total': // Valor integral. Sem alteração.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                 }
 
                 temp1 = converteRealEmCentavo(temp1);
-                despesa.push({
-                    tipo: form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val(),
-                    nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val(),
+                valores.push({
                     valor: temp1,
-                    tipo_valor: 'total'
+                    tipo: 'total'
                 });
                 despesa_total += temp1;
 
@@ -454,18 +430,16 @@ function calcular()
 
             case 'pessoa': // Valor por pessoa. Multiplica pelo total de passageiros e armazena valor integral.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                 }
 
                 temp1 = converteRealEmCentavo(temp1);
 
-                despesa.push({
-                    tipo: form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val(),
-                    nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val(),
+                valores.push({
                     valor: temp1,
-                    tipo_valor: 'pessoa'
+                    tipo: 'pessoa'
                 });
                 
 
@@ -484,7 +458,7 @@ function calcular()
 
             case 'dia': // Valor total do dia. Depende da quantidade de dias do roteiro.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                     return false;
@@ -503,11 +477,9 @@ function calcular()
                 temp2 = form.find('tr:not([data-example])').eq(i).find('[name="valor_dias"]').val();
 
                 temp1 = converteRealEmCentavo(temp1);
-                despesa.push({
-                    tipo: form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val(),
-                    nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val(),
+                valores.push({
                     valor: temp1,
-                    tipo_valor: 'dia',
+                    tipo: 'dia',
                     dias: temp2
                 });
 
@@ -524,7 +496,7 @@ function calcular()
 
             case 'pessoa_dia': // Valor por pessoa e por dia. Depende da quantidade de pessoas e dias do roteiro.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                     return false;
@@ -543,11 +515,9 @@ function calcular()
                 temp2 = form.find('tr:not([data-example])').eq(i).find('[name="valor_dias"]').val();
 
                 temp1 = converteRealEmCentavo(temp1);
-                despesa.push({
-                    tipo: form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val(),
-                    nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val(),
+                valores.push({
                     valor: temp1,
-                    tipo_valor: 'pessoa_dia',
+                    tipo: 'pessoa_dia',
                     dias: temp2
                 });
 
@@ -588,33 +558,8 @@ function calcular()
 
     $('[simu-table-calculo]').find('[name="lucro"]').trigger('change');
 
-    // Faz o levantamento dos parceiros.
-    let parceiros = [];
-    if($('#listaParceiros').find('[data-parceiro]').length > 0) {
-        for(let i = 0; i< $('#listaParceiros').find('[data-parceiro]').length; i++) {
-            parceiros.push($('#listaParceiros').find('[data-parceiro]').eq(i).data('pid'));
-        }
-        
-    }
+    console.log(valores);
 
-
-    //console.log(despesa);
-    mostrarResumo();
-
-    // Armazena tudo no roteiro.
-
-    roteiro = {
-        nome: form.find('[name="nome_pacote"]').val(),
-        data_ini: form.find('[name="data_ini"]').val(),
-        data_fim: form.find('[name="data_fim"]').val(),
-        passagens: clientes,
-        qtd_coordenador: coord,
-        despesas: despesa,
-        parceiros: parceiros,
-        qtd_rateio: rateio_qtd
-    };
-
-    //console.log(roteiro);
 }
 
 function lucroCalculo(sender)
@@ -638,78 +583,51 @@ function lucroCalculo(sender)
 
 }
 
-function mostrarResumo()
-{
-    $('#roteiroNovoResumo').fadeIn();
-    $('.bloco-acord:not(#roteiroNovoResumo)').slideUp();
-}
-
-function ocultarResumo()
-{
-    $('#roteiroNovoResumo').fadeOut();
-    $('.bloco-acord:not(#roteiroNovoResumo)').slideDown();
-}
-
-function recomeco()
-{
-    ocultarResumo();
-    $('.bloco-acord:eq(0) .acord-header').trigger('click');
-    // Apaga variável
-    roteiro = undefined;
-}
-
-function salvarRoteiro()
-{
-    roteiro.taxa_lucro = $('#roteiroNovoResumo [name="lucro"]').val();
-    //console.log(roteiro);
-    roteiroNovo(roteiro);
-}
-
 $(document).ready(function(){
-    $(document).on('blur', '#roteironovo [name="data_ini"], #roteironovo [name="data_fim"]', function(){
-        if($('#roteironovo [name="data_ini"]').val() != '' && $('#roteironovo [name="data_fim"]').val() != '') {
-            if($('#roteironovo [name="data_ini"]').val() > $('#roteironovo [name="data_fim"]').val()) {
+    $(document).on('blur', '#simulacao [name="data_ini"], #simulacao [name="data_fim"]', function(){
+        if($('#simulacao [name="data_ini"]').val() != '' && $('#simulacao [name="data_fim"]').val() != '') {
+            if($('#simulacao [name="data_ini"]').val() > $('#simulacao [name="data_fim"]').val()) {
                 alerta('Data de retorno é menor que a data de partida.', 'Inválido!', 'warning');
-                $('#roteironovo [name="data_fim"]').focus();
+                $('#simulacao [name="data_fim"]').focus();
 
                 return false;
             }
-            $('#roteironovo [name="valor_dias"]').attr('max', nativeDiffDays( new Date($('#roteironovo [name="data_ini"]').val()), new Date($('#roteironovo [name="data_fim"]').val()) ) + 1);
+            $('#simulacao [name="valor_dias"]').attr('max', Dobbin.diffDays( new Date($('#simulacao [name="data_ini"]').val()), new Date($('#simulacao [name="data_fim"]').val()) ) + 1);
         } else {
-            $('#roteironovo [name="valor_dias"]').attr('max', '1');
+            $('#simulacao [name="valor_dias"]').attr('max', '1');
         }
     });
 
-    $(document).on('change', '#roteironovo [name="valor_dias"]', function(){
+    $(document).on('change', '#simulacao [name="valor_dias"]', function(){
         if(parseInt($(this).val()) > parseInt($(this).attr('max'))) {
             $(this).val($(this).attr('max'));
             
         }
     });
 
-    $(document).on('change', '#roteironovo [name="passagens"]', function(){
-        $('#roteironovo [name="rateio_qtd"]').trigger('change');
+    $(document).on('change', '#simulacao [name="passagens"]', function(){
+        $('#simulacao [name="rateio_qtd"]').trigger('change');
     });
 
-    $(document).on('change', '#roteironovo [name="tipo_rateio"]', function(){
+    $(document).on('change', '#simulacao [name="tipo_rateio"]', function(){
         console.log($(this).val());
         if($(this).val() == 'personalizado') {
             $('[data-rateio-div]').fadeIn(200);
-            $('#roteironovo [name="rateio_qtd"]').attr('required', true);
+            $('#simulacao [name="rateio_qtd"]').attr('required', true);
         } else {
             $('[data-rateio-div]').fadeOut(200);
-            $('#roteironovo [name="rateio_qtd"]').attr('required', false).val('');
+            $('#simulacao [name="rateio_qtd"]').attr('required', false).val('');
         }
     });
 
-    $(document).on('change', '#roteironovo [name="rateio_qtd"]', function(){
-        if($('#roteironovo [name="tipo_rateio"]:checked').val() == 'personalizado') {
+    $(document).on('change', '#simulacao [name="rateio_qtd"]', function(){
+        if($('#simulacao [name="tipo_rateio"]:checked').val() == 'personalizado') {
             // Verifica se o valor é maior que o número de clientes.
-            if(parseInt($(this).val()) > parseInt($('#roteironovo [name="passagens"]').val())) {
-                $(this).val($('#roteironovo [name="passagens"]').val());
+            if(parseInt($(this).val()) > parseInt($('#simulacao [name="passagens"]').val())) {
+                $(this).val($('#simulacao [name="passagens"]').val());
             }
 
-            $(this).prop('max', $('#roteironovo [name="passagens"]').val());
+            $(this).prop('max', $('#simulacao [name="passagens"]').val());
         }
     });
 });

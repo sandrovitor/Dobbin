@@ -117,92 +117,6 @@ function checkSystemUpdate()
 
     timeoutUpdate = setTimeout(checkSystemUpdate, 600000); // Verifica a cada 10min (600000ms).
 }
-/** DEPRECATED */
-function formataDataHora(dateObj, anulaTimezone = false) {
-    if(dateObj == 'Invalid Date') {
-        return '--/--/---- --:--:--';
-    }
-    var dia, mes, ano, hora, minuto, segundo;
-    
-    if(anulaTimezone == true) {
-        // Anula o timezone local.
-        let timezone = dateObj.getTimezoneOffset();
-        timezone = timezone/60;
-        dateObj.setHours(dateObj.getHours() + (timezone));
-    }
-
-
-	dia = dateObj.getDate();
-	mes = dateObj.getMonth();
-	ano = dateObj.getFullYear();
-	hora = dateObj.getHours();
-	minuto = dateObj.getMinutes();
-	segundo = dateObj.getSeconds();
-
-	var data = '';
-
-	if(dia < 10) {
-		data +='0';
-	}
-	data += dia+'/';
-
-	if(mes+1 < 10) {
-		data += '0';
-	}
-	data += (mes+1)+'/'+ano+' ';
-
-	if(hora < 10) {
-		data += '0';
-	}
-	data += hora+':';
-
-	if(minuto < 10) {
-		data += '0';
-	}
-	data += minuto+':';
-
-	if(segundo < 10) {
-		data += '0';
-	}
-	data += segundo;
-	
-	return data;
-
-}
-
-/** DEPRECATED */
-function formataData(dateObj, anulaTimezone = false) {
-    if(dateObj == 'Invalid Date') {
-        return '--/--/----';
-    }
-    var dia, mes, ano, hora, minuto, segundo;
-    
-    if(anulaTimezone == true) {
-        // Anula o timezone local.
-        let timezone = dateObj.getTimezoneOffset();
-        timezone = timezone/60;
-        dateObj.setHours(dateObj.getHours() + (timezone));
-    }
-
-	dia = dateObj.getDate();
-	mes = dateObj.getMonth();
-	ano = dateObj.getFullYear();
-
-	var data = '';
-
-	if(dia < 10) {
-		data +='0';
-	}
-	data += dia+'/';
-
-	if(mes+1 < 10) {
-		data += '0';
-	}
-	data += (mes+1)+'/'+ano;
-	
-	return data;
-
-}
 
 function converteCentavoEmReal(centavos = 0) {
     centavos = parseInt(centavos);
@@ -238,7 +152,7 @@ function converteCentavoEmReal(centavos = 0) {
 }
 
 function converteRealEmCentavo(valor = '0,00') {
-    if(nativeIsMoney(valor) == false) {
+    if(Dobbin.isMoney(valor) == false) {
         return false;
     }
 
@@ -391,17 +305,76 @@ function nativeDiffDays(data1 = null, data2 = null)
  * MODAIS E PÁGINAS
  */
 
+function loadCoordenador(id)
+{
+    $.post('/coordenadores/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let c = res.coordenador;
+            $('#modalCoordenadorDetalhes [data-detalhes-nome]').text(c.nome);
+            $('#modalCoordenadorDetalhes [data-detalhes-id]').text(c.id);
+            $('#modalCoordenadorDetalhes [data-detalhes-email]').text(c.email);
+            $('#modalCoordenadorDetalhes [data-detalhes-tel]').text(c.telefone);
+            $('#modalCoordenadorDetalhes [data-detalhes-nascimento]').text(function(){
+                if(c.nascimento == '') {return '';} else {return Dobbin.formataData(new Date(c.nascimento+'T00:00:00-0300'));}
+            });
+            $('#modalCoordenadorDetalhes [data-detalhes-civil]').text(c.estado_civil.toUpperCase());
+            $('#modalCoordenadorDetalhes [data-detalhes-rg]').text(c.rg);
+            $('#modalCoordenadorDetalhes [data-detalhes-cpf]').text(c.cpf);
+            $('#modalCoordenadorDetalhes [data-detalhes-sangue]').text(c.sangue);
+            $('#modalCoordenadorDetalhes [data-detalhes-endereco]').text(c.endereco);
+            $('#modalCoordenadorDetalhes [data-detalhes-complemento]').text(c.complemento);
+            $('#modalCoordenadorDetalhes [data-detalhes-pontoref]').text(c.ponto_referencia);
+            $('#modalCoordenadorDetalhes [data-detalhes-bairro]').text(c.bairro);
+            $('#modalCoordenadorDetalhes [data-detalhes-cep]').text(c.cep);
+            $('#modalCoordenadorDetalhes [data-detalhes-cidade]').text(c.cidade);
+            $('#modalCoordenadorDetalhes [data-detalhes-estado]').text(c.estado);
+            $('#modalCoordenadorDetalhes [data-detalhes-alergia]').text(c.alergia);
+            $('#modalCoordenadorDetalhes [data-detalhes-emergencianome]').text(c.emergencia_nome);
+            $('#modalCoordenadorDetalhes [data-detalhes-emergenciatel]').text(c.emergencia_telefone);
+            $('#modalCoordenadorDetalhes [data-detalhes-criadoem]').text(Dobbin.formataDataHora(new Date(c.criado_em)));
+            $('#modalCoordenadorDetalhes [data-detalhes-atualizadoem]').text(Dobbin.formataDataHora(new Date(c.atualizado_em)));
+
+
+            if(c.deletado_em == null) {
+                $('#modalCoordenadorDetalhes [data-detalhes-deletado]').hide();
+                $('#modalCoordenadorDetalhes [data-detalhes-deletado]').html();
+            } else {
+                $('#modalCoordenadorDetalhes [data-detalhes-deletado]').show();
+                $('#modalCoordenadorDetalhes [data-detalhes-deletado]').html('<span class="badge badge-danger" data-toggle="tooltip" title="Apagado por: '+c.usuario+' em '+Dobbin.formataDataHora(new Date(c.deletado_em))+'"><i class="fas fa-times"></i> APAGADO</span>');
+            }
+
+            
+            $('#modalCoordenadorDetalhes').modal('show');
+            $('[data-toggle="popover"]').popover({'html':true});
+            $('[data-toggle="tooltip"]').tooltip();
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
 function loadCliente(id)
 {
     $.post('/clientes/ver/'+id, function(res){
         if(res.success == true) {
             console.log(res);
             let c = res.cliente;
-            $('[data-detalhes-nome]').text(c.nome);
-            $('[data-detalhes-id]').text(c.id);
-            $('[data-detalhes-email]').text(c.email);
-            $('[data-detalhes-tel]').text(c.telefone);
-            $('[data-detalhes-faixaetaria]').html(function(){
+            $('#modalClienteDetalhes [data-detalhes-nome]').text(c.nome);
+            $('#modalClienteDetalhes [data-detalhes-id]').text(c.id);
+            $('#modalClienteDetalhes [data-detalhes-email]').text(c.email);
+            $('#modalClienteDetalhes [data-detalhes-tel]').text(c.telefone);
+            $('#modalClienteDetalhes [data-detalhes-faixaetaria]').html(function(){
                 switch(c.faixa_etaria) {
                     case '0-5': return '<span class="badge badge-info">0 - 5 ANOS</span>'; break;
                     case '6-12': return '<span class="badge badge-primary">6 - 12 ANOS</span>'; break;
@@ -410,34 +383,34 @@ function loadCliente(id)
                     default: return '<span class="badge badge-secondary"> -- </span>'; break;
                 }
             });
-            $('[data-detalhes-nascimento]').text(function(){
+            $('#modalClienteDetalhes [data-detalhes-nascimento]').text(function(){
                 if(c.nascimento == '') {return '';} else {return Dobbin.formataData(new Date(c.nascimento+'T00:00:00-0300'));}
             });
-            $('[data-detalhes-civil]').text(c.estado_civil.toUpperCase());
-            $('[data-detalhes-rg]').text(c.rg);
-            $('[data-detalhes-cpf]').text(c.cpf);
-            $('[data-detalhes-sangue]').text(c.sangue);
-            $('[data-detalhes-endereco]').text(c.endereco);
-            $('[data-detalhes-complemento]').text(c.complemento);
-            $('[data-detalhes-pontoref]').text(c.ponto_referencia);
-            $('[data-detalhes-bairro]').text(c.bairro);
-            $('[data-detalhes-cep]').text(c.cep);
-            $('[data-detalhes-cidade]').text(c.cidade);
-            $('[data-detalhes-estado]').text(c.estado);
-            $('[data-detalhes-alergia]').text(c.alergia);
-            $('[data-detalhes-emergencianome]').text(c.emergencia_nome);
-            $('[data-detalhes-emergenciatel]').text(c.emergencia_telefone);
-            $('[data-detalhes-taxaextracasal]').text(converteCentavoEmReal(c.taxa_extra_casal));
-            $('[data-detalhes-criadoem]').text(Dobbin.formataDataHora(new Date(c.criado_em)));
-            $('[data-detalhes-atualizadoem]').text(Dobbin.formataDataHora(new Date(c.atualizado_em)));
+            $('#modalClienteDetalhes [data-detalhes-civil]').text(c.estado_civil.toUpperCase());
+            $('#modalClienteDetalhes [data-detalhes-rg]').text(c.rg);
+            $('#modalClienteDetalhes [data-detalhes-cpf]').text(c.cpf);
+            $('#modalClienteDetalhes [data-detalhes-sangue]').text(c.sangue);
+            $('#modalClienteDetalhes [data-detalhes-endereco]').text(c.endereco);
+            $('#modalClienteDetalhes [data-detalhes-complemento]').text(c.complemento);
+            $('#modalClienteDetalhes [data-detalhes-pontoref]').text(c.ponto_referencia);
+            $('#modalClienteDetalhes [data-detalhes-bairro]').text(c.bairro);
+            $('#modalClienteDetalhes [data-detalhes-cep]').text(c.cep);
+            $('#modalClienteDetalhes [data-detalhes-cidade]').text(c.cidade);
+            $('#modalClienteDetalhes [data-detalhes-estado]').text(c.estado);
+            $('#modalClienteDetalhes [data-detalhes-alergia]').text(c.alergia);
+            $('#modalClienteDetalhes [data-detalhes-emergencianome]').text(c.emergencia_nome);
+            $('#modalClienteDetalhes [data-detalhes-emergenciatel]').text(c.emergencia_telefone);
+            $('#modalClienteDetalhes [data-detalhes-taxaextracasal]').text(converteCentavoEmReal(c.taxa_extra_casal));
+            $('#modalClienteDetalhes [data-detalhes-criadoem]').text(Dobbin.formataDataHora(new Date(c.criado_em)));
+            $('#modalClienteDetalhes [data-detalhes-atualizadoem]').text(Dobbin.formataDataHora(new Date(c.atualizado_em)));
 
 
             if(c.deletado_em == null) {
-                $('[data-detalhes-deletado]').hide();
-                $('[data-detalhes-deletado]').html();
+                $('#modalClienteDetalhes [data-detalhes-deletado]').hide();
+                $('#modalClienteDetalhes [data-detalhes-deletado]').html();
             } else {
-                $('[data-detalhes-deletado]').show();
-                $('[data-detalhes-deletado]').html('<span class="badge badge-danger" data-toggle="tooltip" title="Apagado por: '+c.usuario+' em '+Dobbin.formataDataHora(new Date(c.deletado_em))+'"><i class="fas fa-times"></i> APAGADO</span>');
+                $('#modalClienteDetalhes [data-detalhes-deletado]').show();
+                $('#modalClienteDetalhes [data-detalhes-deletado]').html('<span class="badge badge-danger" data-toggle="tooltip" title="Apagado por: '+c.usuario+' em '+Dobbin.formataDataHora(new Date(c.deletado_em))+'"><i class="fas fa-times"></i> APAGADO</span>');
             }
 
             if(c.titular == 0) { // TITULAR
@@ -449,22 +422,22 @@ function loadCliente(id)
                         attr('data-toggle', 'popover').
                         attr('data-content', "Sem dependentes.").
                         attr('data-trigger','hover focus').
-                        attr('onclick', "$('.listaDependentes').slideToggle(100);");
-                        $('.listaDependentes').html('Sem dependentes');
-                        $('.listaDependentes').hide();
+                        attr('onclick', "$('#modalClienteDetalhes .listaDependentes').slideToggle(100);");
+                        $('#modalClienteDetalhes .listaDependentes').html('Sem dependentes');
+                        $('#modalClienteDetalhes .listaDependentes').hide();
                 } else { // TITULAR COM DEPENDENTE
                     $('#modalClienteDetalhes .tipoCliente').
                         attr('data-toggle', 'popover').
                         attr('data-content', "Ver dependentes.").
                         attr('data-trigger','hover focus').
-                        attr('onclick', "$('.listaDependentes').slideToggle(100);");
-                        $('.listaDependentes').html('<table class="table table-sm table-hover table-responsive table-bordered"><thead class="bg-dark text-white"><tr><th>Cód.</th><th>Nome</th><th></th></tr></thead><tbody></tbody></table>');
-                        $('.listaDependentes').html('<h6 class="font-weight-bold">DEPENDENTES:</h6><div class="d-flex flex-wrap flex-column flex-md-row border border-secondary p-2 bg-light shadow-sm"></div>');
-                        $('.listaDependentes').show();
+                        attr('onclick', "$('#modalClienteDetalhes .listaDependentes').slideToggle(100);");
+                        $('#modalClienteDetalhes .listaDependentes').html('<table class="table table-sm table-hover table-responsive table-bordered"><thead class="bg-dark text-white"><tr><th>Cód.</th><th>Nome</th><th></th></tr></thead><tbody></tbody></table>');
+                        $('#modalClienteDetalhes .listaDependentes').html('<h6 class="font-weight-bold">DEPENDENTES:</h6><div class="d-flex flex-wrap flex-column flex-md-row border border-secondary p-2 bg-light shadow-sm"></div>');
+                        $('#modalClienteDetalhes .listaDependentes').show();
 
                         for(let i = 0; i < c.dependentes.length; i++) {
                             let d = c.dependentes[i];
-                            $('.listaDependentes > div').
+                            $('#modalClienteDetalhes .listaDependentes > div').
                                 append('<div onclick="$(this).parents(\'.modal\').eq(0).modal(\'hide\'); setTimeout(function(){loadCliente('+d.id+')}, 300);" '+
                                     'class="border hover px-3 py-2 mb-2 shadow-sm bg-secondary text-white" style="cursor:pointer"> '+
                                     '<strong class=" mr-2">'+d.nome+'</strong><small> [Cód.: '+d.id+']</small>'+
@@ -483,8 +456,8 @@ function loadCliente(id)
                     attr('data-content', "Clique para ver o TITULAR...").
                     attr('data-trigger','hover focus').
                     attr('onclick', "$(this).parents('.modal').eq(0).modal('hide'); setTimeout(function(){loadCliente("+c.titular+")}, 400);");
-                    $('.listaDependentes').html('');
-                    $('.listaDependentes').hide();
+                    $('#modalClienteDetalhes .listaDependentes').html('');
+                    $('#modalClienteDetalhes .listaDependentes').hide();
             }
 
             
@@ -505,6 +478,29 @@ function loadCliente(id)
         //console.log(ev);
         debugador(ev);
     });
+}
+
+function deleteCoordenador(id)
+{
+    let x = confirm('Tem certeza que deseja excluir esse coordenador permanentemente?\n(Os coordenadores removidos vão para lixeira e são excluídos depois de 72h.)');
+    if(x === true) {
+        $.post(PREFIX_POST+'coordenadores/apagar/'+id, function(res){
+            if(res.success = true) {
+                alerta('Coordenador foi excluído com sucesso.', 'Sucesso!', 'success');
+                if(typeof loadDatabaseCoordenadores === 'function') {
+                    loadDatabaseCoordenadores();
+                }
+                loadLanding(location.hash.substring(1, location.hash.length));
+            }
+        }, 'json').
+        fail(function(ev){
+            //console.log(ev);
+            debugador(ev);
+            alerta('Falha...','', 'warning');
+        });
+        return true;
+    }
+    return false;
 }
 
 function deleteCliente(id)
@@ -530,6 +526,25 @@ function deleteCliente(id)
     return false;
 }
 
+function restauraCoordenador(id)
+{
+    $.post(PREFIX_POST+'coordenadores/restaurar/'+id, function(res){
+        if(res.success = true) {
+            alerta('Coordenador foi restaurado com sucesso.', 'Sucesso!', 'success');
+            if(typeof loadDatabaseCoordenadores === 'function') {
+                loadDatabaseCoordenadores();
+            }
+            loadLanding(location.hash.substring(1, location.hash.length));
+        }
+    }, 'json').
+    fail(function(ev){
+        //console.log(ev);
+        debugador(ev);
+        alerta('Falha...','', 'warning');
+    });
+    return true;
+}
+
 function restauraCliente(id)
 {
     $.post(PREFIX_POST+'clientes/restaurar/'+id, function(res){
@@ -537,6 +552,29 @@ function restauraCliente(id)
             alerta('Cliente foi restaurado com sucesso.', 'Sucesso!', 'success');
             if(typeof loadDatabaseClientes === 'function') {
                 loadDatabaseClientes();
+            }
+            loadLanding(location.hash.substring(1, location.hash.length));
+        }
+    }, 'json').
+    fail(function(ev){
+        //console.log(ev);
+        debugador(ev);
+        alerta('Falha...','', 'warning');
+    });
+    return true;
+}
+
+function deleteCoordenadorLixeira(id)
+{
+    if(id == '' || id == 0) {
+        return false;
+    }
+
+    $.post(PREFIX_POST+'coordenadores/apagarlixeira/'+id, function(res){
+        if(res.success = true) {
+            alerta('Coordenador foi removido completamente.', 'Sucesso!', 'success');
+            if(typeof loadDatabaseCoordenadores === 'function') {
+                loadDatabaseCoordenadores();
             }
             loadLanding(location.hash.substring(1, location.hash.length));
         }
@@ -570,6 +608,55 @@ function deleteClienteLixeira(id)
         alerta('Falha...','', 'warning');
     });
     return true;
+}
+
+function editaCoordenador(id)
+{
+    $.post('/coordenadores/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let c = res.coordenador;
+            $('#modalCoordenadorEditar strong[data-detalhes-nome]').text(c.nome);
+            $('#modalCoordenadorEditar input[data-detalhes-nome]').val(c.nome);
+            $('#modalCoordenadorEditar span[data-detalhes-id]').text(c.id);
+            $('#modalCoordenadorEditar input[data-detalhes-id]').val(c.id);
+            $('#modalCoordenadorEditar [data-detalhes-email]').val(c.email);
+            $('#modalCoordenadorEditar [data-detalhes-tel]').val(c.telefone);
+            $('#modalCoordenadorEditar [data-detalhes-nascimento]').val(c.nascimento);
+            $('#modalCoordenadorEditar [data-detalhes-civil]').val(c.estado_civil);
+            $('#modalCoordenadorEditar [data-detalhes-rg]').val(c.rg);
+            $('#modalCoordenadorEditar [data-detalhes-cpf]').val(c.cpf);
+            $('#modalCoordenadorEditar [data-detalhes-sangue]').val(c.sangue);
+            $('#modalCoordenadorEditar [data-detalhes-endereco]').val(c.endereco);
+            $('#modalCoordenadorEditar [data-detalhes-complemento]').val(c.complemento);
+            $('#modalCoordenadorEditar [data-detalhes-pontoref]').val(c.ponto_referencia);
+            $('#modalCoordenadorEditar [data-detalhes-bairro]').val(c.bairro);
+            $('#modalCoordenadorEditar [data-detalhes-cep]').val(c.cep);
+            $('#modalCoordenadorEditar [data-detalhes-cidade]').val(c.cidade);
+            $('#modalCoordenadorEditar [data-detalhes-estado]').val(c.estado);
+            $('#modalCoordenadorEditar [data-detalhes-alergia]').val(c.alergia);
+            $('#modalCoordenadorEditar [data-detalhes-emergencianome]').val(c.emergencia_nome);
+            $('#modalCoordenadorEditar [data-detalhes-emergenciatel]').val(c.emergencia_telefone);
+            $('#modalCoordenadorEditar [data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
+            $('#modalCoordenadorEditar [data-detalhes-titular]').val(function(){
+                if(c.titular != 0) {return c.titular;} else {return ''};
+            });
+
+            $('#modalCoordenadorEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });;
 }
 
 function editaCliente(id)
@@ -1666,6 +1753,115 @@ function roteiroHistoricoNovo(sender) {
     });
 }
 
+function roteiroEditaSalva() {
+    $.post(PREFIX_POST+'roteiros/salvar/'+roteiro.id, {dados: JSON.stringify(roteiro)}, function(res){
+        if(res.success == true) {
+            alerta('Alterações no roteiro foram salvas com êxito.', 'Sucesso.', 'success');
+            location.hash = '#roteiros/ver/'+roteiro.id;
+            loadLanding(location.hash);
+        } else {
+            alerta(res.mensagem, 'Ops, falha.', 'warning');
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
+function roteiroApagar(sender)
+{
+    if($(sender).data('id')  == '') {
+        alerta('Não é possível continuar com essa operação.', 'Espera...', 'info');
+        return false;
+    }
+
+    let x = confirm("Tem certeza que deseja apagar este roteiro? \nEsse roteiro vai ser movido para lixeira.");
+    if(x == true) {
+        $.post(PREFIX_POST+'roteiros/apagar/'+$(sender).data('id'), function(res) {
+            if(res.success == true) {
+                alerta('Roteiro foi movido para lixeira.', 'Sucesso.', 'success');
+                location.hash = '#roteiros';
+                loadLanding(location.hash);
+            } else {
+                alerta(res.mensagem, 'Ops, falha.', 'warning');
+            }
+        },'json');
+    }
+}
+
+function roteiroRestaurar(id)
+{
+    $.post(PREFIX_POST+'roteiros/restaurar/'+id, function(res) {
+        if(res.success == true) {
+            alerta('Roteiro foi restaurado da lixeira.', 'Sucesso.', 'success');
+            location.hash = '#roteiros/lixeira';
+            loadLanding(location.hash);
+        } else {
+            alerta(res.mensagem, 'Ops, falha.', 'warning');
+        }
+    },'json');
+}
+
+function roteiroApagarLixeira(id)
+{
+    if(id == '' || id == 0) {
+        return false;
+    }
+
+    $.post(PREFIX_POST+'roteiros/apagarlixeira/'+id, function(res){
+        if(res.success = true) {
+            alerta('Roteiro foi removido completamente.', 'Sucesso!', 'success');
+            loadLanding(location.hash);
+        }
+    }, 'json').
+    fail(function(ev){
+        //console.log(ev);
+        debugador(ev);
+        alerta('Falha...','', 'warning');
+    });
+    return true;
+}
+
+function roteiroCriarCopia(sender)
+{
+    let form = $(sender).parents('.modal').find('form');
+
+    // Valida dados
+    if(form.find('[name="rid"]').val() == '') {
+        alerta('Houve alguma modificação inválida nessa página. Atualizando...','Aguarde...', 'info');
+        return false;
+    }
+
+
+    let rot = {
+        id: form.find('[name="rid"]').val(),
+        data_ini: form.find('[name="data_ini"]').val(),
+        data_fim: form.find('[name="data_fim"]').val(),
+    }
+
+    $.post(PREFIX_POST+'roteiros/'+rot.id+'/copiar', {
+        roteiro: JSON.stringify(rot)
+    }, function(res){
+        console.log(res);
+        if(res.success == true) {
+            alerta('Cópia do roteiro criada com sucesso...', 'Criado!', 'success');
+            if(res.roteiro.id == '') {
+                location.hash = '#roteiros';
+                loadLanding(location.hash);
+            } else {
+                alerta('Abrindo roteiro recém-criado...', 'Aguarde.', 'info');
+                location.hash = '#roteiros/ver/'+res.roteiro.id;
+                setTimeout(function(){location.reload();}, 2000);
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha.','warning');
+        }
+    }, 'json').
+    fail(function(ev){
+        nativePOSTFail(ev);
+    });
+}
+
 
 /**
  * ./FIM MODAIS E PÁGINAS
@@ -1786,7 +1982,7 @@ $(document).ready(function(){
 
                         alerta('Dados salvos.', '', 'success');
                         $('#modalClienteEditar, #modalUsuarioEditar, #modalMinhaContaEditar, '+
-                        '#modalAlterarMinhaSenha').modal('hide');
+                        '#modalAlterarMinhaSenha, #modalCoordenadorEditar').modal('hide');
                     } else {
                         alerta(res.mensagem, 'Erro: ', 'warning');
                         console.log(res);
@@ -1857,10 +2053,67 @@ $(document).ready(function(){
         });
     });
 
-    $(document).on('keyup', 'form#buscarClientes [name="busca"], form#buscarUsuarios [name="busca"]', function(ev){
+    $(document).on('keyup', 'form#buscarClientes [name="busca"], form#buscarUsuarios [name="busca"], form#buscarCoordenadores [name="busca"]', function(ev){
         let atual = $(this).val();
         let novo = atual.replace(/[=;]/gi, function(x){return '';});
         $(this).val(novo);
+    });
+    
+    // Buscar coordenadores.
+    $(document).on('submit', 'form#buscarCoordenadores', function(ev){
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        let form = $(this);
+        let href = 'coordenadores/buscar';
+        let valor = form.find('[name="busca"]').val().trim();
+
+        $.post(PREFIX_POST+href, {busca: valor}, function(res){
+            //console.log(res);
+            if(res.success == false) {
+                alerta('Não conseguimos recuperar a pesquisa. Erro do servidor: '+res.mensagem, 'Falha!', 'warning');
+            } else {
+                $('#retornoBusca').html('<table class="table table-bordered table-sm">'+
+                '<thead class="bg-dark text-white">'+
+                    '<tr><th>Cód.</th><th>Nome</th><th class="d-none d-lg-table-cell">Email</th><th>Cidade</th>'+
+                    '<th>Estado</th><th class="d-none d-lg-table-cell">Criado em</th><th></th></tr>'+
+                '</thead><tbody style="font-size: .9rem;"></tbody></table>');
+
+                $('#retornoBusca').prepend('<div class="mb-2">Total de registros: <span class="badge badge-info">'+res.coordenadores.length+'</span></div>');
+                if(res.coordenadores.length == 0) {
+                    $('#retornoBusca').find('table tbody').html('<tr><td class="text-center" colspan="7">Nada encontrado.</td></tr>');
+                } else {
+                    $('#retornoBusca').find('table tbody').html('');
+                    for(let i = 0; i < res.coordenadores.length; i++) {
+                        let criadoEm = new Date(res.coordenadores[i].criado_em);
+                        
+                        $('#retornoBusca').find('table tbody')
+                            .append('<tr>'+
+                            '<td>'+res.coordenadores[i].id+'</td>'+
+                            '<td>'+highlight(res.coordenadores[i].nome, valor)+'</td>'+
+                            '<td class="d-none d-lg-table-cell">'+highlight(res.coordenadores[i].email, valor)+'</td>'+
+                            '<td>'+highlight(res.coordenadores[i].cidade, valor)+'</td>'+
+                            '<td>'+res.coordenadores[i].estado+'</td>'+
+                            '<td class="d-none d-lg-table-cell">'+Dobbin.formataDataHora(criadoEm)+'</td>'+
+                            '<td><button type="button" class="btn btn-transparent btn-rounded btn-sm dropdown-toggle no-caret" data-toggle="dropdown"> <i class="fas fa-ellipsis-v fa-fw"></i> </button>'+
+                            '<div class="dropdown-menu">'+
+                                    '<button class="dropdown-item" onclick="loadCoordenador('+res.coordenadores[i].id+')"><i class="far fa-eye fa-fw mr-1"></i> Ver</button>'+
+                                    '<button class="dropdown-item" onclick="editaCoordenador('+res.coordenadores[i].id+')"><i class="fas fa-pencil-alt fa-fw mr-1"></i> Editar</button>'+
+                                    '<div class="dropdown-divider"></div>'+
+                                    '<button class="dropdown-item text-danger" onclick="deleteCoordenador('+res.coordenadores[i].id+')"><i class="fas fa-trash fa-fw mr-1"></i> Apagar</button>'+
+                            '</div></td>'+
+                            '</tr>');
+                    }
+
+
+                    if(res.mensagem != '') {
+                        $('#retornoBusca').append('<div class="alert alert-info">'+res.mensagem+'</div>')
+                    }
+                }
+            }
+        }, 'json').fail(function(ev){
+            nativePOSTFail(ev);
+        });
     });
 
     $(document).on('submit', 'form#buscarUsuarios', function(ev){
@@ -2155,7 +2408,7 @@ $(document).ready(function(){
     });
 
     // Simulação: exibe campo quantidade de dias.
-    $(document).on('change', '#simulacao [name="valor_tipo"], #roteironovo [name="valor_tipo"]', function(ev){
+    $(document).on('change', '#simulacao [name="valor_tipo"], #roteironovo [name="valor_tipo"], #roteiroedita [name="valor_tipo"]', function(ev){
         if($(ev.currentTarget).find(':selected').val() == 'dia' || $(ev.currentTarget).find(':selected').val() == 'pessoa_dia') {
             $(ev.currentTarget).siblings('[data-valor-dias]').slideDown(100);
             $(ev.currentTarget).siblings('[data-valor-dias]').children(':input').attr('required', true);
@@ -2272,4 +2525,10 @@ $(document).ready(function(){
     /**
      * ./VALIDAÇÃO AUTOMÁTICA
      */
+
+     // Carrega a página quando botões de voltar e avançar forem alterados.
+    $(window).on('popstate', function(ev){
+        //console.log(ev.currentTarget.location.hash);
+        loadLanding(ev.currentTarget.location.hash);
+    });
 });

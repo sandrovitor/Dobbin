@@ -4,6 +4,7 @@ Use eftec\bladeone\BladeOne;
 Use Cocur\Slugify\Slugify;
 Use SGCTUR\SGCTUR;
 Use SGCTUR\Cliente;
+Use SGCTUR\Coordenador;
 Use SGCTUR\Usuario;
 Use SGCTUR\Cryptor;
 Use SGCTUR\LOG;
@@ -252,7 +253,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros',
             'description' => 'Roteiros definidos e quantidade de vagas.',
-            'page' => $blade->run("roteiros", array(
+            'page' => $blade->run("roteiros.roteiros", array(
                 'listaRoteiros' => $listaRoteiros,
             ))
         );
@@ -268,7 +269,23 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Novo',
             'description' => 'Crie um novo roteiro.',
-            'page' => $blade->run("roteirosNovo", array(
+            'page' => $blade->run("roteiros.roteirosNovo", array(
+                
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosDatabase($p)
+    {
+        self::validaConexao(2);
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Novo',
+            'description' => 'Base de dados de seus roteiros.',
+            'page' => $blade->run("roteiros.roteirosDatabase", array(
                 
             ))
         );
@@ -284,7 +301,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Simulação',
             'description' => 'Simulação de roteiros, sem alterações.',
-            'page' => $blade->run("roteiroSimulacao", array(
+            'page' => $blade->run("roteiros.roteiroSimulacao", array(
                 
             ))
         );
@@ -298,6 +315,68 @@ class ControllerPrincipal
 
         $rot = new Roteiro($p['id']);
         $roteiro = $rot->getDados();
+        
+        if($roteiro === false || $roteiro->deletado_em !== null) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado!');
+            exit();
+        }
+
+        // Carrega parceiros
+        if($roteiro->parceiros == '') {
+            $roteiro->parceiros = array();
+        } else {
+            $parceiros = json_decode($roteiro->parceiros);
+            $parc_array = array();
+
+            if(is_array($parceiros)) {
+                foreach($parceiros as $a) {
+                    $par = new Parceiro($a);
+                    $x = $par->getDados();
+                    unset($x['financeiro'], $x['servico']);
+                    $x['geral']->historico = $par->getHistorico(50,0,$p['id']);
+                    array_push($parc_array, $x['geral']);
+                }
+    
+            }
+            
+            $roteiro->parceiros = $parc_array;
+        }
+
+        // Criado por
+        $u = new Usuario($roteiro->criado_por);
+        $u = $u->getDados();
+        if($u === false) {
+            $criado_por = '<img src="/media/images/av/user00.png" height="25" style="border-radius:50%" class="mr-1"> <i>Usuário removido</i>';
+        } else {
+            $criado_por = '<img src="/media/images/av/'.$u->avatar.'" height="25" style="border-radius:50%" class="mr-1"> <i>'.$u->nome .' '. $u->sobrenome.'</i>';
+        }
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > <span id="roteiroTitle"></span>',
+            'description' => 'Detalhes do roteiro.',
+            'page' => $blade->run("roteiros.roteirosVer", array(
+                'roteiro' => $roteiro,
+                'sgc' => new SGCTUR(),
+                'criado_por' => $criado_por
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosEditar($p)
+    {
+        self::validaConexao(2);
+
+        $rot = new Roteiro($p['id']);
+        $roteiro = $rot->getDados();
+        if($roteiro === false) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado!');
+            exit();
+        }
 
         // Carrega parceiros
         if($roteiro->parceiros == '') {
@@ -315,6 +394,69 @@ class ControllerPrincipal
 
             $roteiro->parceiros = $parc_array;
         }
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Editar',
+            'description' => 'Faça alterações no roteiro.',
+            'page' => $blade->run("roteiros.roteirosEditar", array(
+                'roteiro' => $roteiro,
+                'sgc' => new SGCTUR(),
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosLixeira($p)
+    {
+        self::validaConexao(2);
+        $sgc = new SGCTUR();
+
+        $listaRoteiros = $sgc->getRoteirosLixeira();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Lixeira',
+            'description' => 'Roteiros excluídos e estão aguardando para serem removidos por completo.',
+            'page' => $blade->run("roteiros.roteirosLixeira", array(
+                'roteiros' => $listaRoteiros,
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosLixeiraVer($p)
+    {
+        self::validaConexao(2);
+
+        $rot = new Roteiro($p['id']);
+        $roteiro = $rot->getDados();
+        
+        if($roteiro === false || $roteiro->deletado_em === null) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado!');
+            exit();
+        }
+
+        // Carrega parceiros
+        if($roteiro->parceiros == '') {
+            $roteiro->parceiros = array();
+        } else {
+            $parceiros = json_decode($roteiro->parceiros);
+            $parc_array = array();
+            foreach($parceiros as $a) {
+                $par = new Parceiro($a);
+                $x = $par->getDados();
+                unset($x['financeiro'], $x['servico']);
+                $x['geral']->historico = $par->getHistorico(50,0,$p['id']);
+                array_push($parc_array, $x['geral']);
+            }
+
+            $roteiro->parceiros = $parc_array;
+        }
+
         // Criado por
         $u = new Usuario($roteiro->criado_por);
         $u = $u->getDados();
@@ -324,14 +466,24 @@ class ControllerPrincipal
             $criado_por = '<img src="/media/images/av/'.$u->avatar.'" height="25" style="border-radius:50%" class="mr-1"> <i>'.$u->nome .' '. $u->sobrenome.'</i>';
         }
 
+        // Deletado por
+        $u = new Usuario($roteiro->criado_por);
+        $u = $u->getDados();
+        if($u === false) {
+            $deletado_por = '<img src="/media/images/av/user00.png" height="25" style="border-radius:50%" class="mr-1"> <i>Usuário removido</i>';
+        } else {
+            $deletado_por = '<img src="/media/images/av/'.$u->avatar.'" height="25" style="border-radius:50%" class="mr-1"> <i>'.$u->nome .' '. $u->sobrenome.'</i>';
+        }
+
         $blade = self::bladeStart();
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > <span id="roteiroTitle"></span>',
             'description' => 'Detalhes do roteiro.',
-            'page' => $blade->run("roteirosVer", array(
+            'page' => $blade->run("roteiros.roteirosLixeiraVer", array(
                 'roteiro' => $roteiro,
                 'sgc' => new SGCTUR(),
-                'criado_por' => $criado_por
+                'criado_por' => $criado_por,
+                'deletado_por' => $deletado_por
             ))
         );
 
@@ -355,7 +507,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes',
             'description' => 'Gerencie seus clientes.',
-            'page' => $blade->run("clientes", array(
+            'page' => $blade->run("clientes.clientes", array(
                 'clientes' => $sgc->getClientesLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
             ))
         );
@@ -371,7 +523,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes > Novo',
             'description' => 'Salve seus novos clientes.',
-            'page' => $blade->run("clientesNovo", array(
+            'page' => $blade->run("clientes.clientesNovo", array(
                 
             ))
         );
@@ -389,7 +541,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes > Buscar',
             'description' => 'Localize seus clientes.',
-            'page' => $blade->run("clientesBuscar", array(
+            'page' => $blade->run("clientes.clientesBuscar", array(
                 'clientes' => $sgc->getClientesLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
                 'totalClientes' => $sgc->getClientesTotal()
             ))
@@ -407,7 +559,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes > Base de Dados',
             'description' => 'Uma interface para sua base de dados dos clientes.',
-            'page' => $blade->run("clientesDatabase", array(
+            'page' => $blade->run("clientes.clientesDatabase", array(
                 'totalClientes' => $sgc->getClientesTotal()
             ))
         );
@@ -425,7 +577,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes > Lixeira',
             'description' => 'Clientes que foram excluídos e estão aguardando para serem removidos por completo.',
-            'page' => $blade->run("clientesLixeira", array(
+            'page' => $blade->run("clientes.clientesLixeira", array(
                 'clientes' => $x['clientes'],
             ))
         );
@@ -484,6 +636,131 @@ class ControllerPrincipal
     /**
      * 
      * 
+     * COORDENADORES
+     * 
+     * 
+     */
+    static function coordenadores($p)
+    {
+        self::validaConexao(2);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores',
+            'description' => 'Gerencie seus coordenadores.',
+            'page' => $blade->run("coordenadores.coordenador", array(
+                'coordenadores' => $sgc->getCoordenadoresLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorNovo($p)
+    {
+        self::validaConexao(2);
+
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores > Novo',
+            'description' => 'Salve os dados dos seus coordenadores.',
+            'page' => $blade->run("coordenadores.coordenadorNovo", array(
+                
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorBuscar($p)
+    {
+        self::validaConexao();
+
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores > Buscar',
+            'description' => 'Localize seus coordenadores.',
+            'page' => $blade->run("coordenadores.coordenadorBuscar", array(
+                'coordenadores' => $sgc->getCoordenadoresLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
+                'totalCoordenadores' => $sgc->getCoordenadoresTotal()
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorDatabase($p)
+    {
+        self::validaConexao();
+
+        $sgc = new SGCTUR();
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores > Base de Dados',
+            'description' => 'Uma interface para sua base de dados dos seus coordenadores.',
+            'page' => $blade->run("coordenadores.coordenadorDatabase", array(
+                'totalCoordenadores' => $sgc->getCoordenadoresTotal()
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorLixeira($p)
+    {
+        self::validaConexao(2);
+
+        $sgc = new SGCTUR();
+        $x = $sgc->getCoordenadoresLixeira();
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-user-tie"></i> Coordenadores > Lixeira',
+            'description' => 'Coordenadores que foram excluídos e estão aguardando para serem removidos por completo.',
+            'page' => $blade->run("coordenadores.coordenadorLixeira", array(
+                'coordenadores' => $x['coordenadores'],
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadorVer($p)
+    {
+        self::validaConexao(2);
+
+        $retorno = array(
+            'success' => false,
+            'mensagem' => '',
+        );
+        if(!isset($p['id']) || $p['id'] == '' || $p['id'] == 0) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado');
+            exit();
+        } else {
+            $coord = new Coordenador((int)$p['id']);
+            $dados = $coord->getDados();
+
+            if($dados === false) {
+                http_response_code(404);
+                $retorno['mensagem'] = Erro::getMessage(105);
+                return json_encode($retorno);
+            } else {
+                $retorno['success'] = true;
+                $retorno['coordenador'] = $dados;
+                return json_encode($retorno);
+            }
+        }
+    }
+
+
+    /**
+     * 
+     * 
      * PARCEIROS
      * 
      * 
@@ -498,7 +775,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="far fa-handshake"></i> Parceiros',
             'description' => 'Gerencie seus parceiros de negócios.',
-            'page' => $blade->run("parceiros", array(
+            'page' => $blade->run("parceiros.parceiros", array(
                 'parceiros' => $sgc->getParceirosLista(),
             ))
         );
@@ -517,7 +794,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="far fa-handshake"></i> Parceiros > Novo',
             'description' => 'Cadastre seus parceiros de negócios.',
-            'page' => $blade->run("parceirosNovo", array(
+            'page' => $blade->run("parceiros.parceirosNovo", array(
                 'bancos' => $bancos['bancos'],
             ))
         );
@@ -534,7 +811,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="far fa-handshake"></i> Parceiros > Base de Dados',
             'description' => 'Uma interface para sua base de dados de parceiros.',
-            'page' => $blade->run("parceirosDatabase", array(
+            'page' => $blade->run("parceiros.parceirosDatabase", array(
                 'totalClientes' => $sgc->getClientesTotal()
             ))
         );
@@ -559,7 +836,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="far fa-handshake"></i> Parceiros > <small id="parceiroTitle" class="text-uppercase"></small>',
             'description' => 'Veja detalhes dos seus parceiros de negócio.',
-            'page' => $blade->run("parceirosVer", array(
+            'page' => $blade->run("parceiros.parceirosVer", array(
                 'bancos' => $bancos['bancos'],
                 'parceiro' => $parceiro,
                 'par' => $par,
@@ -614,7 +891,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-user-shield"></i> Usuários',
             'description' => 'Esses são os que têm acesso à sua plataforma de gestão.',
-            'page' => $blade->run("usuarios", array(
+            'page' => $blade->run("usuarios.usuarios", array(
                 'usuarios' => $sgc->getUsuariosLista(),
             ))
         );
@@ -630,7 +907,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-user-shield"></i> Usuários > Novo',
             'description' => 'Crie novos logins de acesso à plataforma.',
-            'page' => $blade->run("usuariosNovo", array(
+            'page' => $blade->run("usuarios.usuariosNovo", array(
                 
             ))
         );
@@ -648,7 +925,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-user-shield"></i> Usuários > Buscar',
             'description' => 'Localize os usuários da plataforma.',
-            'page' => $blade->run("usuariosBuscar", array(
+            'page' => $blade->run("usuarios.usuariosBuscar", array(
                 'usuarios' => $sgc->getUsuariosLista(),
                 'totalUsuarios' => $sgc->getUsuariosTotal()
             ))
@@ -695,7 +972,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-user-shield"></i> Usuários > Base de Dados',
             'description' => 'Uma interface para sua base de dados dos clientes.',
-            'page' => $blade->run("usuariosDatabase", array(
+            'page' => $blade->run("usuarios.usuariosDatabase", array(
                 'totalUsuarios' => $sgc->getUsuariosTotal()
             ))
         );

@@ -2,14 +2,15 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                Simular roteiros
+                Editar roteiro 
             </div>
             <div class="card-body">
-                <form id="simulacao">
+            
+                <form id="roteiroedita">
                     <div class="border bloco-acord shadow-sm my-3">
                         <div class="acord-header d-flex justify-content-between">
                             <h6 class="text-uppercase my-1 font-weight-bold text-primary">
-                                Definições Gerais
+                                Definições Gerais do Roteiro
                             </h6>
                             <button type="button" class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-up"></i></button>
                         </div>
@@ -17,32 +18,33 @@
                             <div class="row">
                                 <div class="col-12 col-md-4 col-lg-4">
                                     <div class="form-group">
-                                        <label class="small">Nome do pacote</label>
-                                        <input type="text" name="nome_pacote" class="form-control form-control-sm form-control-solid" value="SIMULAÇÃO">
+                                        <label class="small">Nome do roteiro</label>
+                                        <input type="text" name="nome_pacote" class="form-control form-control-sm form-control-solid" value="{{$roteiro->nome}}" required>
+                                        <input type="hidden" name="rid" value="{{$roteiro->id}}" required>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4 col-lg-4">
                                     <div class="form-group">
                                         <label class="small">Partida</label>
-                                        <input type="date" name="data_ini" class="form-control form-control-sm form-control-solid" required>
+                                        <input type="date" name="data_ini" class="form-control form-control-sm form-control-solid" value="{{$roteiro->data_ini}}" required>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4 col-lg-4">
                                     <div class="form-group">
                                         <label class="small">Retorno</label>
-                                        <input type="date" name="data_fim" class="form-control form-control-sm form-control-solid" required>
+                                        <input type="date" name="data_fim" class="form-control form-control-sm form-control-solid" value="{{$roteiro->data_fim}}" required>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4 col-lg-4">
                                     <div class="form-group">
                                         <label class="small">Qtd de Passageiros (Clientes)</label>
-                                        <input type="number" name="passagens" class="form-control form-control-sm form-control-solid" value="" required>
+                                        <input type="number" name="passagens" class="form-control form-control-sm form-control-solid" value="{{$roteiro->passagens}}" required>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4 col-lg-4">
                                     <div class="form-group">
                                         <label class="small">Qtd de Coordenadores (ou isentos)</label>
-                                        <input type="number" name="qtd_coord" class="form-control form-control-sm form-control-solid" value="" required>
+                                        <input type="number" name="qtd_coord" class="form-control form-control-sm form-control-solid" value="{{$roteiro->qtd_coordenador}}" required>
                                     </div>
                                 </div>
                                 
@@ -60,14 +62,14 @@
                                         </div>
                                         <div class="form-check-inline">
                                             <label class="form-check-label">
-                                                <input type="radio" class="form-check-input" name="tipo_rateio" checked="checked" value="automatico66">
+                                                <input type="radio" class="form-check-input" name="tipo_rateio" value="automatico66">
                                                 Automático 66%
                                                 <i class="far fa-question-circle" data-toggle="tooltip" title="Método: Valor das despesas será dividido por 2/3 do total de clientes. Outros 1/3 dos clientes podem ser convertidos em lucro."></i>
                                             </label>
                                         </div>
                                         <div class="form-check-inline">
                                             <label class="form-check-label">
-                                                <input type="radio" class="form-check-input" name="tipo_rateio" value="personalizado">
+                                                <input type="radio" class="form-check-input" name="tipo_rateio" checked="checked" value="personalizado">
                                                 Personalizado
                                                 <i class="far fa-question-circle" data-toggle="tooltip" title="Informe a quantidade de clientes para fazer o rateio das despesas."></i>
                                             </label>
@@ -75,10 +77,18 @@
 
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-4 col-lg-4" data-rateio-div style="display:none;">
+                                <div class="col-12 col-md-4 col-lg-4" data-rateio-div>
                                     <div class="form-group">
                                         <label class="small">Número de clientes para rateio</label>
-                                        <input type="number" name="rateio_qtd" class="form-control form-control-sm form-control-solid" value="" min="1">
+                                        <input type="number" name="rateio_qtd" class="form-control form-control-sm form-control-solid" value="{{$roteiro->qtd_rateio}}" min="1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 ">
+                                    <div class="form-group">
+                                        <label class="small">Observações</label>
+                                        <textarea name="obs" rows="3" class="form-control form-control-sm form-control-solid" maxlength="450">{{$roteiro->obs}}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -90,6 +100,56 @@
                             </div>
                         </div>
                     </div>
+                    <div class="border bloco-acord">
+                        <div class="acord-header d-flex justify-content-between">
+                            <h6 class="text-uppercase my-1 font-weight-bold text-primary">
+                                Parceiros do Roteiro
+                            </h6>
+                            <button type="button" class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
+                        </div>
+                        <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none;">
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="janParceirosSelect()"><i class="fas fa-plus fa-fw"></i> Adicionar parceiro</button>
+                                    
+                                    <div class="d-flex flex-wrap flex-column flex-md-row py-2 mt-2" id="listaParceiros">
+                                        <!--
+                                        <div data-parceiro="" data-pid="1" class="border pl-2 pr-1 py-1 mr-2 d-flex"><div class="flex-grow-1 pr-2"><small><strong>Sandro Vitor Santos Mendonça</strong><br><small>CPF: 123***.***-**</small></small></div><button type="button" class="btn btn-sm btn-transparent align-self-stretch" onclick="$(this).parents('[data-parceiro]').eq(0).fadeOut(200, function(){$(this).remove();})"><i class="fas fa-times"></i></button></div>
+                                            -->
+                                        @if(!empty($roteiro->parceiros))
+                                        @foreach($roteiro->parceiros as $p)
+                                        <div data-parceiro="" data-pid="{{$p->id}}" class="border pl-2 pr-1 py-1 mr-2 d-flex">
+                                            <div class="flex-grow-1 pr-2">
+                                                @if($p->nome_fantasia != '')
+                                                <small><strong>{{$p->nome_fantasia}}</strong><br>
+                                                <small class="font-italic">{{$p->razao_social}}</small><br>
+                                                @else
+                                                <small><strong>{{$p->razao_social}}</strong><br>
+                                                @endif
+
+                                                <small>{{$p->doc_tipo}}:
+                                                @if($p->doc_tipo == 'CNPJ')
+                                                {{substr($p->doc_numero, 0, 2) .'.'. substr($p->doc_numero, 2, 1) . '**.***/****-' . substr($p->doc_numero, -2, 2)}}
+                                                @else
+                                                {{substr($p->doc_numero, 0, 3) .'.***.***-**'}}
+                                                @endif
+                                                </small></small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-transparent align-self-stretch" onclick="$(this).parents('[data-parceiro]').eq(0).fadeOut(200, function(){$(this).remove();})"><i class="fas fa-times"></i></button>
+                                        </div>
+                                        @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 text-right">
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="proximo(this)">Próximo</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+    
                     <div class="border bloco-acord">
                         <div class="acord-header d-flex justify-content-between">
                             <h6 class="text-uppercase my-1 font-weight-bold text-primary">
@@ -147,6 +207,7 @@
                                                     <button type="button" class="btn btn-block btn-sm btn-danger" onclick="$(this).parents('tr').remove();"><i class="fas fa-trash"></i></button>
                                                 </td>
                                             </tr>
+                                            @if(empty($roteiro->despesas))
                                             <tr>
                                                 <td>
                                                     <label class="small">Tipo despesa</label>
@@ -190,6 +251,55 @@
                                                 </td>
                                                 <td></td>
                                             </tr>
+                                            @else
+                                            @foreach($roteiro->despesas as $d)
+                                            <tr>
+                                                <td>
+                                                    <label class="small">Tipo despesa</label>
+                                                    <select class="form-control form-control-sm form-control-solid" name="tipo_despesa">
+                                                        <option value="Hospedagem" {{$d->tipo == 'Hospedagem' ? 'selected' : '' }}>Hospedagem</option>
+                                                        <option value="Transporte" {{$d->tipo == 'Transporte' ? 'selected' : '' }}>Transporte</option>
+                                                        <option value="Alimentação" {{$d->tipo == 'Alimentação' ? 'selected' : '' }}>Alimentação</option>
+                                                        <option value="Personalizado" {{$d->tipo == 'Personalizado' ? 'selected' : '' }}>Personalizado</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <label class="small">Nome da despesa</label>
+                                                    <input type="text" class="form-control form-control-sm form-control-solid" name="nome_despesa" value="{{$d->nome}}" maxlength="30">
+                                                </td>
+                                                <td>
+                                                    <label class="small">Valor</label>
+                                                    <div class="row">
+                                                        <div class="col-12 col-lg-6 mb-1">
+                                                            <div class="input-group input-group-sm">
+                                                                <div class="input-group-prepend">
+                                                                    <span class="input-group-text form-control-solid">R$</span>
+                                                                </div>
+                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" value="{{$sgc->converteCentavoParaReal($d->valor)}}" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)" maxlength="30" required>
+                                                                <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                                            </div>
+                                                            
+                                                        </div>
+                                                        <div class="col-12 col-lg-6 mb-1">
+                                                            <select class="form-control form-control-sm form-control-solid" name="valor_tipo">
+                                                                <option value="total" {{$d->tipo_valor == 'total' ? 'selected' : ''}} title="Valor integral da despesa para todos os passageiros durante o período do roteiro.">Valor Total</option>
+                                                                <option value="dia" {{$d->tipo_valor == 'dia' ? 'selected' : ''}} title="Valor diário da despesa para todos passageiros. Total varia de acordo com a quantidade de dias.">Valor Total p/ Dia</option>
+                                                                <option value="pessoa" {{$d->tipo_valor == 'pessoa' ? 'selected' : ''}} title="Valor individual da despesa para todos os dias. Total varia de acordo com a quantidade de pessoas.">Valor Total p/ Pessoa</option>
+                                                                <option value="pessoa_dia" {{$d->tipo_valor == 'pessoa_dia' ? 'selected' : ''}} title="Valor individual por dia. Total varia de acordo com a quantidade de pessoas e dias.">Valor x Pessoa x Dia</option>
+                                                            </select>
+                                                            <div class="mt-3 mb-2" data-valor-dias {!!isset($d->dias) ? '' : 'style="display:none;"'!!}>
+                                                                <input type="number" class="form-control form-control-sm form-control-solid" name="valor_dias" value="{{isset($d->dias) ? $d->dias : ''}}" placeholder="Qtd dias da despesa" min="0" max="1" onchange="">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                </td>
+                                                <td style="vertical-align:middle;">
+                                                    <button type="button" class="btn btn-block btn-sm btn-danger" onclick="$(this).parents('tr').remove();"><i class="fas fa-trash"></i></button>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                            @endif
                                         </tbody>
                                     </table>
                                     <button type="button" class="btn btn-sm btn-primary" onclick="addDespesa(this)">Adicionar despesa</button>
@@ -202,20 +312,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="border bloco-acord">
+                    <div class="border bloco-acord" id="roteiroNovoResumo" style="display:none;">
                         <div class="acord-header d-flex justify-content-between">
                             <h6 class="text-uppercase my-1 font-weight-bold text-primary">
-                                RESULTADO
+                                RESUMO
                             </h6>
                             <button type="button" class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
                         </div>
                         <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none;">
-                            <div class="row">
-                                <div class="col-12 text-center">
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="calcular()">Calcular resultado</button>
-                                </div>
-                            </div>
-                            <hr>
                             <div class="row">
                                 <div class="col-12">
                                     <table class="table table-sm table-bordered table-responsive-sm resultado-simu" >
@@ -247,15 +351,21 @@
                                             </tr>
                                             <tr>
                                                 <td>
+                                                    <strong>Clientes (poltronas) p/ rateio de despesas:</strong>
+                                                </td>
+                                                <td simu-rateio-qtd></td>
+                                            </tr>
+                                            <tr>
+                                                <td>
                                                     <strong>Valor p/ cliente:</strong><br>
-                                                    <span class="small">(Coordenador isento)</span>
+                                                    <span class="small">(Coordenador(es) isento(s))</span>
                                                 </td>
                                                 <td simu-desc-despesa></td>
                                             </tr>
                                             <tr>
                                                 <td>
                                                     <strong>Valor p/ cliente:</strong><br>
-                                                    <span class="small">(Coordenador isento)</span>
+                                                    <span class="small">(Coordenador(es) isento(s))</span>
                                                 </td>
                                                 <td simu-desc-despesa-lucro></td>
                                             </tr>
@@ -274,32 +384,27 @@
                                     </table>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <!--
-                    <div class="border bloco-acord">
-                        <div class="acord-header d-flex justify-content-between">
-                            <h6 class="text-uppercase my-1 font-weight-bold text-primary">
-                                Parte 4
-                            </h6>
-                            <button type="button" class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
-                        </div>
-                        <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none;">
                             <div class="row">
-                                <div class="col-12">
-                                
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="recomeco()"><i class="fas fa-angle-left mr-2"></i> Voltar e alterar</button>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <button type="button" class="btn btn-sm btn-success" onclick="salvarEditaRoteiro()">Salvar roteiro <i class="ml-2 fas fa-angle-right"></i></button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    -->
                 </form>
             </div>
         </div>
     </div>
 </div>
 
+
+
 <script>
+var roteiro = undefined;
+
 function proximo(sender)
 {
     for(let i = 0; i < $(sender).parents('.acord-body').find('[required]').length; i++) {
@@ -355,7 +460,7 @@ function addDespesa(sender)
 function calcular()
 {
     let result = $('.resultado-simu');
-    let form = $('#simulacao');
+    let form = $('#roteiroedita');
     //result.slideUp(100);
 
     // Validação!
@@ -373,11 +478,12 @@ function calcular()
     }
 
     // Nome da simulação.
-    $('[simu-nome]').html('<strong class="small">Nome da simulação: </strong><br>'+ form.find('[name="nome_pacote"]').val());
+    $('[simu-nome]').html('<strong class="small">Nome do roteiro: </strong><br>'+ form.find('[name="nome_pacote"]').val() +' ('+
+    Dobbin.formataData(new Date(form.find('[name="data_ini"]').val()), true) +' a '+ Dobbin.formataData(new Date(form.find('[name="data_fim"]').val()), true)+')');
 
     // Data da viagem
-    $('[simu-ida]').html('<strong class="small">PARTIDA: </strong><br> '+ formataData(new Date(form.find('[name="data_ini"]').val()), true));
-    $('[simu-volta]').html('<strong class="small">RETORNO: </strong><br> '+ formataData(new Date(form.find('[name="data_fim"]').val()), true));
+    $('[simu-ida]').html('<strong class="small">PARTIDA: </strong><br> '+ Dobbin.formataData(new Date(form.find('[name="data_ini"]').val()), true));
+    $('[simu-volta]').html('<strong class="small">RETORNO: </strong><br> '+ Dobbin.formataData(new Date(form.find('[name="data_fim"]').val()), true));
 
     let clientes = parseInt(form.find('[name="passagens"]').val());
     let coord = parseInt(form.find('[name="qtd_coord"]').val());
@@ -385,18 +491,19 @@ function calcular()
     let dias_total;
     let rateio_qtd;
 
-    let tipo_rateio = $('#simulacao [name="tipo_rateio"]:checked').val();
+    let tipo_rateio = $('#roteiroedita [name="tipo_rateio"]:checked').val();
     switch(tipo_rateio) {
         case 'automatico66': rateio_qtd = Math.ceil(clientes*0.66666); break;
-        case 'personalizado': rateio_qtd = $('#simulacao [name="rateio_qtd"]').val(); break;
+        case 'personalizado': rateio_qtd = $('#roteiroedita [name="rateio_qtd"]').val(); break;
         case 'automatico': default: rateio_qtd = clientes; break;
     }
     
 
     $('[simu-total-pass]').text(passagens);
     $('[simu-desc-pass]').html('<ul><li><b>Clientes:</b> '+clientes+'</li> <li><b>Coordenadores:</b> '+coord+'</li></ul>');
+    $('[simu-rateio-qtd]').html(rateio_qtd);
 
-    let valores = [];
+    let despesa = [];
     let despesa_total = 0;
     let temp1, temp2;
 
@@ -409,15 +516,17 @@ function calcular()
         switch(form.find('tr:not([data-example])').eq(i).find('[name="valor_tipo"] :selected').val()) {
             case 'total': // Valor integral. Sem alteração.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                 }
 
                 temp1 = converteRealEmCentavo(temp1);
-                valores.push({
+                despesa.push({
+                    tipo: form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val(),
+                    nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val(),
                     valor: temp1,
-                    tipo: 'total'
+                    tipo_valor: 'total'
                 });
                 despesa_total += temp1;
 
@@ -430,16 +539,18 @@ function calcular()
 
             case 'pessoa': // Valor por pessoa. Multiplica pelo total de passageiros e armazena valor integral.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                 }
 
                 temp1 = converteRealEmCentavo(temp1);
 
-                valores.push({
+                despesa.push({
+                    tipo: form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val(),
+                    nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val(),
                     valor: temp1,
-                    tipo: 'pessoa'
+                    tipo_valor: 'pessoa'
                 });
                 
 
@@ -458,7 +569,7 @@ function calcular()
 
             case 'dia': // Valor total do dia. Depende da quantidade de dias do roteiro.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                     return false;
@@ -477,9 +588,11 @@ function calcular()
                 temp2 = form.find('tr:not([data-example])').eq(i).find('[name="valor_dias"]').val();
 
                 temp1 = converteRealEmCentavo(temp1);
-                valores.push({
+                despesa.push({
+                    tipo: form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val(),
+                    nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val(),
                     valor: temp1,
-                    tipo: 'dia',
+                    tipo_valor: 'dia',
                     dias: temp2
                 });
 
@@ -496,7 +609,7 @@ function calcular()
 
             case 'pessoa_dia': // Valor por pessoa e por dia. Depende da quantidade de pessoas e dias do roteiro.
                 temp1 = form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val();
-                if(nativeIsMoney(temp1) == false) {
+                if(Dobbin.isMoney(temp1) == false) {
                     form.find('tr:not([data-example])').eq(i).find('[name="valor"]').focus();
                     alerta('Esse valor é inválido.');
                     return false;
@@ -515,9 +628,11 @@ function calcular()
                 temp2 = form.find('tr:not([data-example])').eq(i).find('[name="valor_dias"]').val();
 
                 temp1 = converteRealEmCentavo(temp1);
-                valores.push({
+                despesa.push({
+                    tipo: form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val(),
+                    nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val(),
                     valor: temp1,
-                    tipo: 'pessoa_dia',
+                    tipo_valor: 'pessoa_dia',
                     dias: temp2
                 });
 
@@ -558,8 +673,33 @@ function calcular()
 
     $('[simu-table-calculo]').find('[name="lucro"]').trigger('change');
 
-    console.log(valores);
+    // Faz o levantamento dos parceiros.
+    let parceiros = [];
+    if($('#listaParceiros').find('[data-parceiro]').length > 0) {
+        for(let i = 0; i< $('#listaParceiros').find('[data-parceiro]').length; i++) {
+            parceiros.push($('#listaParceiros').find('[data-parceiro]').eq(i).data('pid'));
+        }
+        
+    }
 
+
+    //console.log(despesa);
+    mostrarResumo();
+
+    // Armazena tudo no roteiro.
+
+    roteiro = {
+        nome: form.find('[name="nome_pacote"]').val(),
+        data_ini: form.find('[name="data_ini"]').val(),
+        data_fim: form.find('[name="data_fim"]').val(),
+        passagens: clientes,
+        qtd_coordenador: coord,
+        despesas: despesa,
+        parceiros: parceiros,
+        qtd_rateio: rateio_qtd
+    };
+
+    //console.log(roteiro);
 }
 
 function lucroCalculo(sender)
@@ -583,51 +723,94 @@ function lucroCalculo(sender)
 
 }
 
+function mostrarResumo()
+{
+    $('#roteiroNovoResumo').fadeIn();
+    $('.bloco-acord:not(#roteiroNovoResumo)').slideUp();
+}
+
+function ocultarResumo()
+{
+    $('#roteiroNovoResumo').fadeOut();
+    $('.bloco-acord:not(#roteiroNovoResumo)').slideDown();
+}
+
+function recomeco()
+{
+    ocultarResumo();
+    $('.bloco-acord:eq(0) .acord-header').trigger('click');
+    // Apaga variável
+    roteiro = undefined;
+}
+
+function salvarEditaRoteiro()
+{
+    roteiro.taxa_lucro = $('#roteiroNovoResumo [name="lucro"]').val();
+    roteiro.id = $('#roteiroedita [name="rid"]').val();
+    roteiro.obs = $('#roteiroedita [name="obs"]').val();
+    //console.log(roteiro);
+    roteiroEditaSalva(roteiro);
+}
+
 $(document).ready(function(){
-    $(document).on('blur', '#simulacao [name="data_ini"], #simulacao [name="data_fim"]', function(){
-        if($('#simulacao [name="data_ini"]').val() != '' && $('#simulacao [name="data_fim"]').val() != '') {
-            if($('#simulacao [name="data_ini"]').val() > $('#simulacao [name="data_fim"]').val()) {
+    // Dispara algumas validações.
+    if($('#roteiroedita [name="data_ini"]').val() != '' && $('#roteiroedita [name="data_fim"]').val() != '') {
+        if($('#roteiroedita [name="data_ini"]').val() > $('#roteiroedita [name="data_fim"]').val()) {
+            alerta('Data de retorno é menor que a data de partida.', 'Inválido!', 'warning');
+            $('#roteiroedita [name="data_fim"]').focus();
+
+            return false;
+        }
+        $('#roteiroedita [name="valor_dias"]').attr('max', Dobbin.diffDays( new Date($('#roteiroedita [name="data_ini"]').val()), new Date($('#roteiroedita [name="data_fim"]').val()) ) + 1);
+    }
+    $('#roteiroedita [name="rateio_qtd"]').trigger('change');
+    $('#roteiroedita [name="valor_dias"]').trigger('change');
+    // Fim das primeiras validações.
+
+    $(document).on('blur', '#roteiroedita [name="data_ini"], #roteiroedita [name="data_fim"]', function(){
+        if($('#roteiroedita [name="data_ini"]').val() != '' && $('#roteiroedita [name="data_fim"]').val() != '') {
+            if($('#roteiroedita [name="data_ini"]').val() > $('#roteiroedita [name="data_fim"]').val()) {
                 alerta('Data de retorno é menor que a data de partida.', 'Inválido!', 'warning');
-                $('#simulacao [name="data_fim"]').focus();
+                $('#roteiroedita [name="data_fim"]').focus();
 
                 return false;
             }
-            $('#simulacao [name="valor_dias"]').attr('max', nativeDiffDays( new Date($('#simulacao [name="data_ini"]').val()), new Date($('#simulacao [name="data_fim"]').val()) ) + 1);
+            $('#roteiroedita [name="valor_dias"]').attr('max', Dobbin.diffDays( new Date($('#roteiroedita [name="data_ini"]').val()), new Date($('#roteiroedita [name="data_fim"]').val()) ) + 1);
         } else {
-            $('#simulacao [name="valor_dias"]').attr('max', '1');
+            $('#roteiroedita [name="valor_dias"]').attr('max', '1');
         }
     });
 
-    $(document).on('change', '#simulacao [name="valor_dias"]', function(){
+    $(document).on('change', '#roteiroedita [name="valor_dias"]', function(){
         if(parseInt($(this).val()) > parseInt($(this).attr('max'))) {
             $(this).val($(this).attr('max'));
             
         }
     });
 
-    $(document).on('change', '#simulacao [name="passagens"]', function(){
-        $('#simulacao [name="rateio_qtd"]').trigger('change');
+    $(document).on('change', '#roteiroedita [name="passagens"]', function(){
+        $('#roteiroedita [name="rateio_qtd"]').trigger('change');
     });
 
-    $(document).on('change', '#simulacao [name="tipo_rateio"]', function(){
+    $(document).on('change', '#roteiroedita [name="tipo_rateio"]', function(){
         console.log($(this).val());
         if($(this).val() == 'personalizado') {
             $('[data-rateio-div]').fadeIn(200);
-            $('#simulacao [name="rateio_qtd"]').attr('required', true);
+            $('#roteiroedita [name="rateio_qtd"]').attr('required', true);
         } else {
             $('[data-rateio-div]').fadeOut(200);
-            $('#simulacao [name="rateio_qtd"]').attr('required', false).val('');
+            $('#roteiroedita [name="rateio_qtd"]').attr('required', false).val('');
         }
     });
 
-    $(document).on('change', '#simulacao [name="rateio_qtd"]', function(){
-        if($('#simulacao [name="tipo_rateio"]:checked').val() == 'personalizado') {
+    $(document).on('change', '#roteiroedita [name="rateio_qtd"]', function(){
+        if($('#roteiroedita [name="tipo_rateio"]:checked').val() == 'personalizado') {
             // Verifica se o valor é maior que o número de clientes.
-            if(parseInt($(this).val()) > parseInt($('#simulacao [name="passagens"]').val())) {
-                $(this).val($('#simulacao [name="passagens"]').val());
+            if(parseInt($(this).val()) > parseInt($('#roteiroedita [name="passagens"]').val())) {
+                $(this).val($('#roteiroedita [name="passagens"]').val());
             }
 
-            $(this).prop('max', $('#simulacao [name="passagens"]').val());
+            $(this).prop('max', $('#roteiroedita [name="passagens"]').val());
         }
     });
 });

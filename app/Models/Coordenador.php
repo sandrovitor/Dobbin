@@ -3,7 +3,7 @@ namespace SGCTUR;
 use SGCTUR\LOG;
 use SGCTUR\Erro;
 
-class Cliente extends Master
+class Coordenador extends Master
 {
     private $id = null;
     private $dados;
@@ -11,16 +11,15 @@ class Cliente extends Master
     private $dependentes = array();
     private $deletado_em = null;
 
-    public function __construct(int $clienteID)
+    public function __construct(int $coordID)
     {
         parent::__construct();
-        if($clienteID <= 0) {
+        if($coordID <= 0) {
             $this->dados = null;
-            $this->dependentes = null;
             return false;
         }
 
-        $this->id = $clienteID;
+        $this->id = $coordID;
         $this->loadInfoBD();
     }
 
@@ -31,10 +30,9 @@ class Cliente extends Master
     {
         if($this->id  !== 0) {
 
-            $abc = $this->pdo->query('SELECT clientes.*, CONCAT(login.nome, " ", login.sobrenome) as usuario FROM clientes LEFT JOIN login ON clientes.deletado_por = login.id WHERE clientes.id = '.$this->id);
+            $abc = $this->pdo->query('SELECT coordenadores.*, CONCAT(login.nome, " ", login.sobrenome) as usuario FROM coordenadores LEFT JOIN login ON coordenadores.deletado_por = login.id WHERE coordenadores.id = '.$this->id);
             if($abc->rowCount() == 0) {
                 $this->dados = null;
-                $this->dependentes = null;
                 return false;
             } else {
                 $x = $abc->fetch(\PDO::FETCH_OBJ);
@@ -42,16 +40,6 @@ class Cliente extends Master
                 $this->dados = $x;
                 if($x->deletado_em !== null) {
                     $this->deletado_em = new \DateTime($x->deletado_em);
-                }
-
-                if($x->titular == 0) {
-                    // Verifica se há dependentes
-                    $abc = $this->pdo->query('SELECT id, nome FROM clientes WHERE titular = '.$this->id.' ORDER BY nome ASC');
-                    if($abc->rowCount() > 0) {
-                        while ($reg = $abc->fetch(\PDO::FETCH_OBJ)) {
-                            $this->dependentes[$reg->id] = $reg->nome;
-                        }
-                    }
                 }
 
                 // Faixa etária    
@@ -82,7 +70,7 @@ class Cliente extends Master
     }
     
     /**
-     * Retorna os dados da ficha do cliente.
+     * Retorna os dados da ficha do coordenador.
      * 
      * @return mixed Se falha, retorna FALSE; se sucesso, retorna uma instância stdClass.
      */
@@ -98,22 +86,7 @@ class Cliente extends Master
     }
 
     /**
-     * Retorna lista de dependentes.
-     * 
-     * @return array Caso o cliente seja um titular com dependentes, retorna lista com ID e nome.
-     * Se o cliente não for titular ou não tiver dependentes, retorna um array vazio.
-     */
-    public function getDependentes()
-    {
-        if($this->dados == null) {
-            return false;
-        }
-        
-        return $this->dependentes;
-    }
-
-    /**
-     * Apaga o cliente no modo "soft-delete" (o registro é removido automaticamente através de cronjob).
+     * Apaga o coordenador no modo "soft-delete" (o registro é removido automaticamente através de cronjob).
      * 
      * @return bool
      */
@@ -127,20 +100,20 @@ class Cliente extends Master
             return false;
         }
 
-        $abc = $this->pdo->query('SELECT * FROM clientes WHERE id = '.$this->id);
+        $abc = $this->pdo->query('SELECT * FROM coordenadores WHERE id = '.$this->id);
         if($abc->rowCount() == 0) {
-            // Cliente não existe.
+            // Coordenador não existe.
             return false;
         } else {
             $reg = $abc->fetch(\PDO::FETCH_OBJ);
             // Apaga (soft-delete).
-            $abc = $this->pdo->query('UPDATE clientes SET deletado_em = NOW(), deletado_por = '.$_SESSION['auth']['id'].' WHERE id = '.$this->id);
+            $abc = $this->pdo->query('UPDATE coordenadores SET deletado_em = NOW(), deletado_por = '.$_SESSION['auth']['id'].' WHERE id = '.$this->id);
             $this->loadInfoBD();
             /**
              * LOG
              */
             $log = new LOG();
-            $log->novo('Excluiu o cliente <i>'.$reg->nome.'</i> [Cód.: '.$reg->id.'].', $_SESSION['auth']['id'], 4);
+            $log->novo('Excluiu o coordenador <i>'.$reg->nome.'</i> [Cód.: '.$reg->id.'].', $_SESSION['auth']['id'], 4);
             /**
              * ./LOG
              */
@@ -150,7 +123,7 @@ class Cliente extends Master
     }
 
     /**
-     * Restaura o cliente que está na lixeira (soft-delete).
+     * Restaura o coordenador que está na lixeira (soft-delete).
      * 
      * @return bool
      */
@@ -164,20 +137,20 @@ class Cliente extends Master
             return false;
         }
 
-        $abc = $this->pdo->query('SELECT * FROM clientes WHERE id = '.$this->id);
+        $abc = $this->pdo->query('SELECT * FROM coordenadores WHERE id = '.$this->id);
         if($abc->rowCount() == 0) {
-            // Cliente não existe.
+            // Coordenador não existe.
             return false;
         } else {
             $reg = $abc->fetch(\PDO::FETCH_OBJ);
-            // Apaga (soft-delete).
-            $abc = $this->pdo->query('UPDATE clientes SET deletado_em = NULL, deletado_por = 0 WHERE id = '.$this->id);
+            // Restaura do soft-delete.
+            $abc = $this->pdo->query('UPDATE coordenadores SET deletado_em = NULL, deletado_por = 0 WHERE id = '.$this->id);
             $this->loadInfoBD();
             /**
              * LOG
              */
             $log = new LOG();
-            $log->novo('Restaurou da lixeira o cliente <i>'.$reg->nome.'</i> [Cód.: '.$reg->id.'].', $_SESSION['auth']['id'], 3);
+            $log->novo('Restaurou da lixeira o coordenador <i>'.$reg->nome.'</i> [Cód.: '.$reg->id.'].', $_SESSION['auth']['id'], 3);
             /**
              * ./LOG
              */
@@ -187,7 +160,7 @@ class Cliente extends Master
     }
 
     /**
-     * Define novos dados do cliente.
+     * Define novos dados do coordenador.
      * 
      * @param array $dados Array associativo de parametros atualizados.
      * 
@@ -199,7 +172,7 @@ class Cliente extends Master
             return null;
         }
 
-        unset($dados['id'], $dados['criado_em'], $dados['atualizado_em'], $dados['dependente'], $dados['deletado_em'], $dados['deletado_por']);
+        unset($dados['id'], $dados['criado_em'], $dados['atualizado_em'], $dados['dependente'], $dados['titular'], $dados['deletado_em'], $dados['deletado_por']);
         foreach($dados as $key => $val) {
             if(isset($this->dados->$key) && $this->dados->$key != $val) {
                 $this->dadosNovo[$key] = $val;
@@ -208,7 +181,7 @@ class Cliente extends Master
     }
 
     /**
-     * Salva as alterações no cliente, usando o método setDados().
+     * Salva as alterações no coordenador, usando o método setDados().
      * 
      * @return void
      */
@@ -223,7 +196,7 @@ class Cliente extends Master
         }
 
         $campos = array();
-        $sql = 'UPDATE clientes SET ';
+        $sql = 'UPDATE coordenadores SET ';
         foreach($this->dadosNovo as $key => $val) {
             $sql .= '`'.$key.'` = "'.trim($val).'",';
 
@@ -281,7 +254,7 @@ class Cliente extends Master
     }
 
     /**
-     * EXCLUI O CLIENTE (DEFINITIVAMENTE) DA LIXEIRA.
+     * EXCLUI O COORDENADOR (DEFINITIVAMENTE) DA LIXEIRA.
      * 
      * @return mixed Em caso de sucesso, retorna TRUE; em caso de falha, retorna string.
      */
@@ -295,12 +268,12 @@ class Cliente extends Master
             return Erro::getMessage(108);
         }
 
-        $abc=$this->pdo->query('DELETE FROM clientes WHERE clientes.id = '.$this->id);
+        $abc=$this->pdo->query('DELETE FROM coordenadores WHERE coordenadores.id = '.$this->id);
         /**
          * LOG
          */
         $log = new LOG();
-        $log->novo('Excluiu o cliente <i>'.$this->dados->nome.'</i> [Cód. '.$this->id.'] definitivamente.', $_SESSION['auth']['id'], 4);
+        $log->novo('Excluiu o coordenador <i>'.$this->dados->nome.'</i> [Cód. '.$this->id.'] definitivamente.', $_SESSION['auth']['id'], 4);
         /**
          * ./LOG
          */

@@ -4,6 +4,7 @@ Use eftec\bladeone\BladeOne;
 Use Cocur\Slugify\Slugify;
 Use SGCTUR\SGCTUR;
 Use SGCTUR\Cliente;
+Use SGCTUR\Coordenador;
 Use SGCTUR\Usuario;
 Use SGCTUR\LOG;
 Use SGCTUR\Erro;
@@ -141,6 +142,122 @@ class ControllerForm
         ];
 
         $c = new Cliente($p['id']);
+        $cliente = $c->getDados();
+        $ret = $c->apagarLixeira();
+
+        if($ret === true) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = $ret;
+        }
+
+        return json_encode($retorno);
+    }
+
+    /**
+     * COORDENADORES
+     */
+
+    static function coordenadoresNovo($p)
+    {
+        self::validaConexao(2);
+
+        $sgc = new SGCTUR();
+        $ret = $sgc->setCoordenadorNovo($_POST);
+
+        return json_encode($ret);
+    }
+
+    static function coordenadoresBuscar($p)
+    {
+        self::validaConexao(2);
+        //return json_encode($_POST);
+
+        $sgc = new SGCTUR();
+
+        return json_encode($sgc->getCoordenadoresBusca($_POST['busca']));
+    }
+
+    static function coordenadoresLista($p)
+    {
+        self::validaConexao(2);
+
+        $sgc = new SGCTUR();
+        return json_encode($sgc->getCoordenadoresLista($_POST['ini'], $_POST['qtd'], ['nome'], SGCTUR::ORDER_ASC));
+    }
+
+    static function coordenadoresSalvar($p)
+    {
+        self::validaConexao(2);
+
+        $retorno = array(
+            'success' => true,
+            'mensagem' => ''
+        );
+        $dados = $_POST;
+
+        $c = new Coordenador($_POST['id']);
+        $c->setDados($dados);
+        $c->salvar();
+        
+        return json_encode($retorno);
+    }
+
+    static function coordenadoresApagar($p)
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        self::validaConexao(2);
+
+        $c = new Coordenador($p['id']);
+        $ret = $c->apagar();
+
+        if($ret == true) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = Erro::getMessage(106);
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadoresRestaurar($p)
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        self::validaConexao(2);
+
+        $c = new Coordenador($p['id']);
+        $ret = $c->restaurar();
+
+        if($ret == true) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = Erro::getMessage(107);
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function coordenadoresLixeiraApagar($p)
+    {
+        self::validaConexao(2);
+        if($p['id'] == '' || (int)$p['id'] <= 0 ) {
+            return Erro::getMessage(100);
+        }
+
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $c = new Coordenador($p['id']);
         $cliente = $c->getDados();
         $ret = $c->apagarLixeira();
 
@@ -544,6 +661,14 @@ class ControllerForm
         return json_encode($retorno);
     }
 
+    static function roteirosLista($p)
+    {
+        self::validaConexao(2);
+
+        $sgc = new SGCTUR();
+        return json_encode($sgc->getRoteirosLista($_POST['ini'], $_POST['qtd'], ['ano', 'mes', 'nome'], [SGCTUR::ORDER_DESC, SGCTUR::ORDER_DESC, SGCTUR::ORDER_ASC]));
+    }
+
     static function roteirosHistoricoNovo($p)
     {
         self::validaConexao(2);
@@ -599,6 +724,150 @@ class ControllerForm
             $retorno['mensagem'] = Erro::getMessage(70);
         }
 
+        return json_encode($retorno);
+    }
+
+    static function roteirosSalvar($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        //$retorno['mensagem'] = print_r((array)json_decode($_POST['dados']));
+
+        $rot = new Roteiro($p['id']);
+        $rot->setDados((array)json_decode($_POST['dados']));
+        $ret = $rot->salvar();
+
+        if($ret === true) {
+            $retorno['success'] = true;
+        } else if($ret === false) {
+            $retorno['mensagem'] = Erro::getMessage(241);
+        } else {
+            $retorno['mensagem'] = $ret;
+            print_r($ret);
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosApagar($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        if($roteiro->getDados() === false) {
+            $retorno['mensagem'] = Erro::getMessage(243);
+            return json_encode($retorno);
+        }
+
+        if($roteiro->apagar()) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = Erro::getMessage(242);
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosRestaurar($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        if($roteiro->getDados() === false) {
+            $retorno['mensagem'] = Erro::getMessage(243);
+            return json_encode($retorno);
+        }
+
+        if($roteiro->restaurar()) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = Erro::getMessage(244);
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosApagarLixeira($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        if($roteiro->getDados() === false) {
+            $retorno['mensagem'] = Erro::getMessage(243);
+            return json_encode($retorno);
+        }
+
+        if($roteiro->apagarLixeira()) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = Erro::getMessage(245);
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function roteiroCriarCopia($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $cop = json_decode($_POST['roteiro']);
+
+        $roteiro = new Roteiro($cop->id);
+        $roteiroDados = $roteiro->getDados();
+
+        if($roteiroDados === false) {
+            // Retorna erro, pq roteiro não existe ou foi apagado.
+            $retorno['mensagem'] = Erro::getMessage(243);
+            return json_encode($retorno);
+        }
+
+        $roteiroDados->data_ini = $cop->data_ini;
+        $roteiroDados->data_fim = $cop->data_fim;
+        $roteiroDados->parceiros = json_decode($roteiroDados->parceiros);
+
+        
+        $sgc = new SGCTUR();
+       
+        $ret = $sgc->setRoteiroNovo((array)$roteiroDados);
+        if($ret === false) {
+            // Retorna erro, pq não conseguiu salvar o novo roteiro.
+            $retorno['mensagem'] = Erro::getMessage(240);
+            return json_encode($retorno);
+        }
+        
+
+        // Busca o último roteiro lançado numa lista de últimos roteiros.
+        $lista = $sgc->getRoteirosLista();
+        $novoID = '';
+        foreach($lista['roteiros'] as $l) {
+            if($l->nome == $roteiroDados->nome && $l->data_ini == $roteiroDados->data_ini && $l->data_fim == $roteiroDados->data_fim) {
+                $novoID = $l->id;
+                break;
+            }
+        }
+
+        $retorno['success'] = true;
+        $retorno['roteiro']['id'] = $novoID;
         return json_encode($retorno);
     }
 

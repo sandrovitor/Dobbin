@@ -141,7 +141,9 @@ class SGCTUR extends Master
         $retorno['consumo']['parceiros'] = (int)$reg->total;
 
         // Roteiros
-        $retorno['consumo']['roteiros'] = 0;
+        $abc = $this->pdo->query('SELECT COUNT(id) as total FROM roteiros WHERE 1');
+        $reg = $abc->fetch(\PDO::FETCH_OBJ);
+        $retorno['consumo']['roteiros'] = (int)$reg->total;
 
         // Vendas
         $retorno['consumo']['vendas'] = 0;
@@ -167,6 +169,18 @@ class SGCTUR extends Master
     }
 
     /**
+     * Retorna total de coordenadores na plataforma.
+     * 
+     * @return int
+     */
+    public function getCoordenadoresTotal()
+    {
+        $abc = $this->pdo->query('SELECT COUNT(id) as total FROM coordenadores WHERE deletado_em IS NULL');
+        $x = $abc->fetch(\PDO::FETCH_OBJ);
+        return (int)$x->total;
+    }
+
+    /**
      * Retorna total de usuarios na plataforma.
      * 
      * @return int
@@ -174,6 +188,18 @@ class SGCTUR extends Master
     public function getUsuariosTotal()
     {
         $abc = $this->pdo->query('SELECT COUNT(id) as total FROM login WHERE 1');
+        $x = $abc->fetch(\PDO::FETCH_OBJ);
+        return (int)$x->total;
+    }
+
+    /**
+     * Retorna total de roteiros na plataforma.
+     * 
+     * @return int
+     */
+    public function getRoteirosTotal()
+    {
+        $abc = $this->pdo->query('SELECT COUNT(id) as total FROM roteiros WHERE deletado_em IS NULL');
         $x = $abc->fetch(\PDO::FETCH_OBJ);
         return (int)$x->total;
     }
@@ -258,6 +284,84 @@ class SGCTUR extends Master
     }
 
     /**
+     * Retorna lista de coordenadores na plataforma.
+     * 
+     * @param int $inicio Onde o ponteiro de busca deve iniciar.
+     * @param int $qtd Total de registros que a busca deve retornar.
+     * @param array $ordem_por Campo a ser ordenado. Ex.: nome, email, cidade, estado, criado_em...
+     * @param const Ordenar ASCENDENTE ou DESCENDENTE.
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING, clientes => ARRAY]
+     */
+    public function getCoordenadoresLista(int $inicio = 0, int $qtd = 20, array $ordem_por = ['criado_em'], $ordem = SGCTUR::ORDER_ASC)
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        if($qtd == 0) {
+            $limit = '';
+        } else {
+            $limit = 'LIMIT '.$inicio.', '.$qtd;
+        }
+
+        $str_ordem = '';
+        if(empty($ordem_por)) {
+            $retorno['mensagem'] = Erro::getMessage(9);
+            return $retorno;
+        }
+        foreach($ordem_por as $o) {
+            switch($o) {
+                case 'nome':
+                case 'email':
+                case 'cidade':
+                case 'estado':
+                case 'criado_em':
+                    $str_ordem .= $o;
+
+                    if($ordem == 1) {
+                        // ASCENDENTE
+                        $str_ordem .= ' ASC, ';
+                    } else {
+                        // DESCENDENTE
+                        $str_ordem .= ' DESC, ';
+                    }
+                break;
+            }
+
+            
+        }
+
+        $str_ordem = substr($str_ordem, 0, -2);
+
+        $abc = $this->pdo->prepare('SELECT * FROM coordenadores WHERE deletado_em IS NULL ORDER BY '.$str_ordem.' '.$limit);
+
+        $abc->bindValue(':ini', $inicio, \PDO::PARAM_INT);
+        $abc->bindValue(':qtd', $qtd, \PDO::PARAM_INT);
+
+        try {
+            $abc->execute();
+        } catch(\PDOException $e) {
+            $retorno['mensagem'] = Erro::getMessage(70);
+            \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+            \error_log($e->getMessage(), 0);
+
+            return $retorno;
+        }
+
+        
+        $retorno['success'] = true;
+        if($abc->rowCount() == 0) {
+            $retorno['coordenadores'] = array();
+        } else {
+            $retorno['coordenadores'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+        }
+
+        return $retorno;
+    }
+
+    /**
      * Faz a busca de uma string em NOME, EMAIL, CIDADE, ENDEREÇO, COMPLEMENTO,
      * PONTO DE REFERÊNCIA e BAIRRO. (Não precisa enviar ID no construtor).
      * 
@@ -273,7 +377,7 @@ class SGCTUR extends Master
         );
 
         if(trim($busca) == '') {
-            $abc= $this->pdo->query('SELECT * FROM clientes WHERE deletado_em IS NULL ORDER BY nome ASC, sobrenome ASC');
+            $abc= $this->pdo->query('SELECT * FROM clientes WHERE deletado_em IS NULL ORDER BY nome ASC');
         } else {
             $abc = $this->pdo->prepare('SELECT * FROM clientes WHERE (nome LIKE :b1 OR email LIKE :b2 OR cidade LIKE :b3 OR endereco LIKE :b4 '.
             'OR complemento LIKE :b5 OR ponto_referencia LIKE :b6 OR bairro LIKE :b7) AND deletado_em IS NULL ORDER BY nome ASC');
@@ -312,6 +416,60 @@ class SGCTUR extends Master
     }
 
     /**
+     * Faz a busca de uma string em NOME, EMAIL, CIDADE, ENDEREÇO, COMPLEMENTO,
+     * PONTO DE REFERÊNCIA e BAIRRO. (Não precisa enviar ID no construtor).
+     * 
+     * @param string $busca String para consulta.
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING, coordenadores => ARRAY]
+     */
+    public function getCoordenadoresBusca(string $busca = '')
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        if(trim($busca) == '') {
+            $abc= $this->pdo->query('SELECT * FROM coordenadores WHERE deletado_em IS NULL ORDER BY nome ASC');
+        } else {
+            $abc = $this->pdo->prepare('SELECT * FROM coordenadores WHERE (nome LIKE :b1 OR email LIKE :b2 OR cidade LIKE :b3 OR endereco LIKE :b4 '.
+            'OR complemento LIKE :b5 OR ponto_referencia LIKE :b6 OR bairro LIKE :b7) AND deletado_em IS NULL ORDER BY nome ASC');
+            $abc->bindValue(':b1', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b2', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b3', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b4', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b5', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b6', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b7', '%'.trim($busca).'%', \PDO::PARAM_STR);
+
+            try {
+                $abc->execute();
+            } catch(\PDOException $e) {
+                $retorno['mensagem'] = Erro::getMessage(70);
+                \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+                \error_log($e->getMessage(), 0);
+                return $retorno;
+            }
+        }
+
+        $retorno['success'] = true;
+        if($abc->rowCount() == 0) {
+            $retorno['coordenadores'] = array();
+        } else if($abc->rowCount() <= 200)  {
+            $retorno['coordenadores'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+        } else {
+            $retorno['coordenadores'] = array();
+            $retorno['mensagem'] = 'Total de '.$abc->rowCount().' registros encontrados. Mostrando os primeiros 200 registros. Tente refinar a busca.';
+            for($i = 0; $i < 200; $i++) {
+                array_push($retorno['coordenadores'], $abc->fetch(\PDO::FETCH_OBJ));
+            }
+        }
+
+        return $retorno;
+    }
+    
+    /**
      * Retorna clientes apagados (soft-delete).
      * 
      * @return array [success => TRUE|FALSE, mensagem => STRING, clientes => ARRAY]
@@ -330,6 +488,56 @@ class SGCTUR extends Master
             $retorno['success'] = true;
         } else {
             $retorno['clientes'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+            $retorno['success'] = true;
+        }
+
+        return $retorno;
+    }
+
+    /**
+     * Retorna coordenadores apagados (soft-delete).
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING, coordenadores => ARRAY]
+     */
+    public function getCoordenadoresLixeira()
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => '',
+        );
+
+        $abc = $this->pdo->query('SELECT coordenadores.id, coordenadores.nome, coordenadores.email, coordenadores.cidade, coordenadores.estado, coordenadores.deletado_em, coordenadores.deletado_por, '.
+        'CONCAT(login.nome," ", login.sobrenome) as usuario FROM coordenadores LEFT JOIN login ON coordenadores.deletado_por = login.id WHERE coordenadores.deletado_em IS NOT NULL');
+        if($abc->rowCount() == 0) {
+            $retorno['coordenadores'] = array();
+            $retorno['success'] = true;
+        } else {
+            $retorno['coordenadores'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+            $retorno['success'] = true;
+        }
+
+        return $retorno;
+    }
+
+    /**
+     * Retorna roteiros apagados (soft-delete).
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING, roteiros => ARRAY]
+     */
+    public function getRoteirosLixeira()
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => '',
+        );
+
+        $abc = $this->pdo->query('SELECT roteiros.id, roteiros.nome, roteiros.data_ini, roteiros.data_fim, roteiros.deletado_em, roteiros.deletado_por, '.
+        'CONCAT(login.nome," ", login.sobrenome) as usuario FROM roteiros LEFT JOIN login ON roteiros.deletado_por = login.id WHERE roteiros.deletado_em IS NOT NULL');
+        if($abc->rowCount() == 0) {
+            $retorno['roteiros'] = array();
+            $retorno['success'] = true;
+        } else {
+            $retorno['roteiros'] = $abc->fetchAll(\PDO::FETCH_OBJ);
             $retorno['success'] = true;
         }
 
@@ -409,6 +617,11 @@ class SGCTUR extends Master
             ":complemento, :ponto_referencia, :bairro, :cep, :cidade, :estado, :sangue, :alergia, ".
             ":em_nome, :em_tel, :taxa_extra, :titular, NOW(), NOW())";
         $abc = $this->pdo->prepare($sql);
+        
+        // Faz o TRIM nos dados
+        foreach($dados as $key => $val) {
+            $dados[$key] = trim($val);
+        }
 
         $abc->bindValue(':nome', $dados['nome'], \PDO::PARAM_STR);
         $abc->bindValue(':email', $dados['email'], \PDO::PARAM_STR);
@@ -439,6 +652,87 @@ class SGCTUR extends Master
              */
             $log = new LOG();
             $log->novo('Criou um novo cliente <i>'.$dados['nome'].'</i>.', $_SESSION['auth']['id'], 1);
+            /**
+             * ./LOG
+             */
+        } catch(\PDOException $e) {
+            $retorno['mensagem'] = Erro::getMessage(70);
+            \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+            \error_log($e->getMessage(), 0);
+        }
+        
+        return $retorno;
+        
+    }
+
+    /**
+     * Cria novo coordenador. (Não precisa enviar ID no construtor).
+     * 
+     * @param array  $dados => [$nome, $nascimento, $rg, $cpf
+     *      $email, $telefone, $endereco, $complemento,
+     *      $ponto_referencia, $bairro, $cidade, $estado,
+     *      $cep, $estado_civil, $alergia, $emergencia_nome,
+     *      $emergencia_tel, $sangue]
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING]
+     */
+    public function setCoordenadorNovo(array $dados)
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        if(empty($dados) || !isset($dados['nome']) || $dados['nome'] == '') {
+            $retorno['mensagem'] = Erro::getMessage(100);
+            return $retorno;
+        }
+
+        /**
+         * VALIDA OS DADOS
+         */
+
+        // Lança cliente no Banco de Dados.
+        $sql = "INSERT INTO coordenadores (id, nome, email, telefone, rg, cpf, nascimento, estado_civil, ".
+            "endereco, complemento, ponto_referencia, bairro, cep, cidade, estado, sangue, alergia, emergencia_nome, ".
+            "emergencia_tel, criado_em, atualizado_em) ".
+        "VALUES (null, :nome, :email, :tel, :rg, :cpf, :nascimento, :estado_civil, :endereco, ".
+            ":complemento, :ponto_referencia, :bairro, :cep, :cidade, :estado, :sangue, :alergia, ".
+            ":em_nome, :em_tel, NOW(), NOW())";
+        $abc = $this->pdo->prepare($sql);
+
+        // Faz o TRIM nos dados
+        foreach($dados as $key => $val) {
+            $dados[$key] = trim($val);
+        }
+
+        $abc->bindValue(':nome', $dados['nome'], \PDO::PARAM_STR);
+        $abc->bindValue(':email', $dados['email'], \PDO::PARAM_STR);
+        $abc->bindValue(':tel', $dados['telefone'], \PDO::PARAM_STR);
+        $abc->bindValue(':rg', $dados['rg'], \PDO::PARAM_STR);
+        $abc->bindValue(':cpf', $dados['cpf'], \PDO::PARAM_STR);
+        $abc->bindValue(':nascimento', $dados['nascimento'], \PDO::PARAM_STR);
+        $abc->bindValue(':estado_civil', $dados['estado_civil'], \PDO::PARAM_STR);
+        $abc->bindValue(':endereco', $dados['endereco'], \PDO::PARAM_STR);
+        $abc->bindValue(':complemento', $dados['complemento'], \PDO::PARAM_STR);
+        $abc->bindValue(':ponto_referencia', $dados['ponto_referencia'], \PDO::PARAM_STR);
+        $abc->bindValue(':bairro', $dados['bairro'], \PDO::PARAM_STR);
+        $abc->bindValue(':cep', $dados['cep'], \PDO::PARAM_STR);
+        $abc->bindValue(':cidade', $dados['cidade'], \PDO::PARAM_STR);
+        $abc->bindValue(':estado', $dados['estado'], \PDO::PARAM_STR);
+        $abc->bindValue(':sangue', $dados['sangue'], \PDO::PARAM_STR);
+        $abc->bindValue(':alergia', $dados['alergia'], \PDO::PARAM_STR);
+        $abc->bindValue(':em_nome', $dados['emergencia_nome'], \PDO::PARAM_STR);
+        $abc->bindValue(':em_tel', $dados['emergencia_tel'], \PDO::PARAM_STR);
+
+        try {
+            $abc->execute();
+            $retorno['success'] = true;
+            /**
+             * LOG
+             */
+            $log = new LOG();
+            $log->novo('Criou um novo coordenador <i>'.$dados['nome'].'</i>.', $_SESSION['auth']['id'], 1);
             /**
              * ./LOG
              */
@@ -532,6 +826,14 @@ class SGCTUR extends Master
         $senhaOptions = array(
             "cost" => $this->system->senha_cost
         );
+        // Faz o TRIM nos dados
+        foreach($dados as $key => $val) {
+            if($key == 'senha1' || $key == 'senha2') {
+
+            } else {
+                $dados[$key] = trim($val);
+            }
+        }
 
         $abc->bindValue(':nome', $dados['nome'], \PDO::PARAM_STR);
         $abc->bindValue(':sobrenome', $dados['sobrenome'], \PDO::PARAM_STR);
@@ -794,6 +1096,11 @@ class SGCTUR extends Master
             $abc = $this->pdo->prepare('INSERT INTO `parc_empresa` (`id`, `razao_social`, `nome_fantasia`, `doc_tipo`, `doc_numero`, `endereco`, `cidade`, `estado`, `responsavel`, `criado_em`) '.
             'VALUES (NULL, :rs, :nf, :doctipo, :docnum, :endereco, :cidade, :estado, :resp, NOW())');
 
+            // Faz o TRIM nos dados
+            foreach($dados as $key => $val) {
+                $dados[$key] = trim($val);
+            }
+
             $abc->bindValue(':rs', $dados['razao_social'], \PDO::PARAM_STR);
             $abc->bindValue(':nf', $dados['fantasia'], \PDO::PARAM_STR);
             $abc->bindValue(':doctipo', $dados['doc_tipo'], \PDO::PARAM_STR);
@@ -1051,11 +1358,35 @@ class SGCTUR extends Master
         // Cálculo do lucro total previsto.
         $lucro['lucroTotal'] = $lucro['lucroRateio'] + $lucro['lucroPoltronaLivre'];
         
+        //---
+
+        // Verifica se alguns outros dados foram enviados e estão no formato certo.
+        // Tarifa
+        if(isset($dados['tarifa'])) {
+            if(is_array($dados['tarifa']) && !empty($dados['tarifa'])) {
+                $dados['tarifa'] = json_encode($dados['tarifa']);
+            }
+        } else {
+            $dados['tarifa'] = '';
+        }
+
+        // Observações
+        if(!isset($dados['obs'])) {
+            $dados['obs'] = '';
+        }
+        
 
         // Persiste dados.
         try {
             $abc = $this->pdo->prepare("INSERT INTO `roteiros` (`id`, `nome`, `data_ini`, `data_fim`, `passagens`, `qtd_coordenador`, `coordenador`, `clientes`, `despesas`, `parceiros`, `qtd_rateio`, `taxa_lucro`, `lucro_previsto`, `tarifa`, `reserva_qtd`, `reserva_obs`, `obs`, `criado_em`, `criado_por`, `atualizado_em`, `deletado_em`, `deletado_por`) VALUES ".
-            "(NULL, :nome, :datai, :dataf, :pass, :qtd_coord, '', '', :despesas, :parceiros, :qtd_rateio, :taxa_lucro, :lucro_previsto, '', '', '', '', current_timestamp(), ".$_SESSION['auth']['id'].", current_timestamp(), NULL, NULL)");
+            "(NULL, :nome, :datai, :dataf, :pass, :qtd_coord, '', '', :despesas, :parceiros, :qtd_rateio, :taxa_lucro, :lucro_previsto, :tarifa, '', '', :obs, current_timestamp(), ".$_SESSION['auth']['id'].", current_timestamp(), NULL, NULL)");
+
+            // Faz o TRIM nas string dos dados
+            foreach($dados as $key => $val) {
+                if(is_string($val)) {
+                    $dados[$key] = trim($val);
+                }
+            }
 
             $abc->bindValue(':nome', $dados['nome'], \PDO::PARAM_STR);
             $abc->bindValue(':datai', $dados['data_ini'], \PDO::PARAM_STR);
@@ -1068,8 +1399,20 @@ class SGCTUR extends Master
             $abc->bindValue(':qtd_rateio', $dados['qtd_rateio'], \PDO::PARAM_INT);
             $abc->bindValue(':taxa_lucro', $dados['taxa_lucro'], \PDO::PARAM_INT);
             $abc->bindValue(':lucro_previsto', json_encode($lucro), \PDO::PARAM_STR);
+            $abc->bindValue(':tarifa', addslashes($dados['tarifa']), \PDO::PARAM_STR);
+            $abc->bindValue(':obs', addslashes($dados['obs']), \PDO::PARAM_STR);
 
             $abc->execute();
+            /**
+             * LOG
+             */
+            $d_i = new \DateTime($dados['data_ini']);
+            $d_f = new \DateTime($dados['data_fim']);
+            $log = new LOG();
+            $log->novo('Criou um novo roteiro: <b>'.$dados['nome'].' ('.$d_i->format('d/m/Y').' a '.$d_f->format('d/m/Y').')</b>.', $_SESSION['auth']['id'], 1);
+            /**
+             * ./LOG
+             */
 
             return true;
         } catch(\PDOException $e) {
@@ -1084,12 +1427,12 @@ class SGCTUR extends Master
      * 
      * @param int $inicio Onde o ponteiro de busca deve iniciar.
      * @param int $qtd Total de registros que a busca deve retornar.
-     * @param array $ordem_por Campo a ser ordenado. Ex.: nome, data_ini, data_fim, criado_em, atualizado_em...
+     * @param array $ordem_por Campo a ser ordenado. Ex.: nome, data_ini, data_fim, mes, ano criado_em, atualizado_em...
      * @param const Ordenar ASCENDENTE ou DESCENDENTE.
      * 
-     * @return array [success => TRUE|FALSE, mensagem => STRING, usuarios => ARRAY]
+     * @return array [success => TRUE|FALSE, mensagem => STRING, roteiros => ARRAY]
      */
-    public function getRoteirosLista(int $inicio = 0, int $qtd = 20, array $ordem_por = ['criado_em'], $ordem = SGCTUR::ORDER_DESC)
+    public function getRoteirosLista(int $inicio = 0, int $qtd = 20, array $ordem_por = ['criado_em'], array $ordem = [SGCTUR::ORDER_DESC])
     {
         $retorno = array(
             'success' => false,
@@ -1107,21 +1450,38 @@ class SGCTUR extends Master
             $retorno['mensagem'] = Erro::getMessage(9);
             return $retorno;
         }
-        foreach($ordem_por as $o) {
+        foreach($ordem_por as $key => $o) {
             switch($o) {
                 case 'nome':
                 case 'data_ini':
                 case 'data_fim':
                 case 'criado_em':
                 case 'atualizado_em':
+                case 'mes':
+                case 'ano':
                     $str_ordem .= $o;
-                    if($ordem == 1) {
-                        // ASCENDENTE
-                        $str_ordem .= ' ASC, ';
+                    
+                    if(!isset($ordem[$key]) || $ordem[$key] == '') {
+                        // Se este índice não estiver setado, usa o primeiro indice.
+                        if($ordem[0] == 1) {
+                            // ASCENDENTE
+                            $str_ordem .= ' ASC, ';
+                        } else {
+                            // DESCENDENTE
+                            $str_ordem .= ' DESC, ';
+                        }
                     } else {
-                        // DESCENDENTE
-                        $str_ordem .= ' DESC, ';
+                        // Indice setado.
+                        if($ordem[$key] == 1) {
+                            // ASCENDENTE
+                            $str_ordem .= ' ASC, ';
+                        } else {
+                            // DESCENDENTE
+                            $str_ordem .= ' DESC, ';
+                        }
+
                     }
+                    
                 break;
             }
 
@@ -1130,7 +1490,7 @@ class SGCTUR extends Master
 
         $str_ordem = substr($str_ordem, 0, -2);
 
-        $abc = $this->pdo->prepare('SELECT id, nome, data_ini, data_fim, passagens, qtd_coordenador, criado_em FROM roteiros WHERE 1 ORDER BY '.$str_ordem.' '.$limit);
+        $abc = $this->pdo->prepare('SELECT id, nome, data_ini, data_fim, MONTH(data_ini) as mes, YEAR(data_ini) as ano, passagens, qtd_coordenador, criado_em FROM roteiros WHERE deletado_em IS NULL ORDER BY '.$str_ordem.' '.$limit);
         $abc->bindValue(':ini', $inicio, \PDO::PARAM_INT);
         $abc->bindValue(':qtd', $qtd, \PDO::PARAM_INT);
 
