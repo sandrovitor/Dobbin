@@ -223,6 +223,81 @@ class Roteiro extends Master
     }
 
     /**
+     * Adiciona coordenador ao roteiro.
+     * 
+     * @param int $coord ID do coordenador que será adicionado.
+     * 
+     * @return bool
+     */
+    public function setCoordenadorAdd(int $coord)
+    {
+        if($this->dados->coordenador == '') {
+            $coordenadores = array();
+        } else {
+            $coordenadores = json_decode($this->dados->coordenador);
+        }
+
+        // verifica se o coordenador já foi adicionado.
+        if(array_search($coord, $coordenadores) === false) {
+            // Não encontrado, adiciona coordenador.
+            if(count($coordenadores) < $this->dados->qtd_coordenador) {
+                array_push($coordenadores, $coord);
+                $this->dados->coordenador = json_encode($coordenadores);
+
+                $abc = $this->pdo->prepare("UPDATE roteiros SET coordenador = :c WHERE id = $this->id");
+                $abc->bindValue(':c', $this->dados->coordenador, \PDO::PARAM_STR);
+                $abc->execute();
+
+                return true;
+            } else {
+                // Limite de coordenadores alcançado.
+                return false;
+            }
+        } else {
+            // Encontrado.
+            return true;
+        }
+    }
+
+    /**
+     * Remove coordenador do roteiro.
+     * 
+     * @param int $coord ID do coordenador que será removido.
+     * 
+     * @return bool
+     */
+    public function setCoordenadorRemove(int $coord)
+    {
+        if($this->dados->coordenador == '') {
+            $coordenadores = array();
+        } else {
+            $coordenadores = json_decode($this->dados->coordenador);
+        }
+
+        // verifica se o coordenador já consta.
+        $key = array_search($coord, $coordenadores);
+        if($key === false) {
+            // Não encontrado.
+            return true;
+        } else {
+            // Encontrado. Remove da lista.
+            unset($coordenadores[$key]);
+            if(empty($coordenadores)) {
+                $this->dados->coordenador = '';
+            } else {
+                $this->dados->coordenador = json_encode($coordenadores);
+            }
+            
+
+            $abc = $this->pdo->prepare("UPDATE roteiros SET coordenador = :c WHERE id = $this->id");
+            $abc->bindValue(':c', $this->dados->coordenador, \PDO::PARAM_STR);
+            $abc->execute();
+
+            return true;
+        }
+    }
+
+    /**
      * Persiste os dados no banco.
      * 
      * @return bool

@@ -337,10 +337,33 @@ class ControllerPrincipal
                     $x['geral']->historico = $par->getHistorico(50,0,$p['id']);
                     array_push($parc_array, $x['geral']);
                 }
-    
+                unset($x, $par);
             }
             
             $roteiro->parceiros = $parc_array;
+        }
+
+        // Carrega coordenadores.
+        if($roteiro->coordenador == '') {
+            $roteiro->coordenador = array();
+        } else {
+            $coordenadores = json_decode($roteiro->coordenador);
+            $coord_array = array();
+
+            if(is_array($coordenadores)) {
+                foreach($coordenadores as $a) {
+                    $coord = new Coordenador($a);
+                    $x = $coord->getDados();
+                    array_push($coord_array, [
+                        'id' => $x->id,
+                        'nome' => $x->nome
+                    ]);
+                }
+
+                unset($x, $coord);
+            }
+
+            $roteiro->coordenador = $coord_array;
         }
 
         // Criado por

@@ -871,6 +871,56 @@ class ControllerForm
         return json_encode($retorno);
     }
 
+    static function roteiroAddCoordenador($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        if($roteiro->getDados() === false) {
+            $retorno['mensagem'] = Erro::getMessage(243);
+            return json_encode($retorno);
+        }
+
+        // Adiciona coordenador ao roteiro.
+        $ret = $roteiro->setCoordenadorAdd((int)$p['coord']);
+        if($ret === true) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = Erro::getMessage(246);
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function roteiroRemoveCoordenador($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        if($roteiro->getDados() === false) {
+            $retorno['mensagem'] = Erro::getMessage(243);
+            return json_encode($retorno);
+        }
+
+        // Remove coordenador do roteiro.
+        $ret = $roteiro->setCoordenadorRemove((int)$p['coord']);
+        if($ret === true) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = Erro::getMessage(246);
+        }
+
+        return json_encode($retorno);
+    }
+
 
     /**
      * MINHA CONTA

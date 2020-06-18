@@ -1164,18 +1164,27 @@
     </div>
 </div>
 
-<div class="modal fade" id="">
+<div class="modal fade" id="janCoordenadorSelect">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header py-2 px-3 font-weight-bold">
-                Titulo do modal
+            <div class="modal-header py-2 px-3 font-weight-bold bg-dark text-white">
+                Escolha o coordenador
                 <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
             </div>
             <div class="modal-body">
-            
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control form-control-sm form-control-solid" name="busca" placeholder="Digite para buscar...">
+                        <div class="text-muted small mt-2"> </div>
+                    </div>
+                    <hr>
+
+                    <div class="text-right">
+                        <input type="hidden" name="rid" value="">
+                        <button type="button" class="btn btn-sm btn-primary" data-selecionar disabled onclick="roteiroAddCoordenador(this)">Selecionar</button>
+                        <button type="button" class="btn btn-sm btn-dark" data-dismiss="modal">Cancelar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

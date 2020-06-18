@@ -126,6 +126,8 @@ $router->addRoutes(array(
     array('POST', $prefix.'roteiros/database', 'ControllerForm#roteirosLista'),
     array('POST', $prefix.'roteiros/[i:id]/addhistorico/[i:parcid]', 'ControllerForm#roteirosHistoricoNovo'),
     array('POST', $prefix.'roteiros/[i:id]/tarifa/editar', 'ControllerForm#roteirosTarifaEdita'),
+    array('POST', $prefix.'roteiros/[i:id]/addcoordenador/[i:coord]', 'ControllerForm#roteiroAddCoordenador'),
+    array('POST', $prefix.'roteiros/[i:id]/delcoordenador/[i:coord]', 'ControllerForm#roteiroRemoveCoordenador'),
     array('POST', $prefix.'roteiros/salvar/[i:id]', 'ControllerForm#roteirosSalvar'),
     array('POST', $prefix.'roteiros/apagar/[i:id]', 'ControllerForm#roteirosApagar'),
     array('POST', $prefix.'roteiros/restaurar/[i:id]', 'ControllerForm#roteirosRestaurar'),

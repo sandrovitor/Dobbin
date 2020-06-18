@@ -938,6 +938,29 @@ function janParceirosSelect()
         
 }
 
+function janCoordenadorSelect(sender)
+{
+    if(sender == null || sender == undefined) {
+        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
+        return false;
+    }
+
+    //console.log(target);
+    $('#janCoordenadorSelect').find('[data-selecionar]').attr('disabled','true');
+    //$('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
+    $('#janCoordenadorSelect [name="busca"]').next().text('');
+
+    $('#janCoordenadorSelect table').remove();
+    $('#janCoordenadorSelect form')[0].reset();
+    $('#janCoordenadorSelect form [name="rid"]').val($(sender).data('id'));
+
+
+
+    $('#janCoordenadorSelect').modal('show');
+    //console.log($('#janClienteSelect [data-selecionar]').data('target'));
+        
+}
+
 function searchClienteNome(busca)
 {
     let resultado;
@@ -1034,6 +1057,47 @@ function searchParceiroNome(busca)
                         jan.find('table tbody').append('<tr style="cursor:pointer" data-id="'+r[i].id+'"><td class="small">'+r[i].id+'</td><td>'+nome+'</td><td>'+servicos+'</td></tr>');
                     };
                     nome = undefined;
+
+                }, 200);
+            }
+
+            jan.find('[name="busca"]').next('.text-muted').html('Registros encontrados: &nbsp; '+r.length);
+
+            jan.find('table tbody').slideDown(300);
+        } else {
+            alerta(res.mensagem, 'Ops, espera um pouco!',' warning');
+        }
+        
+    }, 'json');
+}
+
+function searchCoordenadorNome(busca)
+{
+    let resultado;
+    $.post(PREFIX_POST+'coordenadores/buscar', {busca: busca}, function(res){
+        if(res.success == true) {
+            let r = res.coordenadores;
+            let jan = $('#janCoordenadorSelect');
+
+            //console.log(res);
+            if(jan.find('hr').siblings('table').length == 0) {
+                jan.find('hr').after('<table class="table table-selectable table-sm table-hover table-bordered small"><thead class="thead-dark"><tr><th>Cód.</th><th>Nome</th><th>Cidade/Estado</th></tr></thead><tbody></tbody></table>');
+                jan.find('table tbody').slideUp(300);
+            } else {
+                jan.find('table tbody').slideUp(300);
+                jan.find('table tbody').html('');
+            }
+
+            jan.find('[data-selecionar]').attr('disabled','true');
+            jan.find('[name="busca"]').next('.text-muted').html('');
+
+            if(r.length == 0) {
+                jan.find('table tbody').append('<tr style="cursor:not-allowed" disabled><td colspan="3" disabled>Nada encontrado</td></tr>');
+            } else {
+                setTimeout(function(){
+                    for(let i = 0; i < r.length; i++) {
+                        jan.find('table tbody').append('<tr style="cursor:pointer" data-id="'+r[i].id+'"><td class="small">'+r[i].id+'</td><td>'+r[i].nome+'</td><td>'+r[i].cidade+'/'+r[i].estado+'</td></tr>');
+                    };
 
                 }, 200);
             }
@@ -1862,6 +1926,65 @@ function roteiroCriarCopia(sender)
     });
 }
 
+function roteiroAddCoordenador(sender)
+{
+    if(sender == null || sender == undefined) {
+        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
+        return false;
+    }
+
+    let rid = $(sender).siblings('[name="rid"]').val();
+    let linha = $(sender).parents('form').find('tr.selecionado');
+    let coord = linha.data('id');
+
+    if(coord == undefined || rid == '') {
+        return false;
+    }
+
+    $.post(PREFIX_POST+'roteiros/'+rid+'/addcoordenador/'+coord, function(res){
+        if(res.success) {
+            // Verifica se esse coordenador já consta.
+            if($('#listaCoord').find('[data-id="'+coord+'"]').length == 0) {
+                $('#listaCoord').find('ul.list-group').append('<li class="list-group-item d-flex justify-content-between align-items-center py-2 pl-3 pr-2">'+linha.children('td:eq(1)').text() +
+                ' <button type="button" class="btn btn-sm btn-light" data-id="'+coord+'" data-rid="'+rid+'" onclick="roteiroRemoveCoordenador(this)"><i class="fas fa-times fa-fw"></i></button> </li>');
+            }
+            $(sender).siblings('[data-dismiss="modal"]').click();
+
+        } else {
+            alerta(res.mensagem, 'Falha!', 'warning');
+            return false;
+        }
+    }, 'json').fail(function(ev) {
+        nativePOSTFail(ev);
+    });
+}
+
+function roteiroRemoveCoordenador(sender)
+{
+    if(sender == null || sender == undefined) {
+        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
+        return false;
+    }
+
+    let rid = $(sender).data('rid');
+    let coord = $(sender).data('id');
+
+    if(coord == undefined || rid == '') {
+        return false;
+    }
+
+    $.post(PREFIX_POST+'roteiros/'+rid+'/delcoordenador/'+coord, function(res){
+        if(res.success) {
+            $(sender).parents('li').eq(0).remove();
+        } else {
+            alerta(res.mensagem, 'Falha!', 'warning');
+            return false;
+        }
+    }, 'json').fail(function(ev) {
+        nativePOSTFail(ev);
+    });
+}
+
 
 /**
  * ./FIM MODAIS E PÁGINAS
@@ -2282,7 +2405,31 @@ $(document).ready(function(){
         }
     });
 
-    $(document).on('click', '#janClienteSelect table tbody tr, #janParceirosSelect table tbody tr', function(ev){
+    // Busca nome do coordenador
+    $(document).on('keyup', '#janCoordenadorSelect :input[name="busca"]', function(ev){
+        if(
+            (ev.keyCode >= 48 && ev.keyCode <= 90) ||  //[0-9a-z]
+            ev.keyCode == 8 || //[backspace]
+            ev.keyCode == 32 || //[space]
+            ev.keyCode == 46 || //[delete]
+            (ev.keyCode >= 96 && ev.keyCode <= 105) //[numpad 0-9]
+        ) {
+            clearTimeout(timerKEY1);
+            timerKEY1 = setTimeout(function(){
+                
+                
+                if($(ev.target).val().trim().length >= 3) {
+                    searchCoordenadorNome($(ev.target).val().trim());
+                } else {
+                    $('#janCoordenadorSelect').find('[data-selecionar]').attr('disabled','true');
+                    $('#janCoordenadorSelect [name="busca"]').next('.text-muted').html('');
+                    $('#janCoordenadorSelect table').slideUp(300, function(){$(this).remove()});
+                }
+            }, 700);
+        }
+    });
+
+    $(document).on('click', '#janClienteSelect table tbody tr, #janParceirosSelect table tbody tr, #janCoordenadorSelect table tbody tr', function(ev){
         let tr = $(this);
         let jan = tr.parents('.modal');
 
