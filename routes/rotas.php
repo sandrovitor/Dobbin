@@ -43,6 +43,7 @@ $router->map('POST', '/coordenadores/ver/[i:id]', 'ControllerPrincipal#coordenad
 
 $router->map('POST', '/roteiros', 'ControllerPrincipal#roteiros');
 $router->map('POST', '/roteiros/novo', 'ControllerPrincipal#roteirosNovo');
+$router->map('POST', '/roteiros/database', 'ControllerPrincipal#roteirosDatabase');
 $router->map('POST', '/roteiros/simulacao', 'ControllerPrincipal#roteirosSimulacao');
 $router->map('POST', '/roteiros/ver/[i:id]', 'ControllerPrincipal#roteirosVer');
 $router->map('POST', '/roteiros/editar/[i:id]', 'ControllerPrincipal#roteirosEditar');
@@ -122,6 +123,7 @@ $router->addRoutes(array(
 
 
     array('POST', $prefix.'roteiros/novo', 'ControllerForm#roteirosNovo'),
+    array('POST', $prefix.'roteiros/database', 'ControllerForm#roteirosLista'),
     array('POST', $prefix.'roteiros/[i:id]/addhistorico/[i:parcid]', 'ControllerForm#roteirosHistoricoNovo'),
     array('POST', $prefix.'roteiros/[i:id]/tarifa/editar', 'ControllerForm#roteirosTarifaEdita'),
     array('POST', $prefix.'roteiros/salvar/[i:id]', 'ControllerForm#roteirosSalvar'),

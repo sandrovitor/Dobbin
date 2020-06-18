@@ -76,7 +76,7 @@
             //console.log(db);
             let datahora = dbLocal.clientesDBHora;
 
-            $('[data-database-hora]').text(formataDataHora(datahora));
+            $('[data-database-hora]').text(Dobbin.formataDataHora(datahora));
 
             // Escreve linhas da tabela
             let i = 0;

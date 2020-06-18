@@ -661,6 +661,14 @@ class ControllerForm
         return json_encode($retorno);
     }
 
+    static function roteirosLista($p)
+    {
+        self::validaConexao(2);
+
+        $sgc = new SGCTUR();
+        return json_encode($sgc->getRoteirosLista($_POST['ini'], $_POST['qtd'], ['ano', 'mes', 'nome'], [SGCTUR::ORDER_DESC, SGCTUR::ORDER_DESC, SGCTUR::ORDER_ASC]));
+    }
+
     static function roteirosHistoricoNovo($p)
     {
         self::validaConexao(2);

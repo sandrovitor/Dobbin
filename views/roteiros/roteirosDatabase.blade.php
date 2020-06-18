@@ -2,21 +2,19 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                BASE DE DADOS - Coordenadores
+                BASE DE DADOS - Roteiros
             </div>
             <div class="card-body database" style="overflow-x:auto;">
                 <div class="mb-3">
                     <small>Atualizado em: <span data-database-hora class="font-italic"></span></small>.
-                    <button type="button" class="btn btn-info btn-sm" onclick="loadDatabaseCoordenadores()"><i class="fas fa-sync"></i></button>
+                    <button type="button" class="btn btn-info btn-sm" onclick="loadDatabaseRoteiros()"><i class="fas fa-sync"></i></button>
                 </div>
-                <table class="table table-sm table-striped table-bordered" id="clientes">
+                <table class="table table-sm table-bordered" id="clientes">
                     <thead class="bg-primary text-white">
                         <tr>
                             <th>Cód.</th>
-                            <th>Nome</th>
-                            <th>Email</th>
-                            <th>Cidade</th>
-                            <th>Estado</th>
+                            <th>Nome (Partida e Retorno)</th>
+                            <th>Total de Passagens</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -45,17 +43,17 @@
 
 
 <script>
-    function loadDatabaseCoordenadores()
+    function loadDatabaseRoteiros()
     {
         let total = 0;
         //console.log(total);
 
-        $.post(PREFIX_POST+'coordenadores/database', {ini: 0, qtd: total}, function(res){
+        $.post(PREFIX_POST+'roteiros/database', {ini: 0, qtd: total}, function(res){
             //console.log(res);
 
             if(res.success == true) {
-                dbLocal.coordenadoresDB = res.coordenadores;
-                dbLocal.coordenadoresDBHora = new Date();
+                dbLocal.roteirosDB = res.roteiros;
+                dbLocal.roteirosDBHora = new Date();
                 escreveTabela();
             } else {
                 alerta('Erro ao recuperar base de dados: '+ res.mensagem)
@@ -68,21 +66,22 @@
         let limiteLinhas = 25;
         let pages = 0;
 
-        if(dbLocal.coordenadoresDB == undefined) {
-            loadDatabaseCoordenadores();
+        if(dbLocal.roteirosDB == undefined) {
+            loadDatabaseRoteiros();
             return false;
         } else {
-            let db = dbLocal.coordenadoresDB;
+            let db = dbLocal.roteirosDB;
             //console.log(db);
-            let datahora = dbLocal.coordenadoresDBHora;
+            let datahora = dbLocal.roteirosDBHora;
 
             $('[data-database-hora]').text(Dobbin.formataDataHora(datahora));
 
             // Escreve linhas da tabela
             let i = 0;
+            let mesCorrente = null;
             $('.database table').find('tbody').remove();
             db.forEach(function(x){
-                if(i == limiteLinhas) {
+                if(i >= limiteLinhas) {
                     i = 0;
                 }
 
@@ -90,19 +89,34 @@
                     pages++;
                     $('.database table').append('<tbody data-page="'+pages+'"></tbody>');
                 }
-                let criadoEm = new Date(x.criado_em);
+
+                let dataIni = new Date(x.data_ini);
+                
+                // Verifica o mês
+                if(mesCorrente == null) {
+                    // Abre o mês.
+                    mesCorrente = Dobbin.formataMesAno(dataIni, true);
+                    $('.database table').find('tbody').last().append('<tr> <td colspan="4" class="py-2 pl-2 table-secondary"><strong>'+mesCorrente+'</strong></td> </tr>');
+                    i++;
+                } else {
+                    // Verifica se continua no mesmo mês ou se é outro.
+                    let mesmoMes = Dobbin.formataMesAno(dataIni, true);
+                    if(mesCorrente !== mesmoMes) {
+                        // Novo mesmo, abre novo mês.
+                        mesCorrente = mesmoMes;
+                        $('.database table').find('tbody').last().append('<tr> <td colspan="4" class="py-2 pl-2 table-secondary"><strong>'+mesCorrente+'</strong></td> </tr>');
+                        i++;
+                    }
+
+                    mesmoMes = undefined;
+                }
+                
+
 
                 $('.database table').find('tbody').last()
-                    .append('<tr> <td>'+x.id+'</td> <td>'+x.nome+'</td> <td>'+x.email+'</td> '+
-                    '<td>'+x.cidade+'</td> <td>'+x.estado+'</td> '+
-                    '<td><button type="button" class="btn btn-transparent btn-rounded btn-sm dropdown-toggle no-caret" data-toggle="dropdown"> <i class="fas fa-ellipsis-v fa-fw"></i> </button>'+
-                    '<div class="dropdown-menu">'+
-                            '<button class="dropdown-item" onclick="loadCoordenador('+x.id+')"><i class="far fa-eye fa-fw mr-1"></i> Ver</button>'+
-                            '<button class="dropdown-item" onclick="editaCoordenador('+x.id+')"><i class="fas fa-pencil-alt fa-fw mr-1"></i> Editar</button>'+
-                            '<div class="dropdown-divider"></div>'+
-                            '<button class="dropdown-item text-danger" onclick="deleteCoordenador('+x.id+')"><i class="fas fa-trash fa-fw mr-1"></i> Apagar</button>'+
-                    '</div></td>'+
-                    '</tr>');
+                    .append('<tr> <td>'+x.id+'</td> <td><a href="#roteiros/ver/'+x.id+'">'+x.nome+' ('+Dobbin.formataData(new Date(x.data_ini), true)+' a '+Dobbin.formataData(new Date(x.data_fim), true)+')</a></td>'+
+                    '<td>'+( parseInt(x.passagens) + parseInt(x.qtd_coordenador) )+'</td> '+
+                    '<td></td> </tr>');
 
                 i++;
             });
@@ -123,13 +137,13 @@
     }
 
     $(document).ready(function(){
-        if(dbLocal.coordenadoresDB == "") {
-            loadDatabaseCoordenadores();
+        if(dbLocal.roteirosDB == "") {
+            loadDatabaseRoteiros();
         } else {
             // Verifica se já passou 10 min ou mais desde a última atualização.
             let agora = new Date();
-            if(agora - dbLocal.coordenadoresDBHora >= 10 *60*1000) {
-                loadDatabaseCoordenadores();
+            if(agora - dbLocal.roteirosDBHora >= 10 *60*1000) {
+                loadDatabaseRoteiros();
             } else {
                 escreveTabela();
             }

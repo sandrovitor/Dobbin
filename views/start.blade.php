@@ -95,6 +95,7 @@
                         <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#roteiros/novo">Novo</a></li>
+                            <li><a class="nav-link" href="#roteiros/database">Base de dados</a></li>
                             <li><a class="nav-link" href="#roteiros/simulacao">Simulação</a></li>
                             <li><a class="nav-link text-danger" href="#roteiros/lixeira">Lixeira</a></li>
                         </ul>
@@ -115,7 +116,7 @@
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#usuarios/novo">Novo</a></li>
                             <li><a class="nav-link" href="#usuarios/buscar">Buscar</a></li>
-                            <li><a class="nav-link" href="#usuarios/database">Banco de Dados</a></li>
+                            <li><a class="nav-link" href="#usuarios/database">Base de Dados</a></li>
                         </ul>
                     </li>
                     <li class="nav-item"><a class="nav-link" href="#log"><i class="fas fa-info-circle fa-fw"></i> LOG</a></li>

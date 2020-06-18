@@ -376,8 +376,8 @@ function calcular()
     $('[simu-nome]').html('<strong class="small">Nome da simulação: </strong><br>'+ form.find('[name="nome_pacote"]').val());
 
     // Data da viagem
-    $('[simu-ida]').html('<strong class="small">PARTIDA: </strong><br> '+ formataData(new Date(form.find('[name="data_ini"]').val()), true));
-    $('[simu-volta]').html('<strong class="small">RETORNO: </strong><br> '+ formataData(new Date(form.find('[name="data_fim"]').val()), true));
+    $('[simu-ida]').html('<strong class="small">PARTIDA: </strong><br> '+ Dobbin.formataData(new Date(form.find('[name="data_ini"]').val()), true));
+    $('[simu-volta]').html('<strong class="small">RETORNO: </strong><br> '+ Dobbin.formataData(new Date(form.find('[name="data_fim"]').val()), true));
 
     let clientes = parseInt(form.find('[name="passagens"]').val());
     let coord = parseInt(form.find('[name="qtd_coord"]').val());

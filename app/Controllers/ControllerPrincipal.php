@@ -277,6 +277,22 @@ class ControllerPrincipal
         return json_encode($retorno);
     }
 
+    static function roteirosDatabase($p)
+    {
+        self::validaConexao(2);
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > Novo',
+            'description' => 'Base de dados de seus roteiros.',
+            'page' => $blade->run("roteiros.roteirosDatabase", array(
+                
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
     static function roteirosSimulacao($p)
     {
         self::validaConexao(2);
@@ -491,7 +507,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes',
             'description' => 'Gerencie seus clientes.',
-            'page' => $blade->run("clientes", array(
+            'page' => $blade->run("clientes.clientes", array(
                 'clientes' => $sgc->getClientesLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
             ))
         );
@@ -507,7 +523,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes > Novo',
             'description' => 'Salve seus novos clientes.',
-            'page' => $blade->run("clientesNovo", array(
+            'page' => $blade->run("clientes.clientesNovo", array(
                 
             ))
         );
@@ -525,7 +541,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes > Buscar',
             'description' => 'Localize seus clientes.',
-            'page' => $blade->run("clientesBuscar", array(
+            'page' => $blade->run("clientes.clientesBuscar", array(
                 'clientes' => $sgc->getClientesLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
                 'totalClientes' => $sgc->getClientesTotal()
             ))
@@ -543,7 +559,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes > Base de Dados',
             'description' => 'Uma interface para sua base de dados dos clientes.',
-            'page' => $blade->run("clientesDatabase", array(
+            'page' => $blade->run("clientes.clientesDatabase", array(
                 'totalClientes' => $sgc->getClientesTotal()
             ))
         );
@@ -561,7 +577,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-users"></i> Clientes > Lixeira',
             'description' => 'Clientes que foram excluídos e estão aguardando para serem removidos por completo.',
-            'page' => $blade->run("clientesLixeira", array(
+            'page' => $blade->run("clientes.clientesLixeira", array(
                 'clientes' => $x['clientes'],
             ))
         );
@@ -759,7 +775,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="far fa-handshake"></i> Parceiros',
             'description' => 'Gerencie seus parceiros de negócios.',
-            'page' => $blade->run("parceiros", array(
+            'page' => $blade->run("parceiros.parceiros", array(
                 'parceiros' => $sgc->getParceirosLista(),
             ))
         );
@@ -778,7 +794,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="far fa-handshake"></i> Parceiros > Novo',
             'description' => 'Cadastre seus parceiros de negócios.',
-            'page' => $blade->run("parceirosNovo", array(
+            'page' => $blade->run("parceiros.parceirosNovo", array(
                 'bancos' => $bancos['bancos'],
             ))
         );
@@ -795,7 +811,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="far fa-handshake"></i> Parceiros > Base de Dados',
             'description' => 'Uma interface para sua base de dados de parceiros.',
-            'page' => $blade->run("parceirosDatabase", array(
+            'page' => $blade->run("parceiros.parceirosDatabase", array(
                 'totalClientes' => $sgc->getClientesTotal()
             ))
         );
@@ -820,7 +836,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="far fa-handshake"></i> Parceiros > <small id="parceiroTitle" class="text-uppercase"></small>',
             'description' => 'Veja detalhes dos seus parceiros de negócio.',
-            'page' => $blade->run("parceirosVer", array(
+            'page' => $blade->run("parceiros.parceirosVer", array(
                 'bancos' => $bancos['bancos'],
                 'parceiro' => $parceiro,
                 'par' => $par,
@@ -875,7 +891,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-user-shield"></i> Usuários',
             'description' => 'Esses são os que têm acesso à sua plataforma de gestão.',
-            'page' => $blade->run("usuarios", array(
+            'page' => $blade->run("usuarios.usuarios", array(
                 'usuarios' => $sgc->getUsuariosLista(),
             ))
         );
@@ -891,7 +907,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-user-shield"></i> Usuários > Novo',
             'description' => 'Crie novos logins de acesso à plataforma.',
-            'page' => $blade->run("usuariosNovo", array(
+            'page' => $blade->run("usuarios.usuariosNovo", array(
                 
             ))
         );
@@ -909,7 +925,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-user-shield"></i> Usuários > Buscar',
             'description' => 'Localize os usuários da plataforma.',
-            'page' => $blade->run("usuariosBuscar", array(
+            'page' => $blade->run("usuarios.usuariosBuscar", array(
                 'usuarios' => $sgc->getUsuariosLista(),
                 'totalUsuarios' => $sgc->getUsuariosTotal()
             ))
@@ -956,7 +972,7 @@ class ControllerPrincipal
         $retorno = array(
             'title' => '<i class="fas fa-user-shield"></i> Usuários > Base de Dados',
             'description' => 'Uma interface para sua base de dados dos clientes.',
-            'page' => $blade->run("usuariosDatabase", array(
+            'page' => $blade->run("usuarios.usuariosDatabase", array(
                 'totalUsuarios' => $sgc->getUsuariosTotal()
             ))
         );

@@ -193,6 +193,18 @@ class SGCTUR extends Master
     }
 
     /**
+     * Retorna total de roteiros na plataforma.
+     * 
+     * @return int
+     */
+    public function getRoteirosTotal()
+    {
+        $abc = $this->pdo->query('SELECT COUNT(id) as total FROM roteiros WHERE deletado_em IS NULL');
+        $x = $abc->fetch(\PDO::FETCH_OBJ);
+        return (int)$x->total;
+    }
+
+    /**
      * Retorna lista de clientes na plataforma.
      * 
      * @param int $inicio Onde o ponteiro de busca deve iniciar.
@@ -1415,12 +1427,12 @@ class SGCTUR extends Master
      * 
      * @param int $inicio Onde o ponteiro de busca deve iniciar.
      * @param int $qtd Total de registros que a busca deve retornar.
-     * @param array $ordem_por Campo a ser ordenado. Ex.: nome, data_ini, data_fim, criado_em, atualizado_em...
+     * @param array $ordem_por Campo a ser ordenado. Ex.: nome, data_ini, data_fim, mes, ano criado_em, atualizado_em...
      * @param const Ordenar ASCENDENTE ou DESCENDENTE.
      * 
      * @return array [success => TRUE|FALSE, mensagem => STRING, roteiros => ARRAY]
      */
-    public function getRoteirosLista(int $inicio = 0, int $qtd = 20, array $ordem_por = ['criado_em'], $ordem = SGCTUR::ORDER_DESC)
+    public function getRoteirosLista(int $inicio = 0, int $qtd = 20, array $ordem_por = ['criado_em'], array $ordem = [SGCTUR::ORDER_DESC])
     {
         $retorno = array(
             'success' => false,
@@ -1438,21 +1450,38 @@ class SGCTUR extends Master
             $retorno['mensagem'] = Erro::getMessage(9);
             return $retorno;
         }
-        foreach($ordem_por as $o) {
+        foreach($ordem_por as $key => $o) {
             switch($o) {
                 case 'nome':
                 case 'data_ini':
                 case 'data_fim':
                 case 'criado_em':
                 case 'atualizado_em':
+                case 'mes':
+                case 'ano':
                     $str_ordem .= $o;
-                    if($ordem == 1) {
-                        // ASCENDENTE
-                        $str_ordem .= ' ASC, ';
+                    
+                    if(!isset($ordem[$key]) || $ordem[$key] == '') {
+                        // Se este índice não estiver setado, usa o primeiro indice.
+                        if($ordem[0] == 1) {
+                            // ASCENDENTE
+                            $str_ordem .= ' ASC, ';
+                        } else {
+                            // DESCENDENTE
+                            $str_ordem .= ' DESC, ';
+                        }
                     } else {
-                        // DESCENDENTE
-                        $str_ordem .= ' DESC, ';
+                        // Indice setado.
+                        if($ordem[$key] == 1) {
+                            // ASCENDENTE
+                            $str_ordem .= ' ASC, ';
+                        } else {
+                            // DESCENDENTE
+                            $str_ordem .= ' DESC, ';
+                        }
+
                     }
+                    
                 break;
             }
 
@@ -1461,7 +1490,7 @@ class SGCTUR extends Master
 
         $str_ordem = substr($str_ordem, 0, -2);
 
-        $abc = $this->pdo->prepare('SELECT id, nome, data_ini, data_fim, passagens, qtd_coordenador, criado_em FROM roteiros WHERE deletado_em IS NULL ORDER BY '.$str_ordem.' '.$limit);
+        $abc = $this->pdo->prepare('SELECT id, nome, data_ini, data_fim, MONTH(data_ini) as mes, YEAR(data_ini) as ano, passagens, qtd_coordenador, criado_em FROM roteiros WHERE deletado_em IS NULL ORDER BY '.$str_ordem.' '.$limit);
         $abc->bindValue(':ini', $inicio, \PDO::PARAM_INT);
         $abc->bindValue(':qtd', $qtd, \PDO::PARAM_INT);
 

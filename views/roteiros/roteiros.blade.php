@@ -1,16 +1,14 @@
 <div class="row mb-3">
-    <div class="col-6 col-lg-4 mb-3">
+    <div class="col-6 col-lg-3 mb-3">
         <a href="#roteiros/novo" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Novo</a>
     </div>
-    <!--
-    <div class="col-6 col-lg-4 mb-3">
-        <a href="#roteiros/buscar" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Buscar</a>
+    <div class="col-6 col-lg-3 mb-3">
+        <a href="#roteiros/database" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Base de Dados</a>
     </div>
-    -->
-    <div class="col-12 col-lg-4 mb-3">
+    <div class="col-12 col-lg-3 mb-3">
         <a href="#roteiros/simulacao" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Simulação</a>
     </div>
-    <div class="col-12 col-sm-6 col-lg-4 mb-3">
+    <div class="col-12 col-lg-3 mb-3">
         <a href="#roteiros/lixeira" class="btn btn-block btn-danger rounded-0 shadow-sm font-weight-bold py-2">Lixeira</a>
     </div>
 </div>

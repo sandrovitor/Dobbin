@@ -2,22 +2,20 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                BASE DE DADOS - Usuários
+                BASE DE DADOS - Parceiros
             </div>
             <div class="card-body database" style="overflow-x:auto;">
                 <div class="mb-3">
                     <small>Atualizado em: <span data-database-hora class="font-italic"></span></small>.
-                    <button type="button" class="btn btn-info btn-sm" onclick="loadDatabaseUsuarios()"><i class="fas fa-sync"></i></button>
+                    <button type="button" class="btn btn-info btn-sm" onclick="loadDatabaseParceiros()"><i class="fas fa-sync"></i></button>
                 </div>
-                <table class="table table-sm table-striped table-bordered" id="clientes">
+                <table class="table table-sm table-striped table-bordered" id="parceiros">
                     <thead class="bg-primary text-white">
                         <tr>
                             <th>Cód.</th>
-                            <th>Nome</th>
-                            <th>Usuário</th>
-                            <th>Nível:</th>
-                            <th>Logado em:</th>
-                            <th></th>
+                            <th>Parceiro</th>
+                            <th>Cidade</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                 </table>
@@ -45,17 +43,17 @@
 
 
 <script>
-    function loadDatabaseUsuarios()
+    function loadDatabaseParceiros()
     {
         let total = 0;
         //console.log(total);
 
-        $.post(PREFIX_POST+'usuarios/database', {ini: 0, qtd: total}, function(res){
+        $.post(PREFIX_POST+'parceiros/database', {ini: 0, qtd: total}, function(res){
             //console.log(res);
 
             if(res.success == true) {
-                dbLocal.usuariosDB = res.usuarios;
-                dbLocal.usuariosDBHora = new Date();
+                dbLocal.parceirosDB = res.parceiros;
+                dbLocal.parceirosDBHora = new Date();
                 escreveTabela();
             } else {
                 alerta('Erro ao recuperar base de dados: '+ res.mensagem)
@@ -68,15 +66,15 @@
         let limiteLinhas = 25;
         let pages = 0;
 
-        if(dbLocal.clientesDB == undefined) {
-            loadDatabaseClientes();
+        if(dbLocal.parceirosDB == undefined) {
+            loadDatabaseParceiros();
             return false;
         } else {
-            let db = dbLocal.usuariosDB;
+            let db = dbLocal.parceirosDB;
             //console.log(db);
-            let datahora = dbLocal.usuariosDBHora;
+            let datahora = dbLocal.parceirosDBHora;
 
-            $('[data-database-hora]').text(formataDataHora(datahora));
+            $('[data-database-hora]').text(Dobbin.formataDataHora(datahora));
 
             // Escreve linhas da tabela
             let i = 0;
@@ -91,18 +89,29 @@
                     $('.database table').append('<tbody data-page="'+pages+'"></tbody>');
                 }
                 let criadoEm = new Date(x.criado_em);
+                let nomeExibicao = '';
+                if(x.nome_fantasia != '') {
+                    nomeExibicao = '<a href="#parceiros/ver/'+x.id+'"> <span class="font-weight-bold">'+x.nome_fantasia+'</span><br>'+
+                                        '<span class="text-uppercase small font-italic">'+x.razao_social+'</span></a>';
+                } else {
+                    nomeExibicao = '<a href="#parceiros/ver/'+x.id+'"><span class="text-uppercase font-weight-bold">'+x.razao_social+'</span></a>';
+                }
+                $('.database table').find('tbody').last().
+                    append('<tr><td>'+x.id+'</td> <td>'+nomeExibicao+'</td><td>'+x.cidade+'</td><td>'+x.estado+'</td></tr>');
 
+                /*
                 $('.database table').find('tbody').last()
-                    .append('<tr> <td>'+x.id+'</td> <td><img src="/media/images/av/'+x.avatar+'" height="25" style="border-radius:50%" class="mr-1"> '+x.nome+' '+x.sobrenome+'</td> '+
-                    '<td>@'+x.usuario+'</td> <td>'+x.nivel+'</td> <td>'+formataDataHora(new Date(x.logado_em))+'</td> '+
+                    .append('<tr> <td>'+x.id+'</td> <td>'+x.nome+'</td> <td>'+x.email+'</td> '+
+                    '<td>'+x.cidade+'</td> <td>'+x.estado+'</td> '+
                     '<td><button type="button" class="btn btn-transparent btn-rounded btn-sm dropdown-toggle no-caret" data-toggle="dropdown"> <i class="fas fa-ellipsis-v fa-fw"></i> </button>'+
                     '<div class="dropdown-menu">'+
-                            '<button class="dropdown-item" onclick="loadUsuario('+x.id+')"><i class="far fa-eye fa-fw mr-1"></i> Ver</button>'+
-                            '<button class="dropdown-item" onclick="editaUsuario('+x.id+')"><i class="fas fa-pencil-alt fa-fw mr-1"></i> Editar</button>'+
+                            '<button class="dropdown-item" onclick="loadCliente('+x.id+')"><i class="far fa-eye fa-fw mr-1"></i> Ver</button>'+
+                            '<button class="dropdown-item" onclick="editaCliente('+x.id+')"><i class="fas fa-pencil-alt fa-fw mr-1"></i> Editar</button>'+
                             '<div class="dropdown-divider"></div>'+
-                            '<button class="dropdown-item text-danger" onclick="deleteUsuario('+x.id+')"><i class="fas fa-trash fa-fw mr-1"></i> Apagar</button>'+
+                            '<button class="dropdown-item text-danger" onclick="deleteCliente('+x.id+')"><i class="fas fa-trash fa-fw mr-1"></i> Apagar</button>'+
                     '</div></td>'+
                     '</tr>');
+                    */
 
                 i++;
             });
@@ -123,13 +132,13 @@
     }
 
     $(document).ready(function(){
-        if(dbLocal.usuariosDB == "") {
-            loadDatabaseUsuarios();
+        if(dbLocal.parceirosDB == "") {
+            loadDatabaseParceiros();
         } else {
             // Verifica se já passou 10 min ou mais desde a última atualização.
             let agora = new Date();
-            if(agora - dbLocal.usuariosDBHora >= 10 *60*1000) {
-                loadDatabaseUsuarios();
+            if(agora - dbLocal.parceirosDBHora >= 10 *60*1000) {
+                loadDatabaseParceiros();
             } else {
                 escreveTabela();
             }

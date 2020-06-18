@@ -141,6 +141,44 @@ const Dobbin = {
     
     },
 
+    // Formata Data para: MÊS/AAAA
+    formataMesAno: function(dateObj, anulaTimezone = false) {
+        if(dateObj == 'Invalid Date') {
+            return '--/----';
+        }
+        var dia, mes, ano, hora, minuto, segundo;
+        
+        if(anulaTimezone == true) {
+            // Anula o timezone local.
+            let timezone = dateObj.getTimezoneOffset();
+            timezone = timezone/60;
+            dateObj.setHours(dateObj.getHours() + (timezone));
+        }
+    
+        dia = dateObj.getDate();
+        mes = dateObj.getMonth();
+        ano = dateObj.getFullYear();
+    
+        var data = '';
+        switch(mes) {
+            case 0: data = 'Janeiro/'+ano; break;
+            case 1: data = 'Fevereiro/'+ano; break;
+            case 2: data = 'Março/'+ano; break;
+            case 3: data = 'Abril/'+ano; break;
+            case 4: data = 'Maio/'+ano; break;
+            case 5: data = 'Junho/'+ano; break;
+            case 6: data = 'Julho/'+ano; break;
+            case 7: data = 'Agosto/'+ano; break;
+            case 8: data = 'Setembro/'+ano; break;
+            case 9: data = 'Outubro/'+ano; break;
+            case 10: data = 'Novembro/'+ano; break;
+            case 11: data = 'Dezembro/'+ano; break;
+        }
+        
+        return data;
+    
+    },
+
     // Conversão: Centavo para Real
     converteCentavoEmReal: function(centavos = 0) {
         centavos = parseInt(centavos);
