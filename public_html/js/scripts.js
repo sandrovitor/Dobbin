@@ -67,6 +67,10 @@ function loadLanding(href)
     if(href.charAt(0) == '#') {
         href = href.substring(1, href.length);
     }
+
+    // Oculta todos os tooltips.
+    $('[data-toggle="tooltip"]').tooltip('hide');
+
     $.post(href, function(res){
         //console.log(res);
         $('#content').fadeOut('fast', function(){
@@ -197,6 +201,15 @@ function highlight(texto, destaque)
     return novo;
 }
 
+/**
+ * FUNÇÕES DE VALIDAÇÃO
+ */
+
+function resetValidaOnChange(sender)
+{
+    $(sender).removeClass('is-invalid').removeClass('is-valid');
+}
+
 function validaValorDinheiroOnChange(sender)
 {
     let valor = $(sender).val();
@@ -208,8 +221,13 @@ function validaValorDinheiroOnChange(sender)
             $(sender).val(valor);
         }
 
-        let patt = /(^[0-9]{1,4}[,]{1}[0-9]{2}$|^([0-9]{1,4})$)/gi;
+        // Valores entre 0,00 e 9.999.999,99
+        let patt = /(^[0-9]{1,7}[,]{1}[0-9]{2}$|^([0-9]{1,7})$)/gi;
         if(patt.test(valor) == false) {
+            if($(sender).siblings('.invalid-feedback').length == 0) {
+                $(sender).after('<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999999,99 (9 milhões). Valor sem casa decimal também é válido. Ex.: 0 a 9999999.</div>');
+            }
+
             $(sender).addClass('is-invalid');
             $(sender).focus();
             return false;
@@ -220,10 +238,53 @@ function validaValorDinheiroOnChange(sender)
     return true;
 }
 
-function resetValidaOnChange(sender)
+function validaSenhaOnChange(sender)
 {
-    $(sender).removeClass('is-invalid').removeClass('is-valid');
+    let valor = $(sender).val();
+    let pattLetra = /[A-z]/g;
+    let pattNumero = /[0-9]/g;
+    let pattEspecial = /[^\w]/g;
+
+    let aprovada = 0;
+
+    if($(sender).siblings('.invalid-feedback').length == 0) {
+        $(sender).after('<div class="invalid-feedback"><ul class="ml-1 py-0"></ul></div>');
+    } else {
+        $(sender).siblings('.invalid-feedback').html('<ul class="ml-1 py-0"></ul>');
+    }
+
+    let feedback = $(sender).siblings('.invalid-feedback').children('ul');
+
+    // Verifica se cada validação foi aprovada.
+    if(pattLetra.test(valor) === true) {
+        aprovada++;
+    } else {
+        feedback.append("<li>Necessário uma letra maiúscula ou minúscula.</li>");
+    }
+
+    if(pattNumero.test(valor) === true) {
+        aprovada++;
+    } else {
+        feedback.append("<li>Necessário um número.</li>");
+    }
+
+    if(pattEspecial.test(valor) === true) {
+        aprovada++;
+    } else {
+        feedback.append("<li>Necessário um caractere especial.</li>");
+    }
+
+    if(aprovada == 3) {
+        $(sender).addClass('is-valid');
+    } else {
+        $(sender).addClass('is-invalid');
+        $(sender).focus();
+    }
 }
+
+/**
+ * ./FUNÇÕES DE VALIDAÇÃO
+ */
 
 /** FUNÇÕES NATIVAS DA PLATAFORMA */
 function nativePOSTFail(ev)
@@ -250,53 +311,6 @@ function nativePOSTFail(ev)
     
     //console.log(ev);
     debugador(ev);
-}
-
-function nativeIsMoney(valor = '')
-{
-    //console.log(typeof valor);
-    if(typeof valor != 'string') {
-        console.log('Era esperado uma string.');
-        return false;
-    }
-    if(valor == '' || typeof valor != 'string') {
-        return false;
-        
-    }
-
-    if(valor.length > 0) {
-        // Procura pontos.
-        if(valor.search(/\./gi) >= 0) {
-            // Remove os pontos
-            valor = valor.replace(/\./gi, '');
-        }
-
-        let patt = /(^[0-9]{1,}[,]{1}[0-9]{2}$|^([0-9]{1,})$)/gi;
-        if(patt.test(valor) == false) {
-            return false;
-        } else {
-            return true;
-        }
-    } else {
-        return false;
-    }
-}
-
-function nativeDiffDays(data1 = null, data2 = null)
-{
-    if(data1 == null || data2 == null) {
-        return false;
-    }
-
-    if(data1 instanceof Date == false || data2 instanceof Date == false) {
-        console.log('Essa função nativa espera que os campos sejam do tipo Date.');
-        return false;
-    }
-
-    let diffTime = Math.abs(data2 - data1);
-    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
 }
 
 /** ./FUNÇÕES NATIVAS DA PLATAFORMA */
@@ -1146,8 +1160,8 @@ function parcAddCampoTarifario(sender)
             '<option value="0-5">0 - 5 ANOS</option><option value="6-12">6 - 12 ANOS</option><option value="ADULTO">ADULTO</option>'+
             '<option value="CASAL">CASAL</option><option value="60+">60+ ANOS</option></select>'+
             '<div class="input-group input-group-sm mr-1"><div class="input-group-prepend"><span class="input-group-text form-control-solid">R$</span></div>'+
-            '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)"></div>'+
-            '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>'+
+            '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" dobbin-validate-valor></div>'+
+            '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999999,99 (9 milhões). Valor sem casa decimal também é válido. Ex.: 0 a 9999999.</div>'+
             '<button type="button" class="btn btn-sm btn-danger" onclick="parcDelCampoTarifario(this)"><i class="fas fa-trash"></i></button></div>');
     } else {
         alerta('Você já inseriu o máximo de 5 tarifas.', 'Não dá para fazer isso.', 'warning');
@@ -1186,8 +1200,8 @@ function parcAddBeneficioPago(target)
 
     alvo.append('<div class="beneficio d-flex mb-2" style="display:none"><input type="text" class="form-control form-control-sm form-control-solid mr-1" placeholder="Nome" data-beneficio-nome>'+
     '<div class="input-group input-group-sm mr-1"><div class="input-group-prepend"><span class="input-group-text form-control-solid">R$</span></div>'+
-    '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" data-beneficio-valor>'+
-    '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div></div>'+
+    '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" dobbin-validate-valor data-beneficio-valor>'+
+    '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999999,99 (9 milhões). Valor sem casa decimal também é válido. Ex.: 0 a 9999999.</div>'+
     '<button class="btn btn-sm btn-danger" type="button" onclick="parcDelBeneficioPago(this);"><i class="fas fa-trash"></i></button></div>');
 
     alvo.find('.beneficio').fadeIn();
@@ -2623,6 +2637,8 @@ $(document).ready(function(){
     /**
      * VALIDAÇÃO AUTOMÁTICA
      */
+    
+
     $(document).on('blur', '[data-validate-rg]', function(ev){
         if($(this).val().trim().length !== 0 && $(this).val().trim().length !== 10) {
             //ERRADO
@@ -2648,10 +2664,6 @@ $(document).ready(function(){
             $(this).siblings('.invalid-feedback').remove();
         }
     });
-
-    $(document).on('blur', '[data-validate-valor]', function(ev){
-        
-    });
     
     $(document).on('change', ':input[type="file"]', function(ev){
         //console.log(ev);
@@ -2665,10 +2677,6 @@ $(document).ready(function(){
         //console.log($(ev.target)[0].files[0]);
     });
 
-    $(document).on('blur', '[data-validate-password]', function(ev){
-        
-
-    });
     /**
      * ./VALIDAÇÃO AUTOMÁTICA
      */

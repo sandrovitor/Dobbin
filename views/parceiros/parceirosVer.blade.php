@@ -445,8 +445,8 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text form-control-solid">R$</span>
                                 </div>
-                                <input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)">
-                                <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                <input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" dobbin-validate-valor>
+                                
                             </div>
                             <button type="button" class="btn btn-sm btn-danger" onclick="parcDelCampoTarifario(this)"><i class="fas fa-trash"></i></button>
                         </div>
@@ -523,8 +523,8 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text form-control-solid">R$</span>
                                     </div>
-                                    <input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" data-beneficio-valor>
-                                    <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                    <input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" dobbin-validate-valor data-beneficio-valor>
+                                    
                                 </div>
                                 <button class="btn btn-sm btn-danger" type="button" onclick="parcDelBeneficioPago(this);"><i class="fas fa-trash"></i></button>
                             </div>
@@ -653,8 +653,8 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text form-control-solid">R$</span>
                                 </div>
-                                <input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)">
-                                <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                <input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" dobbin-validate-valor>
+                                
                             </div>
                             <button type="button" class="btn btn-sm btn-danger" onclick="parcDelCampoTarifario(this)"><i class="fas fa-trash"></i></button>
                         </div>
@@ -731,8 +731,8 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text form-control-solid">R$</span>
                                     </div>
-                                    <input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" data-beneficio-valor>
-                                    <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                    <input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" dobbin-validate-valor data-beneficio-valor>
+                                    
                                 </div>
                                 <button class="btn btn-sm btn-danger" type="button" onclick="parcDelBeneficioPago(this);"><i class="fas fa-trash"></i></button>
                             </div>

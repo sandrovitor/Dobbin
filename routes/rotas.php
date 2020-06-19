@@ -50,6 +50,9 @@ $router->map('POST', '/roteiros/editar/[i:id]', 'ControllerPrincipal#roteirosEdi
 $router->map('POST', '/roteiros/lixeira', 'ControllerPrincipal#roteirosLixeira');
 $router->map('POST', '/roteiros/lixeira/ver/[i:id]', 'ControllerPrincipal#roteirosLixeiraVer');
 
+// VENDAS
+$router->map('POST', '/vendas/novo', 'ControllerPrincipal#vendasNovo');
+
 
 $router->map('POST', '/parceiros', 'ControllerPrincipal#parceiros');
 $router->map('POST', '/parceiros/novo', 'ControllerPrincipal#parceirosNovo');
@@ -133,6 +136,8 @@ $router->addRoutes(array(
     array('POST', $prefix.'roteiros/restaurar/[i:id]', 'ControllerForm#roteirosRestaurar'),
     array('POST', $prefix.'roteiros/apagarlixeira/[i:id]', 'ControllerForm#roteirosApagarLixeira'),
     array('POST', $prefix.'roteiros/[i:id]/copiar', 'ControllerForm#roteiroCriarCopia'),
+
+    // VENDAS!
 
 
     

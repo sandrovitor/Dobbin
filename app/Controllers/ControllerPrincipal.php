@@ -515,6 +515,29 @@ class ControllerPrincipal
 
     /**
      * 
+     * VENDAS
+     * 
+     * 
+     */
+    static function vendasNovo($p)
+    {
+        self::validaConexao(3);
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Novo',
+            'description' => 'Venda seus produtos e serviços!',
+            'page' => $blade->run("vendas.vendasNovo", array(
+
+            ))
+        );
+
+        return json_encode($retorno);
+
+    }
+
+    /**
+     * 
      * 
      * CLIENTES
      * 

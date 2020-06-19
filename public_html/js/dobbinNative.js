@@ -247,3 +247,36 @@ const Dobbin = {
         }
     }
 };
+
+/**
+ * 
+ * VALIDAÇÃO AUTOMATICA ATRIBUTOS DOBBIN
+ * 
+ */
+
+$(document).ready(function(){
+    $(document).on('change keyup', '[dobbin-validate-valor]', function(ev){ // VALOR|DINHEIRO
+        resetValidaOnChange(ev.currentTarget);
+        validaValorDinheiroOnChange(ev.currentTarget);
+    });
+
+    $(document).on('blur', '[dobbin-validate-valor]', function(ev){ // VALOR|DINHEIRO
+        resetValidaOnChange(ev.currentTarget);
+        if(validaValorDinheiroOnChange(ev.currentTarget) == true) {
+            let valor = $(ev.currentTarget).val();
+            if(valor.length > 0 && valor.search(',') == -1) {
+                $(ev.currentTarget).val(valor+',00');
+            }
+        }
+    });
+    
+    $(document).on('blur', '[dobbin-validate-password]', function(ev){
+        validaSenhaOnChange(ev.currentTarget);
+    });
+
+    $(document).on('change', '[dobbin-validate-password]', function(ev){
+        resetValidaOnChange(ev.currentTarget);
+    });
+
+
+});

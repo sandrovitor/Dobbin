@@ -157,8 +157,8 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text form-control-solid">R$</span>
                                                                 </div>
-                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)" maxlength="30" required>
-                                                                <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" dobbin-validate-valor maxlength="30" required>
+                                                                
                                                             </div>
                                                             
                                                         </div>
@@ -202,8 +202,8 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text form-control-solid">R$</span>
                                                                 </div>
-                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)" maxlength="30" required>
-                                                                <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" dobbin-validate-valor maxlength="30" required>
+                                                                
                                                             </div>
                                                             
                                                         </div>

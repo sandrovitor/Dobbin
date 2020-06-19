@@ -100,6 +100,15 @@
                             <li><a class="nav-link text-danger" href="#roteiros/lixeira">Lixeira</a></li>
                         </ul>
                     </li>
+                    <!--
+                    <li class="nav-item">
+                        <a class="nav-link" href="#vendas"><i class="fas fa-shopping-cart fa-fw"></i> Vendas</a>
+                        <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
+                        <ul style="display:none;">
+                            <li><a class="nav-link" href="#vendas/novo">Novo</a></li>
+                        </ul>
+                    </li>
+                    -->
 
                     <!--
                     <li class="nav-item"><a class="nav-link" href="#roteiros"><i class="fas fa-luggage-cart fa-fw"></i> Roteiros</a></li>
@@ -405,7 +414,12 @@
                     <div class="form-group row">
                         <div class="col-12 col-xl-6 mb-3">
                             <label>Taxa extra casal (R$):</label>
-                            <input type="text" class="form-control form-control-solid" name="taxa_extra_casal" placeholder="" data-detalhes-taxaextracasal data-validate-valor pattern="[0-9,]{0,10}">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text form-control-solid">R$</div>
+                                </div>
+                                <input type="text" class="form-control form-control-solid" name="taxa_extra_casal" placeholder="" data-detalhes-taxaextracasal dobbin-validate-valor pattern="[0-9,]{0,10}">
+                            </div>
                         </div>
                     </div>
                     <div class="form-group row">
@@ -704,11 +718,18 @@
                     <hr>
                     <div class="form-group">
                         <label>Nova senha:</label>
-                        <input type="password" name="senha1" data-validate-password class="form-control form-control-solid" autocomplete="off">
+                        <input type="password" name="senha1" dobbin-validate-password class="form-control form-control-solid" autocomplete="off">
+                    </div>
+                    <div class="alert alert-secondary">
+                        <ul class="ml-2 pl-1">
+                            <li>Sua senha deve possuir mínimo 8 e máximo de 16 caracteres;</li>
+                            <li>Sua senha deve possuir pelo menos 1 número, 1 letra, 1 caractere especial;</li>
+                            <li>Caracteres especiais permitidos: ($ # ! ? @ % & * - _ + = . , : ; [espaço] ).</li>
+                        </ul>
                     </div>
                     <div class="form-group">
                         <label>Repita nova senha:</label>
-                        <input type="password" name="senha2" data-validate-password class="form-control form-control-solid" autocomplete="off">
+                        <input type="password" name="senha2" dobbin-validate-password class="form-control form-control-solid" autocomplete="off">
                     </div>
                     <div class="form-group">
                         <button type="submit" class="btn btn-success">Salvar</button>
