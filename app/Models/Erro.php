@@ -73,6 +73,8 @@ class Erro
         243 => 'Roteiro não existe.',
         244 => 'Não foi possível restaurar esse roteiro. Ocorreu algum erro na operação. Informe desenvolvedor.',
         245 => 'Não foi possível excluir definitivamente. Talvez o roteiro não exista, ou ele não esteja na lixeira ainda.',
+        246 => 'Não foi possível adicionar o coordenador ao roteiro, pois o limite já foi alcançado.',
+        247 => 'Não foi possível remover o coordenador do roteiro.',
     ];
 
     public static function getMessage(int $code)

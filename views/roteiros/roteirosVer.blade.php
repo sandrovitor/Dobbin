@@ -121,11 +121,18 @@
                                     <div class="card-body pt-3 pb-2 px-2">
                                         <div class="row">
                                             <div class="col-12">
-                                                
-                                                <div class="mt-3">
-                                                    <kbd>Em desenvolvimento...</kbd>
-                                                    <pre>Essa seção só estará disponível quando esse aviso sumir.</pre>
+                                                <button type="button" class="btn btn-sm btn-primary mr-2" onclick="janCoordenadorSelect(this)" data-id="{{$roteiro->id}}">Adicionar coordenador</button>
+                                                <div id="listaCoord" class="mt-3">
+                                                    <ul class="list-group">
+                                                    @foreach($roteiro->coordenador as $coord)
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 pl-3 pr-2">
+                                                        {{$coord['nome']}}
+                                                        <button type="button" class="btn btn-sm btn-light" data-id="{{$coord['id']}}" data-rid="{{$roteiro->id}}" onclick="roteiroRemoveCoordenador(this)"><i class="fas fa-times fa-fw"></i></button>
+                                                        </li>
+                                                    @endforeach
+                                                    </ul>
                                                 </div>
+                                                
                                             </div>
                                         </div>
                                     </div>
@@ -466,8 +473,8 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text form-control-solid">R$</span>
                                                 </div>
-                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)">
-                                                <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" dobbin-validate-valor>
+                                                
                                             </div>
                                         </td>
                                         <td>
@@ -504,8 +511,8 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text form-control-solid">R$</span>
                                                 </div>
-                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" value="{{$sgc->converteCentavoParaReal( ceil(($despesasTotal + $roteiro->lucro_previsto->lucroRateio) / $roteiro->qtd_rateio) )}}" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)" required>
-                                                <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" value="{{$sgc->converteCentavoParaReal( ceil(($despesasTotal + $roteiro->lucro_previsto->lucroRateio) / $roteiro->qtd_rateio) )}}" dobbin-validate-valor required>
+                                                
                                             </div>
                                         </td>
                                         <td>
@@ -541,8 +548,8 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text form-control-solid">R$</span>
                                                 </div>
-                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" value="{{$sgc->converteCentavoParaReal($t->valor)}}"  placeholder="1234,99" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)" required>
-                                                <div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>
+                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" value="{{$sgc->converteCentavoParaReal($t->valor)}}"  placeholder="1234,99" dobbin-validate-valor required>
+                                                
                                             </div>
                                         </td>
                                         <td>

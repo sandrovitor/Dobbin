@@ -129,7 +129,12 @@
                     <div class="form-group row">
                         <div class="col-12 col-xl-6 mb-3">
                             <label>Taxa extra casal (R$):</label>
-                            <input type="text" class="form-control form-control-solid" name="taxa_extra_casal" placeholder="" data-validate-valor pattern="[0-9,]{0,10}">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text form-control-solid">R$</div>
+                                </div>
+                                <input type="text" class="form-control form-control-solid" name="taxa_extra_casal" placeholder="" data-detalhes-taxaextracasal dobbin-validate-valor pattern="[0-9,]{0,10}">
+                            </div>
                         </div>
                     </div>
                     <div class="form-group row">

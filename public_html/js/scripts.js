@@ -67,6 +67,10 @@ function loadLanding(href)
     if(href.charAt(0) == '#') {
         href = href.substring(1, href.length);
     }
+
+    // Oculta todos os tooltips.
+    $('[data-toggle="tooltip"]').tooltip('hide');
+
     $.post(href, function(res){
         //console.log(res);
         $('#content').fadeOut('fast', function(){
@@ -197,6 +201,15 @@ function highlight(texto, destaque)
     return novo;
 }
 
+/**
+ * FUNÇÕES DE VALIDAÇÃO
+ */
+
+function resetValidaOnChange(sender)
+{
+    $(sender).removeClass('is-invalid').removeClass('is-valid');
+}
+
 function validaValorDinheiroOnChange(sender)
 {
     let valor = $(sender).val();
@@ -208,8 +221,13 @@ function validaValorDinheiroOnChange(sender)
             $(sender).val(valor);
         }
 
-        let patt = /(^[0-9]{1,4}[,]{1}[0-9]{2}$|^([0-9]{1,4})$)/gi;
+        // Valores entre 0,00 e 9.999.999,99
+        let patt = /(^[0-9]{1,7}[,]{1}[0-9]{2}$|^([0-9]{1,7})$)/gi;
         if(patt.test(valor) == false) {
+            if($(sender).siblings('.invalid-feedback').length == 0) {
+                $(sender).after('<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999999,99 (9 milhões). Valor sem casa decimal também é válido. Ex.: 0 a 9999999.</div>');
+            }
+
             $(sender).addClass('is-invalid');
             $(sender).focus();
             return false;
@@ -220,10 +238,53 @@ function validaValorDinheiroOnChange(sender)
     return true;
 }
 
-function resetValidaOnChange(sender)
+function validaSenhaOnChange(sender)
 {
-    $(sender).removeClass('is-invalid').removeClass('is-valid');
+    let valor = $(sender).val();
+    let pattLetra = /[A-z]/g;
+    let pattNumero = /[0-9]/g;
+    let pattEspecial = /[^\w]/g;
+
+    let aprovada = 0;
+
+    if($(sender).siblings('.invalid-feedback').length == 0) {
+        $(sender).after('<div class="invalid-feedback"><ul class="ml-1 py-0"></ul></div>');
+    } else {
+        $(sender).siblings('.invalid-feedback').html('<ul class="ml-1 py-0"></ul>');
+    }
+
+    let feedback = $(sender).siblings('.invalid-feedback').children('ul');
+
+    // Verifica se cada validação foi aprovada.
+    if(pattLetra.test(valor) === true) {
+        aprovada++;
+    } else {
+        feedback.append("<li>Necessário uma letra maiúscula ou minúscula.</li>");
+    }
+
+    if(pattNumero.test(valor) === true) {
+        aprovada++;
+    } else {
+        feedback.append("<li>Necessário um número.</li>");
+    }
+
+    if(pattEspecial.test(valor) === true) {
+        aprovada++;
+    } else {
+        feedback.append("<li>Necessário um caractere especial.</li>");
+    }
+
+    if(aprovada == 3) {
+        $(sender).addClass('is-valid');
+    } else {
+        $(sender).addClass('is-invalid');
+        $(sender).focus();
+    }
 }
+
+/**
+ * ./FUNÇÕES DE VALIDAÇÃO
+ */
 
 /** FUNÇÕES NATIVAS DA PLATAFORMA */
 function nativePOSTFail(ev)
@@ -250,53 +311,6 @@ function nativePOSTFail(ev)
     
     //console.log(ev);
     debugador(ev);
-}
-
-function nativeIsMoney(valor = '')
-{
-    //console.log(typeof valor);
-    if(typeof valor != 'string') {
-        console.log('Era esperado uma string.');
-        return false;
-    }
-    if(valor == '' || typeof valor != 'string') {
-        return false;
-        
-    }
-
-    if(valor.length > 0) {
-        // Procura pontos.
-        if(valor.search(/\./gi) >= 0) {
-            // Remove os pontos
-            valor = valor.replace(/\./gi, '');
-        }
-
-        let patt = /(^[0-9]{1,}[,]{1}[0-9]{2}$|^([0-9]{1,})$)/gi;
-        if(patt.test(valor) == false) {
-            return false;
-        } else {
-            return true;
-        }
-    } else {
-        return false;
-    }
-}
-
-function nativeDiffDays(data1 = null, data2 = null)
-{
-    if(data1 == null || data2 == null) {
-        return false;
-    }
-
-    if(data1 instanceof Date == false || data2 instanceof Date == false) {
-        console.log('Essa função nativa espera que os campos sejam do tipo Date.');
-        return false;
-    }
-
-    let diffTime = Math.abs(data2 - data1);
-    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
 }
 
 /** ./FUNÇÕES NATIVAS DA PLATAFORMA */
@@ -938,6 +952,29 @@ function janParceirosSelect()
         
 }
 
+function janCoordenadorSelect(sender)
+{
+    if(sender == null || sender == undefined) {
+        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
+        return false;
+    }
+
+    //console.log(target);
+    $('#janCoordenadorSelect').find('[data-selecionar]').attr('disabled','true');
+    //$('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
+    $('#janCoordenadorSelect [name="busca"]').next().text('');
+
+    $('#janCoordenadorSelect table').remove();
+    $('#janCoordenadorSelect form')[0].reset();
+    $('#janCoordenadorSelect form [name="rid"]').val($(sender).data('id'));
+
+
+
+    $('#janCoordenadorSelect').modal('show');
+    //console.log($('#janClienteSelect [data-selecionar]').data('target'));
+        
+}
+
 function searchClienteNome(busca)
 {
     let resultado;
@@ -1048,6 +1085,47 @@ function searchParceiroNome(busca)
     }, 'json');
 }
 
+function searchCoordenadorNome(busca)
+{
+    let resultado;
+    $.post(PREFIX_POST+'coordenadores/buscar', {busca: busca}, function(res){
+        if(res.success == true) {
+            let r = res.coordenadores;
+            let jan = $('#janCoordenadorSelect');
+
+            //console.log(res);
+            if(jan.find('hr').siblings('table').length == 0) {
+                jan.find('hr').after('<table class="table table-selectable table-sm table-hover table-bordered small"><thead class="thead-dark"><tr><th>Cód.</th><th>Nome</th><th>Cidade/Estado</th></tr></thead><tbody></tbody></table>');
+                jan.find('table tbody').slideUp(300);
+            } else {
+                jan.find('table tbody').slideUp(300);
+                jan.find('table tbody').html('');
+            }
+
+            jan.find('[data-selecionar]').attr('disabled','true');
+            jan.find('[name="busca"]').next('.text-muted').html('');
+
+            if(r.length == 0) {
+                jan.find('table tbody').append('<tr style="cursor:not-allowed" disabled><td colspan="3" disabled>Nada encontrado</td></tr>');
+            } else {
+                setTimeout(function(){
+                    for(let i = 0; i < r.length; i++) {
+                        jan.find('table tbody').append('<tr style="cursor:pointer" data-id="'+r[i].id+'"><td class="small">'+r[i].id+'</td><td>'+r[i].nome+'</td><td>'+r[i].cidade+'/'+r[i].estado+'</td></tr>');
+                    };
+
+                }, 200);
+            }
+
+            jan.find('[name="busca"]').next('.text-muted').html('Registros encontrados: &nbsp; '+r.length);
+
+            jan.find('table tbody').slideDown(300);
+        } else {
+            alerta(res.mensagem, 'Ops, espera um pouco!',' warning');
+        }
+        
+    }, 'json');
+}
+
 function novoParceiro(sender)
 {
     $.post(PREFIX_POST+$(sender).attr('action'), $(sender).serialize(), function(res){
@@ -1082,8 +1160,8 @@ function parcAddCampoTarifario(sender)
             '<option value="0-5">0 - 5 ANOS</option><option value="6-12">6 - 12 ANOS</option><option value="ADULTO">ADULTO</option>'+
             '<option value="CASAL">CASAL</option><option value="60+">60+ ANOS</option></select>'+
             '<div class="input-group input-group-sm mr-1"><div class="input-group-prepend"><span class="input-group-text form-control-solid">R$</span></div>'+
-            '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" onblur="validaValorDinheiroOnChange(this)"></div>'+
-            '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div>'+
+            '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" name="valor" dobbin-validate-valor></div>'+
+            '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999999,99 (9 milhões). Valor sem casa decimal também é válido. Ex.: 0 a 9999999.</div>'+
             '<button type="button" class="btn btn-sm btn-danger" onclick="parcDelCampoTarifario(this)"><i class="fas fa-trash"></i></button></div>');
     } else {
         alerta('Você já inseriu o máximo de 5 tarifas.', 'Não dá para fazer isso.', 'warning');
@@ -1122,8 +1200,8 @@ function parcAddBeneficioPago(target)
 
     alvo.append('<div class="beneficio d-flex mb-2" style="display:none"><input type="text" class="form-control form-control-sm form-control-solid mr-1" placeholder="Nome" data-beneficio-nome>'+
     '<div class="input-group input-group-sm mr-1"><div class="input-group-prepend"><span class="input-group-text form-control-solid">R$</span></div>'+
-    '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" onkeyup="resetValidaOnChange(this)" onchange="validaValorDinheiroOnChange(this)" data-beneficio-valor>'+
-    '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999,99. Valor sem casa decimal também é válido. Ex.: 0 a 9999.</div></div>'+
+    '<input type="text" class="form-control form-control-sm form-control-solid" placeholder="Ex.: 5000,00" dobbin-validate-valor data-beneficio-valor>'+
+    '<div class="invalid-feedback">Só permitido valores entre 0,00 e 9999999,99 (9 milhões). Valor sem casa decimal também é válido. Ex.: 0 a 9999999.</div>'+
     '<button class="btn btn-sm btn-danger" type="button" onclick="parcDelBeneficioPago(this);"><i class="fas fa-trash"></i></button></div>');
 
     alvo.find('.beneficio').fadeIn();
@@ -1862,6 +1940,65 @@ function roteiroCriarCopia(sender)
     });
 }
 
+function roteiroAddCoordenador(sender)
+{
+    if(sender == null || sender == undefined) {
+        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
+        return false;
+    }
+
+    let rid = $(sender).siblings('[name="rid"]').val();
+    let linha = $(sender).parents('form').find('tr.selecionado');
+    let coord = linha.data('id');
+
+    if(coord == undefined || rid == '') {
+        return false;
+    }
+
+    $.post(PREFIX_POST+'roteiros/'+rid+'/addcoordenador/'+coord, function(res){
+        if(res.success) {
+            // Verifica se esse coordenador já consta.
+            if($('#listaCoord').find('[data-id="'+coord+'"]').length == 0) {
+                $('#listaCoord').find('ul.list-group').append('<li class="list-group-item d-flex justify-content-between align-items-center py-2 pl-3 pr-2">'+linha.children('td:eq(1)').text() +
+                ' <button type="button" class="btn btn-sm btn-light" data-id="'+coord+'" data-rid="'+rid+'" onclick="roteiroRemoveCoordenador(this)"><i class="fas fa-times fa-fw"></i></button> </li>');
+            }
+            $(sender).siblings('[data-dismiss="modal"]').click();
+
+        } else {
+            alerta(res.mensagem, 'Falha!', 'warning');
+            return false;
+        }
+    }, 'json').fail(function(ev) {
+        nativePOSTFail(ev);
+    });
+}
+
+function roteiroRemoveCoordenador(sender)
+{
+    if(sender == null || sender == undefined) {
+        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
+        return false;
+    }
+
+    let rid = $(sender).data('rid');
+    let coord = $(sender).data('id');
+
+    if(coord == undefined || rid == '') {
+        return false;
+    }
+
+    $.post(PREFIX_POST+'roteiros/'+rid+'/delcoordenador/'+coord, function(res){
+        if(res.success) {
+            $(sender).parents('li').eq(0).remove();
+        } else {
+            alerta(res.mensagem, 'Falha!', 'warning');
+            return false;
+        }
+    }, 'json').fail(function(ev) {
+        nativePOSTFail(ev);
+    });
+}
+
 
 /**
  * ./FIM MODAIS E PÁGINAS
@@ -2282,7 +2419,31 @@ $(document).ready(function(){
         }
     });
 
-    $(document).on('click', '#janClienteSelect table tbody tr, #janParceirosSelect table tbody tr', function(ev){
+    // Busca nome do coordenador
+    $(document).on('keyup', '#janCoordenadorSelect :input[name="busca"]', function(ev){
+        if(
+            (ev.keyCode >= 48 && ev.keyCode <= 90) ||  //[0-9a-z]
+            ev.keyCode == 8 || //[backspace]
+            ev.keyCode == 32 || //[space]
+            ev.keyCode == 46 || //[delete]
+            (ev.keyCode >= 96 && ev.keyCode <= 105) //[numpad 0-9]
+        ) {
+            clearTimeout(timerKEY1);
+            timerKEY1 = setTimeout(function(){
+                
+                
+                if($(ev.target).val().trim().length >= 3) {
+                    searchCoordenadorNome($(ev.target).val().trim());
+                } else {
+                    $('#janCoordenadorSelect').find('[data-selecionar]').attr('disabled','true');
+                    $('#janCoordenadorSelect [name="busca"]').next('.text-muted').html('');
+                    $('#janCoordenadorSelect table').slideUp(300, function(){$(this).remove()});
+                }
+            }, 700);
+        }
+    });
+
+    $(document).on('click', '#janClienteSelect table tbody tr, #janParceirosSelect table tbody tr, #janCoordenadorSelect table tbody tr', function(ev){
         let tr = $(this);
         let jan = tr.parents('.modal');
 
@@ -2476,6 +2637,8 @@ $(document).ready(function(){
     /**
      * VALIDAÇÃO AUTOMÁTICA
      */
+    
+
     $(document).on('blur', '[data-validate-rg]', function(ev){
         if($(this).val().trim().length !== 0 && $(this).val().trim().length !== 10) {
             //ERRADO
@@ -2501,10 +2664,6 @@ $(document).ready(function(){
             $(this).siblings('.invalid-feedback').remove();
         }
     });
-
-    $(document).on('blur', '[data-validate-valor]', function(ev){
-        
-    });
     
     $(document).on('change', ':input[type="file"]', function(ev){
         //console.log(ev);
@@ -2518,10 +2677,6 @@ $(document).ready(function(){
         //console.log($(ev.target)[0].files[0]);
     });
 
-    $(document).on('blur', '[data-validate-password]', function(ev){
-        
-
-    });
     /**
      * ./VALIDAÇÃO AUTOMÁTICA
      */
