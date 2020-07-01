@@ -4,7 +4,9 @@ var dbLocal = {"clientesDB":[], "clientesDBHora":[], "usuariosDB":[], "usuariosD
 var timeoutUpdate;
 var timerKEY1;
 var debugEnabled = false;
-var sidebarAlwaysShow = true;;
+var sidebarAlwaysShow = true;
+
+var geralIntervalo5Min, geralIntervalo10Min, geralIntervalo15Min; // Intervalos
 
 var teste;
 
@@ -68,6 +70,34 @@ function loadLanding(href)
         href = href.substring(1, href.length);
     }
 
+    let querystring = '';
+
+    if(location.search.length > 0) {
+        // Há outras instruções.
+        // Remove a interrogação e faz um explode.
+        querystring = location.search.substring(1, location.search.length);
+        querystring = querystring.split('&');
+        console.log(querystring);
+        querystring.forEach(function(a, chave){
+            let tmp = a.split('=');
+            querystring[chave] = {
+                'comando': tmp[0],
+                'valor': tmp[1]
+            }
+            tmp = undefined;
+        });
+        
+    } else {
+        if(location.href.search(/[?]/) >= 0) {
+            location.href = location.href.replace('?', '');
+        }
+    }
+    
+    if(querystring.length > 0) {
+        console.log(querystring);
+    }
+    
+
     // Oculta todos os tooltips.
     $('[data-toggle="tooltip"]').tooltip('hide');
 
@@ -82,6 +112,19 @@ function loadLanding(href)
 
             $('[data-toggle="tooltip"]').tooltip();
             $('[data-toggle="popover"]').popover({"html":true});
+
+            // Varredura de querystring para comandos.
+            if(querystring.length > 0) {
+                querystring.forEach(function(q){
+                    switch(q.comando){
+                        case 'return':
+                            $('#content .page-header-title').append(' <button type="button" class="ml-2 btn btn-secondary font-weight-bold" onclick="location.hash = \'#'+q.valor+'\'; location.search=\'\'; loadLanding(\'#'+q.valor+'\');"><i class="fas fa-reply"></i> Voltar para outra página</button>');
+                            break;
+                    }
+                });
+            }
+            // Ativa gatilhos da página: $(document).ready();
+            gatilhosLoadLanding();
         });
     }, 'json')
     .fail(function(ev, st){
@@ -106,6 +149,32 @@ function loadLanding(href)
         
 
     });
+}
+
+function gatilhosLoadLanding()
+{
+    /**
+     * Organiza todos os gatilhos de cada página em uma única função.
+     * Primeiro, identifica a página e depois ativa as funções correspondentes.
+     * 
+     * PS: Nem todas as funções serão ativadas aqui. Somente as que precisam ser executadas em intervalos de tempo.
+     */
+
+    let local = location.hash;
+    if(local.charAt(0) == '#') {
+        local = local.substring(1, local.length);
+    }
+    clearInterval(geralIntervalo5Min);
+    clearInterval(geralIntervalo10Min);
+    clearInterval(geralIntervalo15Min);
+
+    switch(true) { // procura o regex que for verdadeiro
+        case /(roteiros\/ver\/)([0-9])/gi.test(local): // Roteiros > Ver
+            $(document).ready(function(){
+                setTimeout(function(){getClientesRoteiro();}, 1000);
+                geralIntervalo5Min = setInterval(function(){getClientesRoteiro(); getEstoqueRoteiro();}, 180000);
+            }); break;
+    }
 }
 
 function checkSystemUpdate()
@@ -312,12 +381,102 @@ function nativePOSTFail(ev)
     //console.log(ev);
     debugador(ev);
 }
-
 /** ./FUNÇÕES NATIVAS DA PLATAFORMA */
 
 /**
- * MODAIS E PÁGINAS
+ * MODAIS E JANELAS SUSPENSAS
  */
+
+function janClienteSelect(target)
+{
+    if($(target).length == 0) {
+        alerta('Há algum erro lógico aqui... Informe ao desenvolvedor.');
+    } else {
+        //console.log(target);
+        $('#janClienteSelect').find('[data-selecionar]').attr('disabled','true');
+        $('#janClienteSelect [name="busca"]').next('.text-muted').html('');
+        $('#janClienteSelect [data-selecionar]').data('target', target);
+        $('#janClienteSelect table').remove();
+        $('#janClienteSelect form')[0].reset();
+
+
+
+        $('#janClienteSelect').modal('show');
+        //console.log($('#janClienteSelect [data-selecionar]').data('target'));
+        
+    }
+}
+
+function janParceirosSelect()
+{
+    //console.log(target);
+    $('#janParceirosSelect').find('[data-selecionar]').attr('disabled','true');
+    //$('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
+    $('#janParceirosSelect [name="busca"]').next().text('');
+
+    $('#janParceirosSelect table').remove();
+    $('#janParceirosSelect form')[0].reset();
+
+
+
+    $('#janParceirosSelect').modal('show');
+    //console.log($('#janClienteSelect [data-selecionar]').data('target'));
+        
+}
+
+function janCoordenadorSelect(sender)
+{
+    if(sender == null || sender == undefined) {
+        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
+        return false;
+    }
+
+    //console.log(target);
+    $('#janCoordenadorSelect').find('[data-selecionar]').attr('disabled','true');
+    //$('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
+    $('#janCoordenadorSelect [name="busca"]').next().text('');
+
+    $('#janCoordenadorSelect table').remove();
+    $('#janCoordenadorSelect form')[0].reset();
+    $('#janCoordenadorSelect form [name="rid"]').val($(sender).data('id'));
+
+
+
+    $('#janCoordenadorSelect').modal('show');
+        
+}
+
+function janRoteiroSelect(sender)
+{
+    if(sender == null || sender == undefined) {
+        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
+        return false;
+    }
+
+    //console.log(target);
+    $('#janRoteirosSelect').find('[data-selecionar]').attr('disabled','true');
+    //$('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
+    $('#janRoteirosSelect [name="busca"]').next().text('');
+
+    $('#janRoteirosSelect table').remove();
+    $('#janRoteirosSelect form')[0].reset();
+    $('#janRoteirosSelect [data-selecionar]').data('target', sender);
+
+
+
+    $('#janRoteirosSelect').modal('show');
+}
+
+
+function janDinamicaGatilhos()
+{
+    // Dispara alguns gatilhos da janela dinâmica.
+
+    // Torna o campo editável.
+    $('span[dobbin-campo-editavel], div[dobbin-campo-editavel]').after(
+        ' <button type="button" class="btn btn-xs btn-secondary mr-md-2"><i class="fas fa-pen"></i></button> '
+    );
+}
 
 function loadCoordenador(id)
 {
@@ -493,6 +652,92 @@ function loadCliente(id)
         debugador(ev);
     });
 }
+
+/**
+ * ./MODAIS E JANELAS SUSPENSAS
+ */
+
+
+function getClienteDados(id, callback)
+{
+    id = parseInt(id);
+
+    $.post('/clientes/ver/'+id, function(res){
+        //console.log(res);
+        if(res.success == true) {
+            callback(res.cliente);
+        } else {
+            alerta(res.mensagem, 'Falha ao retornar dados do cliente.', 'danger');
+            callback(false);
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+        callback(false);
+    });
+}
+
+function getCoordenadorDados(id, callback)
+{
+    id = parseInt(id);
+
+    $.post('/coordenadores/ver/'+id, function(res){
+        console.log(res);
+        if(res.success == true) {
+            callback(res.coordenador);
+        } else {
+            alerta(res.mensagem, 'Falha ao retornar dados do coordenador.', 'danger');
+            callback(false);
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+        callback(false);
+    });
+}
+
+function getRoteiroDados(id, callback)
+{
+    id = parseInt(id);
+
+    $.post('/roteiros/load/'+id, function(res){
+        console.log(res);
+        if(res.success == true) {
+            callback(res.roteiro);
+        } else {
+            alerta(res.mensagem, 'Falha ao retornar dados do roteiro.', 'danger');
+            callback(false);
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+        callback(false);
+    });
+}
+
+function getVenda(id)
+{
+    $.post('/vendas/database/load/venda/'+id, function(res){
+        $('.modal:not(#janDinamica)').modal('hide');
+        if(res.success) {
+            let venda = res.venda;
+            // AJUSTA TITULO DA JANELA DINÂMICA
+            $('#janDinamica').find('.tituloModal').text('Venda #'+venda.id);
+            $('#janDinamica').find('.modal-body').html(res.page);
+            
+            setTimeout(function(){$('#janDinamica').modal('show');}, 400);
+            $('#janDinamica').find('.modal-dialog').removeClass('modal-sm').addClass('modal-xl');
+            janDinamicaGatilhos(); // Dispara gatilhos na janela dinâmica.
+            console.log(res);
+        } else {
+            $('#janDinamica').find('.modal-body').html('<h6>Não conseguimos recuperar esta venda.</h6><br>'+res.mensagem);
+            alerta(res.mensagem, 'Não conseguimos recuperar esta venda.', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+/**
+ * PÁGINAS
+ */
+
 
 function deleteCoordenador(id)
 {
@@ -915,66 +1160,6 @@ function delMinhaContaFoto()
     }, 'json');
 }
 
-function janClienteSelect(target)
-{
-    if($(target).length == 0) {
-        alerta('Há algum erro lógico aqui... Informe ao desenvolvedor.');
-    } else {
-        //console.log(target);
-        $('#janClienteSelect').find('[data-selecionar]').attr('disabled','true');
-        $('#janClienteSelect [name="busca"]').next('.text-muted').html('');
-        $('#janClienteSelect [data-selecionar]').data('target', target);
-        $('#janClienteSelect table').remove();
-        $('#janClienteSelect form')[0].reset();
-
-
-
-        $('#janClienteSelect').modal('show');
-        //console.log($('#janClienteSelect [data-selecionar]').data('target'));
-        
-    }
-}
-
-function janParceirosSelect()
-{
-    //console.log(target);
-    $('#janParceirosSelect').find('[data-selecionar]').attr('disabled','true');
-    //$('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
-    $('#janParceirosSelect [name="busca"]').next().text('');
-
-    $('#janParceirosSelect table').remove();
-    $('#janParceirosSelect form')[0].reset();
-
-
-
-    $('#janParceirosSelect').modal('show');
-    //console.log($('#janClienteSelect [data-selecionar]').data('target'));
-        
-}
-
-function janCoordenadorSelect(sender)
-{
-    if(sender == null || sender == undefined) {
-        alerta('Houve um erro na solicitação. Não é possível continuar...', 'Abortado.', 'warning');
-        return false;
-    }
-
-    //console.log(target);
-    $('#janCoordenadorSelect').find('[data-selecionar]').attr('disabled','true');
-    //$('#janParceirosSelect [name="busca"]').next('.text-muted').html('');
-    $('#janCoordenadorSelect [name="busca"]').next().text('');
-
-    $('#janCoordenadorSelect table').remove();
-    $('#janCoordenadorSelect form')[0].reset();
-    $('#janCoordenadorSelect form [name="rid"]').val($(sender).data('id'));
-
-
-
-    $('#janCoordenadorSelect').modal('show');
-    //console.log($('#janClienteSelect [data-selecionar]').data('target'));
-        
-}
-
 function searchClienteNome(busca)
 {
     let resultado;
@@ -1112,6 +1297,51 @@ function searchCoordenadorNome(busca)
                     for(let i = 0; i < r.length; i++) {
                         jan.find('table tbody').append('<tr style="cursor:pointer" data-id="'+r[i].id+'"><td class="small">'+r[i].id+'</td><td>'+r[i].nome+'</td><td>'+r[i].cidade+'/'+r[i].estado+'</td></tr>');
                     };
+
+                }, 200);
+            }
+
+            jan.find('[name="busca"]').next('.text-muted').html('Registros encontrados: &nbsp; '+r.length);
+
+            jan.find('table tbody').slideDown(300);
+        } else {
+            alerta(res.mensagem, 'Ops, espera um pouco!',' warning');
+        }
+        
+    }, 'json');
+}
+
+function searchRoteiroNome(busca)
+{
+
+    let resultado;
+    $.post(PREFIX_POST+'roteiros/buscar', {busca: busca}, function(res){
+        if(res.success == true) {
+            let r = res.roteiros;
+            let jan = $('#janRoteirosSelect');
+
+            console.log(r);
+            if(jan.find('hr').siblings('table').length == 0) {
+                jan.find('hr').after('<table class="table table-selectable table-sm table-hover table-bordered small"><thead class="thead-dark"><tr><th>Cód.</th><th>Roteiro</th></tr></thead><tbody></tbody></table>');
+                jan.find('table tbody').slideUp(300);
+            } else {
+                jan.find('table tbody').slideUp(300);
+                jan.find('table tbody').html('');
+            }
+
+            jan.find('[data-selecionar]').attr('disabled','true');
+            jan.find('[name="busca"]').next('.text-muted').html('');
+
+            if(r.length == 0) {
+                jan.find('table tbody').append('<tr style="cursor:not-allowed" disabled><td colspan="3" disabled>Nada encontrado</td></tr>');
+            } else {
+                setTimeout(function(){
+                    for(let i = 0; i < r.length; i++) {
+                        jan.find('table tbody').append('<tr style="cursor:pointer" data-id="'+r[i].id+'"><td class="small">'+r[i].id+'</td><td>'+r[i].nome+
+                        ' ('+Dobbin.formataData(new Date(r[i].data_ini),true)+' a '+Dobbin.formataData(new Date(r[i].data_fim),true)+')' + r[i].situacao_html+'</td></tr>');
+                    };
+
+                    $('[data-toggle="tooltip"').tooltip();
 
                 }, 200);
             }
@@ -1767,6 +1997,9 @@ function parcHistoricoDelete(sender) {
         nativePOSTFail(ev);
     });
 }
+/**
+ * ROTEIROS
+ */
 
 function roteiroAddParceiroNovoRoteiro(sender) {
     let conteudo = sender.children('td:eq(1)').html();
@@ -1999,6 +2232,107 @@ function roteiroRemoveCoordenador(sender)
     });
 }
 
+/**
+ * VENDAS
+ */
+
+/**
+ * 
+ * @param {Array} c Dados do cliente.
+ * @param {Element} sender Elemento que disparou a função
+ */
+function vendaAddPassageiroLista(c, sender)
+{
+    let faixa = $(sender).data('faixa-etaria');
+    let venda = $(sender).data('venda');
+    if(faixa.indexOf(' ') == -1) {
+        let x = faixa;
+        faixa = [x];
+        x = undefined;
+    } else {
+        faixa = faixa.split(' ');
+    }
+    console.log(c);
+    console.log(sender);
+    console.log(faixa);
+
+    // Verifica se está dentro da faixa etária permitida.
+    if(
+        ( (c.faixa_etaria == '0-5' || c.faixa_etaria == '6-12') && faixa.find(function(f){return f == 'CRIANCA'}) ) || // Só crianças
+        ( c.faixa_etaria == '60+' && faixa.find(function(f){return f == 'IDOSO'}) ) || // Só idosos
+        ( faixa.find(function(f){return f == 'ADULTO'}) ) // Todos como adultos
+    ) {
+        // Envia informação do cliente para a plataforma.
+        $.post(PREFIX_POST+'vendas/'+venda+'/clientes/add/'+c.id, function(res){
+            if(res.success == true) {
+                // Verifica se é janela dinâmica.
+                if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
+                    getVenda(venda); // Atualiza janela dinâmica.
+                }
+
+                alerta('Cliente adicionado.', 'Sucesso!', 'success');
+            } else {
+                alerta(res.mensagem, 'Falha...', 'warning');
+            }
+        },'json').
+        fail(function(ev){nativePOSTFail(ev);});
+    } else {
+        alerta('A faixa etária deste cliente não corresponde à vaga.', 'Escolha outro cliente.', 'warning');
+        $(sender).val('');
+    }
+
+    /*
+    // verifica se o cliente é da faixa etária permitida.
+    if(faixa == 'CRIANCA' && (c.faixa_etaria == '0-5' || c.faixa_etaria == '6-12')) { // CRIANÇA
+        $(target).val(c.id +' - '+c.nome);
+        alerta('OK CRIANCA');
+    } else if(faixa === c.faixa_etaria || c.faixa_etaria == '0-5' || c.faixa_etaria == '6-12') { // ADULTO
+        $(target).val(c.id +' - '+c.nome);
+        alerta('OK ADULTO');
+    } else if(faixa == 'IDOSO' && c.faixa_etaria == '60+'){
+        $(target).val(c.id +' - '+c.nome);
+        alerta('OK IDOSO');
+    } else {
+        if(faixa === 'CRIANCA') {
+            alerta('Esse cliente não pode ser adicionado, pois essa vaga é destinada à uma CRIANÇA (0-12).', 'Não foi possível continuar', 'info');
+        } else if(faixa === 'IDOSO') {
+            alerta('Esse cliente não pode ser adicionado, pois essa vaga é destinada à um IDOSO (60+).', 'Não foi possível continuar', 'info');
+        } else {
+            alerta('Erro inexplicável.', 'Não foi possível continuar', 'info');
+        }
+        $(sender).val('');
+    }
+    */
+}
+
+/**
+ * 
+ * @param {int} id ID da venda
+ * @param {string} situacao Situação da venda
+ * @param {string} outro Informação adicional. Se "paga", informar forma de pagamento; se "devolvida", informar valor em centavos.
+ * @param {Element} sender Elemento que disparou a função.
+ */
+function vendaAlteraSituacao(id, situacao, outro, sender)
+{
+    $.post(PREFIX_POST+'vendas/'+id+'/situacao/editar',{
+        situacao: situacao,
+        outro: outro
+    }, function(res){
+        if(res.success == true) {
+            // Verifica se é janela dinâmica.
+            if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
+                getVenda(id); // Atualiza janela dinâmica.
+            }
+
+            alerta('Situação da venda alterada.', 'Sucesso!', 'success');
+            getReservas();
+            getAguardandoPagamento();
+        } else {
+            alerta(res.mensagem, 'Falha...', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
 
 /**
  * ./FIM MODAIS E PÁGINAS
@@ -2090,7 +2424,8 @@ $(document).ready(function(){
 
     $(document).on('click', 'a', function(ev){
         let href = $(this).attr('href');
-        if(href.charAt(0) == '#') {
+
+        if(href.charAt(0) == '#' && $(this).attr('target') != '_blank') {
             loadLanding(href.substring(1, href.length));
         }
 
@@ -2443,7 +2778,31 @@ $(document).ready(function(){
         }
     });
 
-    $(document).on('click', '#janClienteSelect table tbody tr, #janParceirosSelect table tbody tr, #janCoordenadorSelect table tbody tr', function(ev){
+    // Busca nome do roteiro
+    $(document).on('keyup', '#janRoteirosSelect :input[name="busca"]', function(ev){
+        if(
+            (ev.keyCode >= 48 && ev.keyCode <= 90) ||  //[0-9a-z]
+            ev.keyCode == 8 || //[backspace]
+            ev.keyCode == 32 || //[space]
+            ev.keyCode == 46 || //[delete]
+            (ev.keyCode >= 96 && ev.keyCode <= 105) //[numpad 0-9]
+        ) {
+            clearTimeout(timerKEY1);
+            timerKEY1 = setTimeout(function(){
+                
+                
+                if($(ev.target).val().trim().length >= 3) {
+                    searchRoteiroNome($(ev.target).val().trim());
+                } else {
+                    $('#janRoteirosSelect').find('[data-selecionar]').attr('disabled','true');
+                    $('#janRoteirosSelect [name="busca"]').next('.text-muted').html('');
+                    $('#janRoteirosSelect table').slideUp(300, function(){$(this).remove()});
+                }
+            }, 700);
+        }
+    });
+
+    $(document).on('click', '#janClienteSelect table tbody tr, #janParceirosSelect table tbody tr, #janCoordenadorSelect table tbody tr, #janRoteirosSelect table tbody tr', function(ev){
         let tr = $(this);
         let jan = tr.parents('.modal');
 
@@ -2580,7 +2939,7 @@ $(document).ready(function(){
     });
 
     // Botão de "Carregar mais" registros do histórico.
-    $(document). on('click', '#historico_negoc .loadMore', function(ev){
+    $(document).on('click', '#historico_negoc .loadMore', function(ev){
         let btn = $(ev.currentTarget);
         $.post(PREFIX_POST+'parceiros/'+btn.data('pid')+'/listahistorico/'+btn.data('qtd')+'/'+btn.data('start'), function(res){
             console.log(res);
@@ -2634,6 +2993,20 @@ $(document).ready(function(){
         });
     });
 
+    $(document).on('click', '#janDinamica [data-dismiss="modal"]', function(ev){
+        $(this).parents('.modal').eq(0).find('.modal-body').html('<div class="text-center py-2"><div class="spinner-grow text-primary"></div></div>');
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+    /**
+     * EDITAR CAMPOS
+     */
+
+    
+    /**
+     * EDITAR CAMPOS
+     */
+
     /**
      * VALIDAÇÃO AUTOMÁTICA
      */
@@ -2680,6 +3053,36 @@ $(document).ready(function(){
     /**
      * ./VALIDAÇÃO AUTOMÁTICA
      */
+
+    // Altera eventos dos modais, para permitir múltiplos modais.
+    $('.modal').on({
+        'show.bs.modal': function() { // Antes de abrir o modal
+            var idx = $('.modal:visible').length;
+          
+            $(this).css('z-index', 1040 + (10 * idx));
+            $('[data-toggle="tooltip"]').tooltip();
+        },
+        'shown.bs.modal': function() { // Depois de abrir o modal
+            var idx = ($('.modal:visible').length) - 1; // raise backdrop after animation.
+            $('.modal-backdrop').not('.stacked')
+            .css('z-index', 1039 + (10 * idx))
+            .addClass('stacked');
+            $('[data-toggle="tooltip"]').tooltip();
+        },
+        'hidden.bs.modal': function() { // Depois de ter fechado o modal.
+            if ($('.modal:visible').length > 0) {
+                // restore the modal-open class to the body element, so that scrolling works
+                // properly after de-stacking a modal.
+
+                // Restaura a classe 'modal-open' ao elemento BODY, para o scroll
+                // funcionar corretamente, depois de 'de-stacking' o modal.
+                setTimeout(function() {
+                    $(document.body).addClass('modal-open');
+                    $('[data-toggle="tooltip"]').tooltip();
+                }, 0);
+            }
+        }
+    });
 
      // Carrega a página quando botões de voltar e avançar forem alterados.
     $(window).on('popstate', function(ev){

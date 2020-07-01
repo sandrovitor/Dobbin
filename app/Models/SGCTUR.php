@@ -1,7 +1,7 @@
 <?php
 namespace SGCTUR;
-use SGCTUR\LOG;
-use SGCTUR\Erro;
+use SGCTUR\LOG, SGCTUR\Erro, SGCTUR\Roteiro;
+use \stdClass as stdClass;
 
 class SGCTUR extends Master 
 {
@@ -463,6 +463,68 @@ class SGCTUR extends Master
             $retorno['mensagem'] = 'Total de '.$abc->rowCount().' registros encontrados. Mostrando os primeiros 200 registros. Tente refinar a busca.';
             for($i = 0; $i < 200; $i++) {
                 array_push($retorno['coordenadores'], $abc->fetch(\PDO::FETCH_OBJ));
+            }
+        }
+
+        return $retorno;
+    }
+
+    /**
+     * Faz a busca de uma string em NOME, DATA_INI, DATA_FIM. (Não precisa enviar ID no construtor).
+     * 
+     * @param string $busca String para consulta.
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING, roteiros => ARRAY]
+     */
+    public function getRoteirosBusca(string $busca = '')
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        if(trim($busca) == '') {
+            $abc= $this->pdo->query('SELECT id FROM roteiros WHERE deletado_em IS NULL ORDER BY nome ASC, data_ini DESC, data_fim DESC');
+        } else {
+            $abc = $this->pdo->prepare('SELECT id FROM roteiros WHERE (nome LIKE :b1 OR data_ini LIKE :b2 OR data_fim LIKE :b3) AND deletado_em IS NULL ORDER BY nome ASC, data_ini DESC, data_fim DESC');
+            $abc->bindValue(':b1', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b2', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b3', '%'.trim($busca).'%', \PDO::PARAM_STR);
+
+            try {
+                $abc->execute();
+            } catch(\PDOException $e) {
+                $retorno['mensagem'] = Erro::getMessage(70);
+                \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+                \error_log($e->getMessage(), 0);
+                return $retorno;
+            }
+        }
+
+        $retorno['success'] = true;
+        $retorno['roteiros'] = array();
+
+        if($abc->rowCount() == 0) {
+            $retorno['roteiros'] = array();
+        } else if($abc->rowCount() <= 200)  {
+            $tmp = $abc->fetchAll(\PDO::FETCH_OBJ);
+            // Captura informações dos roteiros no BANCO DE DADOS
+            foreach($tmp as $t) {
+                $roteiro = new Roteiro($t->id);
+                array_push($retorno['roteiros'], $roteiro->getDados());
+            }
+
+            unset($tmp, $t);
+            
+        } else {
+            $retorno['roteiros'] = array();
+            $retorno['mensagem'] = 'Total de '.$abc->rowCount().' registros encontrados. Mostrando os primeiros 200 registros. Tente refinar a busca.';
+            for($i = 0; $i < 200; $i++) {
+                $tmp = $abc->fetch(\PDO::FETCH_OBJ);
+                $roteiro = new Roteiro($tmp->id);
+                array_push($retorno['roteiros'], $roteiro->getDados());
+
+                unset($tmp, $roteiro);
             }
         }
 
@@ -1439,12 +1501,14 @@ class SGCTUR extends Master
             'mensagem' => ''
         );
         
+        // Quantidade de registros.
         if($qtd == 0) {
             $limit = '';
         } else {
             $limit = 'LIMIT '.$inicio.', '.$qtd;
         }
 
+        // Clausula ORDER BY
         $str_ordem = '';
         if(empty($ordem_por)) {
             $retorno['mensagem'] = Erro::getMessage(9);
@@ -1513,5 +1577,248 @@ class SGCTUR extends Master
         }
 
         return $retorno;
+    }
+
+    /**
+     * Lança venda na plataforma.
+     * 
+     * @param \stdClass $venda Um objeto gerado com o JSON_DECODE ou não.
+     * @return array [success => TRUE|FALSE, mensagem => STRING]
+     */
+    public function setVendaNovo(\stdClass $venda)
+    {
+        //print_r($venda);
+
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        // Define variáveis importantes.
+        $vendedor = $_SESSION['auth']['id'];
+        $cliente = $venda->clienteID;
+        $obs = $venda->obs;
+        $formaPagamento = $venda->formaPagamento;
+
+        // Verifica os itens da venda e checa se são do mesmo roteiro.
+        $listaRoteiros = array();
+        foreach($venda->items as $key => $val) {
+            if(\array_search($val->roteiroID, $listaRoteiros) === false) {
+                array_push($listaRoteiros, $val->roteiroID);
+            }
+        }
+
+        // Inicia transação no banco de dados.
+        $this->pdo->beginTransaction();
+
+
+        // Lança venda para cada roteiro
+        foreach($listaRoteiros as $r) {
+            // Carrega roteiro.
+            $roteiroClasse = new Roteiro($r);
+            $roteiro = $roteiroClasse->getDados();
+            //print_r($roteiro->tarifa);
+            
+            $v = new stdClass();
+            $v->roteiroID = $r;
+            $v->items = array();
+            $v->criancas = 0;
+            $v->adultos = 0;
+            $v->clientes_total = 0;
+            $v->valor_total = 0;
+            $v->desconto_total = 0;
+
+            // Busca itens desse roteiro.
+            foreach($venda->items as $items) {
+                if($items->roteiroID === $r) {
+                    unset($items->roteiroID);
+                    array_push($v->items, $items);
+                    
+                    // Busca a tarifa correspondente.
+                    foreach($roteiro->tarifa as $key => $y) {
+                        if($y->nome == $items->tarifa) {
+                            $x = $key;
+                            break;
+                        }
+                    }
+                    // Conta clientes.
+                    $v->criancas += ( (int)$roteiro->tarifa[$x]->distr->criancas * (int)$items->qtd );
+                    $v->adultos += ( (int)$roteiro->tarifa[$x]->distr->adultos * (int)$items->qtd );
+
+                    // Valor total e desconto total.
+                    $v->valor_total += (int)$items->subtotal;
+                    $v->desconto_total += (int)$items->desconto;
+
+                }
+            }
+    
+            // Conta total de clientes nessa venda.
+            $v->clientes_total = $v->criancas + $v->adultos;
+            //print_r($v);
+
+            // Verifica se há estoque suficiente para efetuar a compra.
+            if($roteiro->estoque['total'] - $roteiro->estoque['vendidos'] >= $v->clientes_total) {
+            
+                // Lança venda no sistema.
+                $abc = $this->pdo->prepare("INSERT INTO `vendas` (`id`, `cliente_id`, `roteiro_id`, `items`, `adultos`, `criancas`, `clientes_total`, `lista_clientes`, `desconto_total`, `valor_total`, `status`, `obs`, `forma_pagamento`, `usuario_id`, `data_reserva`, `data_venda`, `data_pagamento`, `data_cancelado`, `data_estorno`) VALUES ".
+                "(NULL, :cliente, :roteiro, :items, :adultos, :criancas, :clientesTotal, '', :descontoTotal, :valorTotal, :status, :obs, :formaPagamento, $vendedor, NOW(), NULL, NULL, NULL, NULL)");
+
+                $abc->bindValue(':cliente', $cliente, \PDO::PARAM_INT);
+                $abc->bindValue(':roteiro', $v->roteiroID, \PDO::PARAM_INT);
+                $abc->bindValue(':items', json_encode($v->items), \PDO::PARAM_STR);
+                $abc->bindValue(':adultos', $v->adultos, \PDO::PARAM_INT);
+                $abc->bindValue(':criancas', $v->criancas, \PDO::PARAM_INT);
+                $abc->bindValue(':clientesTotal', $v->clientes_total, \PDO::PARAM_INT);
+                $abc->bindValue(':descontoTotal', $v->desconto_total, \PDO::PARAM_INT);
+                $abc->bindValue(':valorTotal', $v->valor_total, \PDO::PARAM_INT);
+                $abc->bindValue(':obs', $obs, \PDO::PARAM_STR);
+                $abc->bindValue(':status', '', \PDO::PARAM_STR);
+
+                if($formaPagamento == 'Reserva') {
+                    $abc->bindValue(':status', 'Reserva', \PDO::PARAM_STR);
+                    $abc->bindValue(':formaPagamento', '', \PDO::PARAM_STR);
+                } else {
+                    $abc->bindValue(':status', 'Aguardando', \PDO::PARAM_STR);
+                    $abc->bindValue(':formaPagamento', $formaPagamento, \PDO::PARAM_STR);
+                }
+
+                try{
+                    $abc->execute();
+                } catch(\PDOException $e) {
+                    $this->pdo->rollBack();
+                    $retorno['mensagem'] = Erro::getMessage(70) . ' ERRO: '.$e->getMessage();
+                    \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+                    \error_log($e->getMessage(), 0);
+                    return $retorno;
+                }
+
+            } else {
+                // Não há vagas suficientes para compra deste roteiro.
+                $retorno['mensagem'] .= '- O roteiro <i>'.$roteiro->nome.' (Cód.: '.$roteiro->id.')</i> não possui vagas disponíveis suficientes. [Disponível: '.
+                ($roteiro->estoque['total'] - $roteiro->estoque['vendidos']) .'; Necessárias: '.$v->clientes_total.'].<br>';
+            }
+            
+        }
+
+        // Commit no banco
+        $this->pdo->commit();
+
+        $retorno['success'] = true;
+        return $retorno;
+    }
+
+    /**
+     * Listar vendas. (Não precisa enviar ID no construtor).
+     * 
+     * @param int $inicio Onde o ponteiro de busca deve iniciar.
+     * @param int $qtd Total de registros que a busca deve retornar.
+     * @param array $ordem_por Campo a ser ordenado. Ex.: cliente_id, roteiro_id, roteiroNome, clienteNome, data_reserva...
+     * @param const Ordenar ASCENDENTE ou DESCENDENTE.
+     * @param array $filtro Filtro a ser aplicado (array de arrays). Se array vazio ([]) é usado "WHERE 1" na consulta.
+     * Modelo deve ser: [ [CAMPO (nome do campo no BD), OPERADOR (=, <>, <, >, IS NOT, IS), VALOR (NULL, string, int)], [...] ].
+     * Ex.: [ ['status', '=', 'Reserva'] ].
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING, vendas => ARRAY]
+     */
+    public function getVendasLista(int $inicio = 0, int $qtd = 20, array $ordem_por = ['data_reserva'], array $ordem = [SGCTUR::ORDER_DESC], array $filtro = [])
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+        
+        // Cláusula LIMIT
+        if($qtd == 0) {
+            $limit = '';
+        } else {
+            $limit = 'LIMIT '.$inicio.', '.$qtd;
+        }
+
+        // Cláusula ORDER BY
+        $str_ordem = '';
+        if(empty($ordem_por)) {
+            $retorno['mensagem'] = Erro::getMessage(9);
+            return $retorno;
+        }
+        foreach($ordem_por as $key => $o) {
+            switch($o) {
+                case 'cliente_id':
+                case 'roteiro_id':
+                case 'data_reserva':
+                case 'roteiroNome':
+                case 'clienteNome':
+                    $str_ordem .= $o;
+                    
+                    if(!isset($ordem[$key]) || $ordem[$key] == '') {
+                        // Se este índice não estiver setado, usa o primeiro indice.
+                        if($ordem[0] == 1) {
+                            // ASCENDENTE
+                            $str_ordem .= ' ASC, ';
+                        } else {
+                            // DESCENDENTE
+                            $str_ordem .= ' DESC, ';
+                        }
+                    } else {
+                        // Indice setado.
+                        if($ordem[$key] == 1) {
+                            // ASCENDENTE
+                            $str_ordem .= ' ASC, ';
+                        } else {
+                            // DESCENDENTE
+                            $str_ordem .= ' DESC, ';
+                        }
+
+                    }
+                    
+                break;
+            }
+
+            
+        }
+
+        $str_ordem = substr($str_ordem, 0, -2);
+
+        
+        // Cláusula WHERE
+        $where = '';
+        if(empty($filtro)) {
+            $where = '1';
+        } else {
+            foreach($filtro as $f) {
+                switch(\gettype($f[2])) {
+                    case 'boolean':
+                    case 'integer':
+                    case 'NULL':
+                        $where .= $f[0]. ' '. $f[1] .' '.$f[2].' AND ';
+                    break;
+                    
+                    case 'string':
+                        $where .= $f[0]. ' '. $f[1] .' "'.$f[2].'" AND ';
+                    break;
+                }
+            }
+
+            $where = substr($where, 0, -5);
+        }
+
+        try{
+            $abc = $this->pdo->query('SELECT vendas.*, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim, '.
+            'clientes.nome as cliente_nome '.
+            'FROM vendas '.
+            'LEFT JOIN roteiros ON vendas.roteiro_id = roteiros.id '.
+            'LEFT JOIN clientes ON vendas.cliente_id = clientes.id '.
+            'WHERE '.$where.' ORDER BY '.$str_ordem.' '.$limit);
+            $retorno['vendas'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+            $retorno['success'] = true;
+
+            return $retorno;
+        } catch(\PDOException $e) {
+            $retorno['mensagem'] = Erro::getMessage(70) . ' ERRO: '.$e->getMessage();
+            \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+            \error_log($e->getMessage(), 0);
+            return $retorno;
+        }
+        
+
     }
 }

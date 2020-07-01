@@ -11,6 +11,7 @@ Use SGCTUR\LOG;
 Use SGCTUR\Erro;
 Use SGCTUR\Parceiro;
 Use SGCTUR\Roteiro;
+Use SGCTUR\Venda;
 
 class ControllerPrincipal 
 {
@@ -309,6 +310,30 @@ class ControllerPrincipal
         return json_encode($retorno);
     }
 
+    static function roteirosLoad($p)
+    {
+        self::validaConexao(2);
+
+        $retorno = ['success' => false, 'mensagem' => ''];
+
+        $rot = new Roteiro($p['id']);
+        $roteiro = $rot->getDados();
+        
+        if($roteiro === false) {
+            http_response_code(404);
+            header('HTTP/1.1 404 Não encontrado!');
+            exit();
+        } else {
+            $roteiro = $rot->getDados();
+            
+            $retorno['success'] = true;
+            $retorno['roteiro'] = $roteiro;
+        }
+
+
+        return json_encode($retorno);
+    }
+
     static function roteirosVer($p)
     {
         self::validaConexao(2);
@@ -375,17 +400,50 @@ class ControllerPrincipal
             $criado_por = '<img src="/media/images/av/'.$u->avatar.'" height="25" style="border-radius:50%" class="mr-1"> <i>'.$u->nome .' '. $u->sobrenome.'</i>';
         }
 
+        // Lista de vendas
+        $lista_vendas = $rot->getVendidosLista();
+
         $blade = self::bladeStart();
         $retorno = array(
             'title' => '<i class="fas fa-luggage-cart"></i> Roteiros > <span id="roteiroTitle"></span>',
             'description' => 'Detalhes do roteiro.',
             'page' => $blade->run("roteiros.roteirosVer", array(
                 'roteiro' => $roteiro,
+                'lista_vendas' => $lista_vendas,
                 'sgc' => new SGCTUR(),
                 'criado_por' => $criado_por
             ))
         );
 
+        return json_encode($retorno);
+    }
+
+    static function roteirosVerClientes($p) // Retorna JSON.
+    {
+        self::validaConexao(2);
+
+        $rot = new Roteiro($p['id']);
+        $retorno = $rot->getClientesLista();
+        return json_encode($retorno);
+    }
+
+    static function roteirosVerEstoque($p) // Retorna JSON.
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => '',
+            'estoque' => array()
+        ];
+
+        $rot = new Roteiro($p['id']);
+        $r = $rot->getDados();
+        if($r === false) {
+            $retorno['mensagem'] = 'Roteiro não encontrado ou pode ter sido excluído.';
+        } else {
+            $retorno['success'] = true;
+            $retorno['estoque'] = $r->estoque;
+        }
         return json_encode($retorno);
     }
 
@@ -536,6 +594,40 @@ class ControllerPrincipal
 
     }
 
+    static function vendasDatabase($p)
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Todas',
+            'description' => 'Veja todas as suas vendas concluídas, canceladas, aguardando pagamento e reservas.',
+            'page' => $blade->run("vendas.vendasDatabase", array(
+                'vendas' => $sgc->getVendasLista()['vendas'],
+                'sgc' => $sgc,
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function vendasDatabaseReservas($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Reserva'] ]);
+        return json_encode($ret);
+    }
+
+    static function vendasDatabaseAguardando($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Aguardando'] ]);
+        return json_encode($ret);
+    }
+
     /**
      * 
      * 
@@ -649,7 +741,6 @@ class ControllerPrincipal
             $dados = $cliente->getDados();
 
             if($dados === false) {
-                http_response_code(404);
                 $retorno['mensagem'] = Erro::getMessage(105);
                 return json_encode($retorno);
             } else {

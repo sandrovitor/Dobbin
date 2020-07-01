@@ -1,7 +1,6 @@
 <?php
 namespace SGCTUR;
-use SGCTUR\LOG;
-use SGCTUR\Erro;
+use SGCTUR\LOG, SGCTUR\Erro, SGCTUR\Cliente;
 
 class Roteiro extends Master 
 {
@@ -51,6 +50,54 @@ class Roteiro extends Master
                 if($tarifa != null) {
                     $this->dados->tarifa = $tarifa;
                 }
+
+                // Situação da viagem, com base na data.
+                $hoje = new \DateTime();
+                $partida = new \DateTime($this->dados->data_ini);
+                $retorno = new \DateTime($this->dados->data_fim);
+                $diffPart = $hoje->diff($partida);
+                $diffRet = $hoje->diff($retorno);
+
+
+                if($diffPart->invert == 1 && $diffRet->invert == 1) { // Datas já passaram.
+                    $situacao = '<span class="badge badge-dark py-1 px-2 ml-3" title="A data da viagem já passou." data-toggle="tooltip">CONCLUIDO</span>';
+                    $this->dados->situacao = 'CONCLUIDO';
+                } else if($diffPart->invert == 1 && $diffRet->invert == 0) { // Durante a viagem
+                    $situacao = '<span class="badge badge-primary py-1 px-2 ml-3" title="Período da viagem em andamento." data-toggle="tooltip">EM VIAGEM</span>';
+                    $this->dados->situacao = 'ANDAMENTO';
+                } else { // Data no futuro.
+                    $this->dados->situacao = 'ABERTO';
+                    if($diffPart->days > 7) { // Falta mais de uma semana
+                        $situacao = '<span class="badge badge-success py-1 px-2 ml-3" title="Falta alguns dias para esta viagem." data-toggle="tooltip">PROGRAMADO</span>';
+                    } else if($diffPart->days > 1) { // Falta uma semana ou menos.
+                        $situacao = '<span class="badge badge-info py-1 px-2 ml-3" title="Falta uma semana ou menos para esta viagem." data-toggle="tooltip">MENOS DE UMA SEMANA</span>';
+                    } else { // Breve. Menos de 2 dias
+                        $situacao = '<span class="badge badge-info py-1 px-2 ml-3" title="Falta menos de 2 dias para esta viagem." data-toggle="tooltip">BREVE</span>';
+                    }
+                }
+
+                $this->dados->situacao_html = $situacao;
+
+                // Informações sobre vendas do roteiro
+                if(!isset($this->dados->estoque)) {
+                    $this->dados->estoque = array();
+                }
+        
+                $abc = $this->pdo->query("SELECT SUM(clientes_total) as vendidos FROM vendas WHERE roteiro_id = $this->id AND status <> 'Cancelada' AND status <> 'Devolvida' AND status <> 'Reserva'");
+                $reg = $abc->fetch(\PDO::FETCH_OBJ);
+                if($reg->vendidos === NULL) { $reg->vendidos = 0;}
+        
+                $this->dados->estoque['total'] = (int)$this->dados->passagens;
+                $this->dados->estoque['vendidos'] = (int)$reg->vendidos;
+        
+                $abc = $this->pdo->query("SELECT SUM(clientes_total) reservados FROM vendas WHERE roteiro_id = $this->id AND status = 'Reserva'");
+                $reg = $abc->fetch(\PDO::FETCH_OBJ);
+                if($reg->reservados === NULL) { $reg->reservados = 0;}
+                $this->dados->estoque['reservados'] = (int)$reg->reservados;
+                $this->dados->estoque['livre'] = $this->dados->estoque['total'] - ($this->dados->estoque['vendidos'] + $this->dados->estoque['reservados']);
+                $this->dados->estoque['vendidos_perc'] = round( ($this->dados->estoque['vendidos']  * 100) / $this->dados->estoque['total'], 2);
+                $this->dados->estoque['reservados_perc'] = round( ($this->dados->estoque['reservados'] * 100) / $this->dados->estoque['total'], 2);
+                $this->dados->estoque['livre_perc'] = round( ($this->dados->estoque['livre'] * 100) / $this->dados->estoque['total'], 2);
                 
                 return true;
             }
@@ -71,6 +118,90 @@ class Roteiro extends Master
 
         return $this->dados;
     }
+
+    /**
+     * Retorna lista de vendas desse roteiro.
+     * 
+     * @return array
+     */
+    public function getVendidosLista()
+    {
+        if($this->dados == null) {
+            return array();
+        }
+
+        $abc = $this->pdo->query("SELECT vendas.*, clientes.nome as cliente_nome FROM vendas LEFT JOIN clientes ON vendas.cliente_id = clientes.id WHERE vendas.roteiro_id = $this->id AND vendas.status <> 'Devolvida' AND vendas.status <> 'Cancelada' ORDER BY vendas.id ASC");
+        if($abc->rowCount() == 0) {
+            $reg = array();
+        } else {
+            $reg = $abc->fetchAll(\PDO::FETCH_OBJ);
+        }
+
+        return $reg;
+    }
+
+    /**
+     * Retorna lista de clientes/passageiros do roteiro.
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => string, clientes => array]
+     */
+    public function getClientesLista()
+    {
+        if($this->dados == null) {
+            return [
+                'success' => false,
+                'mensagem' => 'Roteiro não encontrado ou não existe.',
+                'clientes' => []
+            ];
+        }
+
+        $retorno = [
+            'success' => true,
+            'mensagem' => '',
+            'clientes' => []
+        ];
+
+        $lista_vendas = $this->getVendidosLista();
+        $temp1 = array(); // Array temporário com todos os clientes desordenados.
+        foreach($lista_vendas as $l) {
+            if($l->lista_clientes == '') {
+                $temp2 = array();
+            } else {
+                $temp2 = json_decode($l->lista_clientes);
+            }
+
+            if(!empty($temp2)) {
+                foreach($temp2 as $temp3) {
+                    // Busca cliente no Banco de dados.
+                    $cliente = new Cliente($temp3);
+                    $c = $cliente->getDados();
+                    if($c->cpf == ''){$cpf = '-';} else {$cpf = $c->cpf;}
+                    array_push($temp1, [
+                        'id' => $c->id,
+                        'nome' => $c->nome,
+                        'faixa_etaria' => $c->faixa_etaria,
+                        'cpf' => $cpf,
+                        'titular' => $c->titular, // Código do titular (caso seja dependente)
+                        'venda' => $l->id // ID da venda
+                    ]);
+                }
+
+                unset($cliente, $c);
+
+                // organiza array pelo nome
+                usort($temp1, function($a, $b){
+                    return strcmp($a["nome"], $b["nome"]);
+                });
+                
+            }
+        }
+
+        $retorno['clientes'] = $temp1;
+
+        return $retorno;
+    }
+
+
 
     /**
      * Adiciona uma nova entrada no histórico deste roteiro.

@@ -100,15 +100,17 @@
                             <li><a class="nav-link text-danger" href="#roteiros/lixeira">Lixeira</a></li>
                         </ul>
                     </li>
-                    <!--
+                    
+
                     <li class="nav-item">
                         <a class="nav-link" href="#vendas"><i class="fas fa-shopping-cart fa-fw"></i> Vendas</a>
                         <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#vendas/novo">Novo</a></li>
+                            <li><a class="nav-link" href="#vendas/database">Base de Dados</a></li>
                         </ul>
                     </li>
-                    -->
+
 
                     <!--
                     <li class="nav-item"><a class="nav-link" href="#roteiros"><i class="fas fa-luggage-cart fa-fw"></i> Roteiros</a></li>
@@ -1211,6 +1213,35 @@
     </div>
 </div>
 
+<div class="modal fade" id="janRoteirosSelect">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3 font-weight-bold bg-dark text-white">
+                Escolha o roteiro
+                <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control form-control-sm form-control-solid" name="busca" placeholder="Digite para buscar...">
+                        <div class="text-muted small mt-2"> </div>
+                        <div class="alert alert-info small">
+                            <strong>DICA:</strong> Pesquise DATA ou NOME (nunca os dois juntos);<br>
+                            <strong>DICA:</strong>Para pesquisar data, use o formato AAAA-MM-DD. Exemplo: 2020-06-01 (01/06/2020).
+                        </div>
+                    </div>
+                    <hr>
+
+                    <div class="text-right">
+                        <button type="button" class="btn btn-sm btn-primary" data-dismiss="modal" data-selecionar data-target="" disabled onclick="$($(this).data('target')).val($('#janRoteirosSelect table.table-selectable ').find('tr.selecionado').data('id')).trigger('change');">Selecionar</button>
+                        <button type="button" class="btn btn-sm btn-dark" data-dismiss="modal">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -1245,6 +1276,22 @@
     </div>
 </div>
     <!-- ./JANELA SUSPENSA -->
+
+    <!-- JANELA SUSPENSA DINÂMICA -->
+<div class="modal fade" id="janDinamica">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3 font-weight-bold">
+                <span class="tituloModal">Janela suspensa dinâmica</span>
+                <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
+            </div>
+            <div class="modal-body">
+                TESTE DE JANELA DINÂMICA
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- ./JANELA SUSPENSA DINÂMICA -->
 
 
     <!-- SPLASH SCREEN -->

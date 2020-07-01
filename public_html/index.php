@@ -12,6 +12,7 @@ require_once('../app/Config.php');
 require_once('../vendor/autoload.php');
 require_once('../app/Controllers/ControllerPrincipal.php');
 require_once('../app/Controllers/ControllerForm.php');
+require_once('../app/Controllers/ControllerJan.php');
 @session_start(); // Inicia sessão em todas as páginas/requisições.
 
 date_default_timezone_set('America/Bahia');
