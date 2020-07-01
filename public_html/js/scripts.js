@@ -653,6 +653,23 @@ function loadCliente(id)
     });
 }
 
+function vendaEstornarModal(id)
+{
+    getVendaDados(id, function(v){
+        console.log(v);
+        if(v === false) {return false;}
+        let modal = $('#modalEstornarVenda');
+        modal.find('h6').html('<strong>Venda:</strong> #'+v.id+'<br>'+
+        '<strong>Forma de Pagamento:</strong> '+v.forma_pagamento+'<br>'+
+        '<strong>Cliente:</strong> '+v.cliente_nome);
+
+        modal.find('[name="id"]').val(v.id);
+        modal.find('[name="valor_devolvido"]').val('0,00');
+        modal.find('[name="valor_devolvido"]').attr('max',v.valor_total);
+        modal.modal('show');
+    });
+}
+
 /**
  * ./MODAIS E JANELAS SUSPENSAS
  */
@@ -732,6 +749,24 @@ function getVenda(id)
         }
     }, 'json').
     fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendaDados(id, callback)
+{
+    id = parseInt(id);
+
+    $.post('/vendas/database/load/venda/'+id, function(res){
+        
+        if(res.success == true) {
+            callback(res.venda);
+        } else {
+            alerta(res.mensagem, 'Falha ao retornar dados da venda.', 'danger');
+            callback(false);
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+        callback(false);
+    });
 }
 
 /**
@@ -2333,6 +2368,8 @@ function vendaAlteraSituacao(id, situacao, outro, sender)
     }, 'json').
     fail(function(ev){nativePOSTFail(ev);});
 }
+
+
 
 /**
  * ./FIM MODAIS E PÁGINAS

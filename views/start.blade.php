@@ -1083,15 +1083,27 @@
     </div>
 </div>
 
-<div class="modal fade" id="">
+<div class="modal fade" id="modalEstornarVenda">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 px-3 font-weight-bold">
-                Titulo do modal
+                Estornar Venda
                 <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
             </div>
             <div class="modal-body">
-            
+                <h6></h6>
+                <form>
+                    <div class="form-group">
+                        <label>Valor a ser devolvido</label>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text ">R$</div>
+                            </div>
+                            <input type="text" class="form-control form-control-sm" name="valor_devolvido" dobbin-mask-money max="">
+                            <input type="hidden" name="id" value="">
+                        </div>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>

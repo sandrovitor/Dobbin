@@ -139,7 +139,7 @@ class ControllerJan
                         <button type="button" class="btn btn-sm btn-primary mr-md-2" disabled>Aguardando pagamento</button>
                         <button type="button" class="btn btn-sm btn-primary mr-md-2" disabled>Pago</button>
                         <button type="button" class="btn btn-sm btn-primary mr-md-2" disabled>Cancelado</button>
-                        <button type="button" class="btn btn-sm btn-primary mr-md-2" onclick="alert(\'Ainda indisponível...\')">Estornado</button>
+                        <button type="button" class="btn btn-sm btn-primary mr-md-2" onclick="vendaEstornarModal('.$ret->id.')">Estornado</button>
                         ';
                     break;
                     case 'Cancelada':
