@@ -46,12 +46,19 @@ $router->map('POST', '/roteiros/novo', 'ControllerPrincipal#roteirosNovo');
 $router->map('POST', '/roteiros/database', 'ControllerPrincipal#roteirosDatabase');
 $router->map('POST', '/roteiros/simulacao', 'ControllerPrincipal#roteirosSimulacao');
 $router->map('POST', '/roteiros/ver/[i:id]', 'ControllerPrincipal#roteirosVer');
+$router->map('POST', '/roteiros/ver/[i:id]/clientes', 'ControllerPrincipal#roteirosVerClientes'); // JSON
+$router->map('POST', '/roteiros/ver/[i:id]/estoque', 'ControllerPrincipal#roteirosVerEstoque'); // JSON
+$router->map('POST', '/roteiros/load/[i:id]', 'ControllerPrincipal#roteirosLoad');
 $router->map('POST', '/roteiros/editar/[i:id]', 'ControllerPrincipal#roteirosEditar');
 $router->map('POST', '/roteiros/lixeira', 'ControllerPrincipal#roteirosLixeira');
 $router->map('POST', '/roteiros/lixeira/ver/[i:id]', 'ControllerPrincipal#roteirosLixeiraVer');
 
 // VENDAS
 $router->map('POST', '/vendas/novo', 'ControllerPrincipal#vendasNovo');
+$router->map('POST', '/vendas/database', 'ControllerPrincipal#vendasDatabase');
+$router->map('POST', '/vendas/database/get/reservas', 'ControllerPrincipal#vendasDatabaseReservas'); // JSON
+$router->map('POST', '/vendas/database/get/aguardando', 'ControllerPrincipal#vendasDatabaseAguardando'); // JSON
+$router->map('POST', '/vendas/database/load/venda/[i:vid]', 'ControllerJan#vendasLoad');
 
 
 $router->map('POST', '/parceiros', 'ControllerPrincipal#parceiros');
@@ -127,6 +134,7 @@ $router->addRoutes(array(
 
     array('POST', $prefix.'roteiros/novo', 'ControllerForm#roteirosNovo'),
     array('POST', $prefix.'roteiros/database', 'ControllerForm#roteirosLista'),
+    array('POST', $prefix.'roteiros/buscar', 'ControllerForm#roteirosBuscar'),
     array('POST', $prefix.'roteiros/[i:id]/addhistorico/[i:parcid]', 'ControllerForm#roteirosHistoricoNovo'),
     array('POST', $prefix.'roteiros/[i:id]/tarifa/editar', 'ControllerForm#roteirosTarifaEdita'),
     array('POST', $prefix.'roteiros/[i:id]/addcoordenador/[i:coord]', 'ControllerForm#roteiroAddCoordenador'),
@@ -138,7 +146,9 @@ $router->addRoutes(array(
     array('POST', $prefix.'roteiros/[i:id]/copiar', 'ControllerForm#roteiroCriarCopia'),
 
     // VENDAS!
-
+    array('POST', $prefix.'vendas/novo', 'ControllerForm#vendasNovo'),
+    array('POST', $prefix.'vendas/[i:id]/clientes/add/[i:cid]', 'ControllerForm#vendasAddCliente'),
+    array('POST', $prefix.'vendas/[i:id]/situacao/editar', 'ControllerForm#vendasAlterarSituacao'),
 
     
 

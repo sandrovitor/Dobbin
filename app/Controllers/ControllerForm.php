@@ -10,6 +10,7 @@ Use SGCTUR\LOG;
 Use SGCTUR\Erro;
 Use SGCTUR\Parceiro;
 Use SGCTUR\Roteiro;
+Use SGCTUR\Venda;
 
 class ControllerForm
 {
@@ -661,6 +662,16 @@ class ControllerForm
         return json_encode($retorno);
     }
 
+    static function roteirosBuscar($p)
+    {
+        self::validaConexao();
+        //return json_encode($_POST);
+
+        $sgc = new SGCTUR();
+
+        return json_encode($sgc->getRoteirosBusca($_POST['busca']));
+    }
+
     static function roteirosLista($p)
     {
         self::validaConexao(2);
@@ -1020,6 +1031,108 @@ class ControllerForm
             $_SESSION['auth']['avatar'] = $dados->avatar;
         } else {
             $retorno['mensagem'] = $res;
+        }
+
+        return json_encode($retorno);
+    }
+
+    /**
+     * 
+     * 
+     * VENDAS
+     * 
+     * 
+     */
+    static function vendasNovo($p)
+    {
+        self::validaConexao(3);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        if(!isset($_POST['venda']) || $_POST['venda'] == '') {
+            $retorno['mensagem'] = Erro::getMessage(300);
+            return json_encode($retorno);
+        }
+
+        
+        $venda = json_decode($_POST['venda']);
+        if($venda === null) {
+            $retorno['mensagem'] = Erro::getMessage(301);
+            return json_encode($retorno);
+        }
+
+        // Checa existência do cliente.
+        $cliente = new Cliente((int)$venda->clienteID);
+        if($cliente->getDados() === false) {
+            $retorno['mensagem'] = Erro::getMessage(105);
+            return json_encode($retorno);
+        }
+        unset($cliente);
+
+        $sgc = new SGCTUR();
+        $ret = $sgc->setVendaNovo(json_decode($_POST['venda']));
+
+
+        return json_encode($ret);
+    }
+
+    static function vendasAddCliente($p)
+    {
+        self::validaConexao(3);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $venda = new Venda($p['id']);
+        $v = $venda->getDados();
+
+        // Captura lista de clientes.
+        if($v->lista_clientes == '') {
+            $temp1 = array();
+        } else {
+            $temp1 = json_decode($v->lista_clientes);
+
+        }
+
+        // Busca cliente na lista.
+        if(array_search($p['cid'], $temp1) === FALSE) {
+            // Adiciona cliente e salva.
+            $res = $venda->setListaClienteNovo($p['cid']);
+
+            if($res === true) {
+                $retorno['success'] = true;
+            } else {
+                $retorno['mensagem'] = 'Não foi possível adicionar o cliente à lista.';
+            }
+
+        } else {
+            // Cliente já está na lista
+            $retorno['mensagem'] = 'Este cliente já foi adicionado à lista.';
+        }
+
+        return json_encode($retorno);
+       
+    }
+
+    static function vendasAlterarSituacao($p)
+    {
+        self::validaConexao(3);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $venda = new Venda($p['id']);
+        $v = $venda->getDados();
+        $ret = $venda->setSituacao($_POST['situacao'], $_POST['outro']);
+
+        if($ret === false) {
+            $retorno['mensagem'] = 'Não foi possível alterar a situação desta venda.';
+        } else {
+            $retorno['success'] = true;
         }
 
         return json_encode($retorno);

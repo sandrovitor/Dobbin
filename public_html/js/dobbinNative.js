@@ -278,5 +278,51 @@ $(document).ready(function(){
         resetValidaOnChange(ev.currentTarget);
     });
 
+    $(document).on('change keyup', '[dobbin-mask-money]', function(ev){
+        let valor = $(ev.currentTarget).val();
+        let decimal;
+        let reais = '';
+        valor = valor.replace(/(\W|\D)/g,'');
+
+        // Remove o 0 do inicio.
+        while(valor.charAt(0) == '0') {
+            valor = valor.slice(1, valor.length);
+        }
+        
+        //console.log(valor);
+        if(valor.length < 3) {
+            // Preenche com zeros à esquerda.
+            while(valor.length < 3) {valor = '0'+valor;}
+
+        }
+
+
+        let x = [];
+        x[0] = valor.slice(0,valor.length-2);
+        x[1] = valor.slice(valor.length-2, valor.length); // Casas decimais
+        decimal = x[1];
+        
+        if(x[0].length > 3) {
+            let i = x[0].length;
+            while(i >= 1){
+                if(i-3 > 0 && reais == '') {
+                    reais = x[0].slice(i-3, i);
+                } else if(i-3 > 0) {
+                    reais = x[0].slice(i-3, i)+'.'+reais;
+                } else {
+                    reais = x[0].slice(0, i)+'.'+reais;
+                }
+                
+                i = i-3;
+            }
+        } else {
+            reais = x[0];
+        }
+
+        //console.log(x);
+        $(ev.currentTarget).val(reais+','+decimal);
+        
+    });
+
 
 });

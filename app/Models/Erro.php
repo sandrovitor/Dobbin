@@ -75,6 +75,13 @@ class Erro
         245 => 'Não foi possível excluir definitivamente. Talvez o roteiro não exista, ou ele não esteja na lixeira ainda.',
         246 => 'Não foi possível adicionar o coordenador ao roteiro, pois o limite já foi alcançado.',
         247 => 'Não foi possível remover o coordenador do roteiro.',
+
+        /**
+         * 3xx: Vendas
+         */
+        300 => 'A plataforma não recebeu os dados da venda corretamente.',
+        301 => 'A plataforma não recebeu os dados da venda corretamente. Erro na leitura.',
+        302 => 'A venda não foi encontrada na plataforma. Ela pode ter sido removida ou ainda não existe.',
     ];
 
     public static function getMessage(int $code)

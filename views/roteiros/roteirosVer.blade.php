@@ -17,15 +17,17 @@
                                     <button type="button" class="btn btn-sm btn-dark mr-2" onclick="$('.modal.show').modal('hide'); $('#janCriarCopiaRoteiro').modal('show')" data-id="{{$roteiro->id}}">Criar cópia do roteiro</button>
                                 </div>
                             @php
+                                $hoje = new DateTime();
                                 $partida = new DateTime($roteiro->data_ini);
                                 $retorno = new DateTime($roteiro->data_fim);
                                 $criado = new DateTime($roteiro->criado_em);
                                 $atualizado = new DateTime($roteiro->atualizado_em);
+
                             @endphp
                                 <table class="table table-bordered table-sm">
                                     <tbody>
                                         <tr>
-                                            <td class="px-3 py-1" colspan="2"><strong>Roteiro:</strong> <span class="ml-2">{{$roteiro->nome}}</span></td>
+                                            <td class="px-3 py-1" colspan="2"><strong>Roteiro:</strong> <span class="ml-2">{{$roteiro->nome}}</span> {!!$roteiro->situacao_html!!}</td>
                                         </tr>
                                         <tr>
                                             <td class="px-3 py-1"><strong>Partida:</strong> <span class="ml-2">{{$partida->format('d/m/Y')}}</span></td>
@@ -35,7 +37,8 @@
                                             <td class="px-3 py-2" colspan="2"></td>
                                         </tr>
                                         <tr>
-                                            <td class="px-3 py-1" colspan="2"><strong>Total de poltronas:</strong> <span class="ml-2">{{(int)$roteiro->passagens + (int)$roteiro->qtd_coordenador}}</span></td>
+                                            <td class="px-3 py-1"><strong>Total de poltronas:</strong> <span class="ml-2">{{(int)$roteiro->passagens + (int)$roteiro->qtd_coordenador}}</span></td>
+                                            <td class="px-3 py-1"><strong>Poltronas livre:</strong> <span class="ml-2" data-poltrona-livre>{{(int)$roteiro->estoque['livre']}}</span></td>
                                         </tr>
                                         <tr>
                                             <td class="px-3 py-1"><strong>Clientes (pagantes):</strong> <span class="ml-2">{{(int)$roteiro->passagens}}</span></td>
@@ -73,24 +76,74 @@
                                 </div>
                                 <hr>
                                 <div class="row">
-                                    <div class="col-12 d-flex">
+                                    <div class="col-12 d-flex" id="graficoVendas">
+                                    @php
+                                    $estoque = $roteiro->estoque;
+                                    $estoque['vendidos_perc'] = round( ($estoque['vendidos']  * 100) / $estoque['total'], 2);
+                                    $estoque['reservados_perc'] = round( ($estoque['reservados'] * 100) / $estoque['total'], 2);
+                                    $estoque['livre_perc'] = round( ($estoque['livre'] * 100) / $estoque['total'], 2);
+                                    
+                                    //var_dump($estoque);
+                                    @endphp
                                         <!-- Poltronas vendidas -->
-                                        <div class="progress mr-1 rounded rounded-lg" title="Poltronas vendidas" data-toggle="tooltip" style="height:10px; width:10%;">
+                                        <div class="progress mr-1 rounded rounded-lg" title="Poltronas vendidas: {{$estoque['vendidos']}}" data-toggle="tooltip" style="height:10px; width:{{$estoque['vendidos_perc']}}%;">
                                             <div class="progress-bar" style="height:10px; width:100%;"></div>
                                         </div>
                                         <!-- Poltronas reservadas -->
-                                        <div class="progress mr-1 rounded rounded-lg" title="Poltronas reservadas" data-toggle="tooltip" style="height:10px; width:0%;">
+                                        <div class="progress mr-1 rounded rounded-lg" title="Poltronas reservadas: {{$estoque['reservados']}}" data-toggle="tooltip" style="height:10px; width:{{$estoque['reservados_perc']}}%;">
                                             <div class="progress-bar bg-secondary" style="height:10px; width:100%;"></div>
                                         </div>
                                         <!-- Poltronas vagas -->
-                                        <div class="progress rounded rounded-lg" title="Poltronas livres para venda" data-toggle="tooltip" style="height:10px; width:90%;">
+                                        <div class="progress rounded rounded-lg" title="Poltronas livres para venda: {{$estoque['livre']}}" data-toggle="tooltip" style="height:10px; width:{{$estoque['livre_perc']}}%;">
                                             <div class="progress-bar bg-success" style="height:10px; width:100%;"></div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="mt-3">
-                                    <kbd>Em desenvolvimento...</kbd>
-                                    <pre>Essa seção só estará disponível quando esse aviso sumir.</pre>
+                                    <table class="table table-sm table-bordered small table-hover" id="tabelaVendas">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                <th>Venda</th>
+                                                <th>Cliente</th>
+                                                <th>Pessoas</th>
+                                                <th>Crianças</th>
+                                                <th>Situação</th>
+                                                <th>Data Reserva/Venda</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if(empty($lista_vendas))
+                                            <tr>
+                                                <td colspan="5" class="text-center py-2 font-italic">Sem vendas</td>
+                                            </tr>
+                                            @else
+                                            @foreach($lista_vendas as $l)
+                                            @php
+                                                if($l->status == 'Reserva') {
+                                                    $temp = new DateTime($l->data_reserva);
+                                                    $bgtr = 'table-secondary';
+                                                    $situ = '<span class="badge badge-secondary py-1 px-2">'.$l->status.'</span>';
+                                                } else {
+                                                    $temp = new DateTime($l->data_venda);
+                                                    $bgtr = '';
+                                                    $situ = '<span class="badge badge-success py-1 px-2">'.$l->status.'</span> ('.$l->forma_pagamento.')';
+                                                }
+                                            @endphp
+                                            <tr class="{{$bgtr}}">
+                                                <td><a href="javascript:void(0)" onclick="getVenda({{$l->id}})">{{$l->id}}</a></td>
+                                                <td><a href="javascript:void(0)" onclick="loadCliente({{$l->cliente_id}})">{{$l->cliente_nome == NULL ? 'Cliente desconhecido' : $l->cliente_nome}}</a></td>
+                                                <td>{{$l->clientes_total}}</td>
+                                                <td>{{$l->criancas}}</td>
+                                                <td>{!!$situ!!}</td>
+                                                <td>{{$temp->format('d/m/Y H:i:s')}}</td>
+                                            </tr>
+                                            @endforeach
+                                            @php
+                                                unset($temp, $bgtr);
+                                            @endphp
+                                            @endif
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -98,16 +151,18 @@
                             <div class="col-lg-6">
                                 <div class="card rounded-0">
                                     <div class="card-header text-dark px-2 py-1">
-                                        CLIENTES
+                                        CLIENTES/PASSAGEIROS
                                     </div>
                                     <div class="card-body pt-3 pb-2 px-2">
                                         <div class="row">
-                                            <div class="col-12">
+                                            <div class="col-12" id="passagDiv">
                                                 
-                                                <div class="mt-3">
-                                                    <kbd>Em desenvolvimento...</kbd>
-                                                    <pre>Essa seção só estará disponível quando esse aviso sumir.</pre>
+                                                <div class="text-center mx-2">
+                                                    Carregando...<br>
+                                                    <div class="spinner-grow text-primary"></div><br>
+                                                    <small class="text-muted">[Se essa seção demorar a carregar, ela pode estar indisponível ou em desenvolvimento.]</small>
                                                 </div>
+                                                
                                             </div>
                                         </div>
                                     </div>
@@ -763,6 +818,48 @@
         });
     }
 
+    function getClientesRoteiro()
+    {
+        $.post('/roteiros/ver/'+roteiro.id+'/clientes', function(res){
+            if(res.success) {
+                if(debugEnabled == true){console.log(res.clientes);}
+                $('#passagDiv').html('');
+                $('#passagDiv').append('<table class="table table-sm table-bordered small"><thead class="thead-dark"><tr> <th>#</th></tH> <th>Nome</th> <th>CPF</th> <th>Faixa etária</th> <th>Venda</th> </tr></thead><tbody></tbody></table>');
+
+                res.clientes.forEach(function(c, key){
+                    $('#passagDiv table tbody').append('<tr> <td>'+(key+1)+'</td> <td><a href="javascript:void(0)" onclick="loadCliente('+c.id+')">'+c.nome+'</a></td> '+
+                    '<td>'+c.cpf+'</td> <td>'+c.faixa_etaria+'</td> '+
+                    '<td><a href="javascript:void(0)" onclick="getVenda('+c.venda+')">#'+c.venda+'</a></td> </tr>');
+                });
+            } else {
+                alerta(res.mensagem, 'Falha ao carregar lista de passageiros.', 'warning');
+            }
+        }, 'json').
+        fail(function(ev){nativePOSTFail(ev);});
+    }
+
+    function getEstoqueRoteiro()
+    {
+        $.post('/roteiros/ver/'+roteiro.id+'/estoque', function(res){
+            if(res.success) {
+                if(debugEnabled == true){console.log(res.estoque);}
+                
+                
+                $('#graficoVendas').children('.progress').eq(0).attr('title', 'Poltronas vendidas: '+res.estoque.vendidos);
+                $('#graficoVendas').children('.progress').eq(0).css('width', res.estoque.vendidos_perc+'%');
+                $('#graficoVendas').children('.progress').eq(1).attr('title', 'Poltronas reservadas: '+res.estoque.reservados);
+                $('#graficoVendas').children('.progress').eq(1).css('width', res.estoque.reservados_perc+'%');
+                $('#graficoVendas').children('.progress').eq(2).attr('title', 'Poltronas livres para venda: '+res.estoque.livre);
+                $('#graficoVendas').children('.progress').eq(2).css('width', res.estoque.livre_perc+'%');
+                $('[data-poltrona-livre]').html(res.estoque.livre);
+                $('[data-toggle="tooltip"]').tooltip();
+            } else {
+                alerta(res.mensagem, 'Falha ao atualizar o estoque.', 'warning');
+            }
+        }, 'json').
+        fail(function(ev){nativePOSTFail(ev);});
+    }
+
     $(document).ready(function(){
         //console.log(roteiro);
         @if($roteiro->tarifa == '')
@@ -770,5 +867,7 @@
         alerta('Informe as tarifas para este roteiro o mais breve possível.', 'Pendência...', 'light', 10000);
         @endif
         $('#roteiroTitle').html(roteiro.nome+ ' <small>('+Dobbin.formataData(new Date(roteiro.data_ini), true)+' a '+Dobbin.formataData(new Date(roteiro.data_fim), true)+')</small>');
+
+        
     });
 </script>
