@@ -3138,6 +3138,19 @@ $(document).ready(function(){
         }
     });
 
+    $(document).on('click', '.card-header.card-collapse', function(ev){
+        let sender = $(ev.currentTarget);
+
+        if(sender.siblings('.card-body').is(':visible')) {
+            // Oculta os detalhes
+            sender.siblings('.card-body').slideUp('fast');
+        } else {
+            // Exibe os detalhes
+            sender.siblings('.card-body').slideDown('fast');
+            
+        }
+    });
+
     // Adiciona contador aos TEXTAREA
     $(document).on('change keyup', 'textarea[maxlength]', function(ev){
         if($(this).prop('maxlength') != '' && $(this).prop('maxlength') > 0){

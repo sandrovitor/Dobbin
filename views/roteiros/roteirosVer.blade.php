@@ -2,19 +2,26 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="$('.card-header.card-collapse').siblings('.card-body').not(':visible').slideDown('fast');">Mostrar todos</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="$('.card-header.card-collapse').siblings('.card-body:visible').slideUp('fast');">Ocultar todos</button>
+
+                        <button type="button" class="btn btn-sm btn-light mr-2 disabled" disabled>|</button>
+                        <button type="button" class="btn btn-sm btn-dark mr-2" onclick="$('.modal.show').modal('hide'); $('#janCriarCopiaRoteiro').modal('show')" data-id="{{$roteiro->id}}">Criar cópia do roteiro</button>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-lg-8">
                         <!-- COLUNA 1 -->
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 GERAL
                             </div>
-                            <div class="card-body pt-3 pb-0 px-2">
+                            <div class="card-body pt-3 pb-0 px-2" >
                                 <div class="mb-3">
                                     <a href="#roteiros/editar/{{$roteiro->id}}" class="btn btn-sm btn-primary mr-2">Editar roteiro</a>
                                     <button type="button" class="btn btn-sm btn-danger mr-2" onclick="roteiroApagar(this)" data-id="{{$roteiro->id}}">Apagar roteiro</button>
-                                    <button type="button" class="btn btn-sm btn-light mr-2 disabled" disabled>|</button>
-                                    <button type="button" class="btn btn-sm btn-dark mr-2" onclick="$('.modal.show').modal('hide'); $('#janCriarCopiaRoteiro').modal('show')" data-id="{{$roteiro->id}}">Criar cópia do roteiro</button>
                                 </div>
                             @php
                                 $hoje = new DateTime();
@@ -66,7 +73,7 @@
                             </div>
                         </div>
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 VENDAS
                             </div>
                             <div class="card-body pt-3 pb-2 px-2">
@@ -156,7 +163,7 @@
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="card rounded-0">
-                                    <div class="card-header text-dark px-2 py-1">
+                                    <div class="card-header card-collapse text-dark px-2 py-1">
                                         CLIENTES/PASSAGEIROS
                                     </div>
                                     <div class="card-body pt-3 pb-2 px-2">
@@ -176,7 +183,7 @@
                             </div>
                             <div class="col-lg-6">
                                 <div class="card rounded-0">
-                                    <div class="card-header text-dark px-2 py-1">
+                                    <div class="card-header card-collapse text-dark px-2 py-1">
                                         COORDENADORES
                                     </div>
                                     <div class="card-body pt-3 pb-2 px-2">
@@ -204,7 +211,7 @@
                     <div class="col-lg-4">
                         <!-- COLUNA 2 -->
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 DESPESAS
                             </div>
                             <div class="card-body pt-3 pb-2 px-2">
@@ -322,7 +329,7 @@
                         </div>
 
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 FATURAMENTO
                             </div>
                             <div class="card-body pt-3 pb-2 px-2">
@@ -380,7 +387,7 @@
                         </div>
 
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 PARCEIROS DESTE ROTEIRO
                             </div>
                             <div class="card-body pt-3 pb-2 px-2">
