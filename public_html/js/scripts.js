@@ -3170,7 +3170,6 @@ $(document).ready(function(){
      // Carrega a página quando botões de voltar e avançar forem alterados.
     $(window).on('popstate', function(ev){
         //console.log(ev.currentTarget.location.hash);
-        console.log('POPSTATE DISPAROU!');
         loadLanding(ev.currentTarget.location.hash);
     });
 });
