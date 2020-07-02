@@ -1773,6 +1773,12 @@ class SGCTUR extends Master
                     }
                     
                 break;
+
+                default:
+                    $retorno['mensagem'] = Erro::getMessage(9) +' (Filtro de ordem incorreto.)';
+                    return $retorno;
+                break;
+                
             }
 
             
@@ -1804,12 +1810,14 @@ class SGCTUR extends Master
         }
 
         try{
-            $abc = $this->pdo->query('SELECT vendas.*, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim, '.
+            $query = 'SELECT vendas.*, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim, '.
             'clientes.nome as cliente_nome '.
             'FROM vendas '.
             'LEFT JOIN roteiros ON vendas.roteiro_id = roteiros.id '.
             'LEFT JOIN clientes ON vendas.cliente_id = clientes.id '.
-            'WHERE '.$where.' ORDER BY '.$str_ordem.' '.$limit);
+            'WHERE '.$where.' ORDER BY '.$str_ordem.' '.$limit;
+
+            $abc = $this->pdo->query($query);
             $retorno['vendas'] = $abc->fetchAll(\PDO::FETCH_OBJ);
             $retorno['success'] = true;
 
@@ -1817,6 +1825,7 @@ class SGCTUR extends Master
         } catch(\PDOException $e) {
             $retorno['mensagem'] = Erro::getMessage(70) . ' ERRO: '.$e->getMessage();
             \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+            \error_log('QUERY DE CONSULTA COM ERRO: '.$query, 0);
             \error_log($e->getMessage(), 0);
             return $retorno;
         }

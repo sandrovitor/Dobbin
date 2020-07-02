@@ -587,7 +587,6 @@ class ControllerPrincipal
             'title' => '<i class="fas fa-shopping-cart"></i> Vendas',
             'description' => 'Gerencie suas vendas.',
             'page' => $blade->run("vendas.vendas", array(
-                'clientes' => $sgc->getClientesLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
                 'vendas' => $sgc->getVendasLista()['vendas'],
             ))
         );
@@ -624,6 +623,23 @@ class ControllerPrincipal
             'page' => $blade->run("vendas.vendasDatabase", array(
                 'vendas' => $sgc->getVendasLista(0,200)['vendas'],
                 'sgc' => $sgc,
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+    
+    static function vendasCanceladas($p)
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Canceladas',
+            'description' => 'Vendas que foram canceladas antes de serem pagas.',
+            'page' => $blade->run("vendas.vendasCanceladas", array(
+                'vendas' => $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [['status', '=', 'Cancelada']])['vendas'],
             ))
         );
 
