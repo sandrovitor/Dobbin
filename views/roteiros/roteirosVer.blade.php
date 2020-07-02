@@ -23,6 +23,8 @@
                                 $criado = new DateTime($roteiro->criado_em);
                                 $atualizado = new DateTime($roteiro->atualizado_em);
 
+                                $receita = 0; // Valor somado de todas as vendas.
+
                             @endphp
                                 <table class="table table-bordered table-sm">
                                     <tbody>
@@ -112,9 +114,10 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            
                                             @if(empty($lista_vendas))
                                             <tr>
-                                                <td colspan="5" class="text-center py-2 font-italic">Sem vendas</td>
+                                                <td colspan="6" class="text-center py-2 font-italic">Sem vendas</td>
                                             </tr>
                                             @else
                                             @foreach($lista_vendas as $l)
@@ -128,6 +131,9 @@
                                                     $bgtr = '';
                                                     $situ = '<span class="badge badge-success py-1 px-2">'.$l->status.'</span> ('.$l->forma_pagamento.')';
                                                 }
+
+                                                // Incrementa valor da receita.
+                                                $receita += (int)$l->valor_total;
                                             @endphp
                                             <tr class="{{$bgtr}}">
                                                 <td><a href="javascript:void(0)" onclick="getVenda({{$l->id}})">{{$l->id}}</a></td>
@@ -303,7 +309,7 @@
                                             <td class="text-success">+</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="2"></td>
+                                            <td colspan="3"></td>
                                         </tr>
                                         <tr>
                                             <td>Lucro Total</td>
@@ -314,6 +320,65 @@
                                 </table>
                             </div>
                         </div>
+
+                        <div class="card rounded-0">
+                            <div class="card-header text-dark px-2 py-1">
+                                FATURAMENTO
+                            </div>
+                            <div class="card-body pt-3 pb-2 px-2">
+                                @php
+                                    $coberturaDespesa = round(($receita *100)/$despesasTotal, 2);
+                                    $coberturaDiff = $receita - $despesasTotal;
+                                    
+                                    if($coberturaDiff < 0) {
+                                        $bgCobertura = 'danger';
+                                    } else {
+                                        if($coberturaDespesa < 20) {
+                                            $bgCobertura = 'danger';
+                                        } else if($coberturaDespesa < 50) {
+                                            $bgCobertura = 'warning';
+                                        } else if($coberturaDespesa < 100) {
+                                            $bgCobertura = 'primary';
+                                        } else {
+                                            $bgCobertura = 'success';
+                                            $coberturaDespesa = 100;
+                                        }
+                                    }
+
+                                    if($receita > $despesasTotal) {
+                                        $lucroTotal = $receita - $despesasTotal;
+                                    } else {
+                                        $lucroTotal = 0;
+                                    }
+                                @endphp
+
+                                <h6><strong>Cobertura das despesas:</strong>
+                                <span class="badge badge-{{$bgCobertura}} py-1 px-2">R$ {{$coberturaDiff < 0 ? '-'.$sgc->converteCentavoParaReal($coberturaDiff*(-1)) : $sgc->converteCentavoParaReal($coberturaDiff)}}</span></h6>
+                                <div class="progress mb-3" style="height:10px;">
+                                    <div class="progress-bar bg-{{$bgCobertura}} progress-bar-striped progress-bar-animated"
+                                        title="Valor faturado até o momento: R$ {{$sgc->converteCentavoParaReal($receita)}}."
+                                        data-toggle="tooltip" style="width:{{$coberturaDespesa}}%; height: 10px;"></div>
+                                </div>
+                                <table class="table table-bordered table-sm">
+                                    <thead class="thead-dark small">
+                                        <tr>
+                                            <th colspan="3" class="text-center">DETALHES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="small">
+                                        <tr>
+                                            <td><strong>Despesas:</strong> R$ {{$sgc->converteCentavoParaReal($despesasTotal)}}</td>
+                                            <td><strong>Receita:</strong> R$ {{$sgc->converteCentavoParaReal($receita)}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2"><strong>Lucro real:</strong> R$ {{$sgc->converteCentavoParaReal($lucroTotal)}}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <small class="mt-3">Atualizado em: <i>{{$hoje->format('d/m/Y H:i:s')}}</i></small></small>
+                            </div>
+                        </div>
+
                         <div class="card rounded-0">
                             <div class="card-header text-dark px-2 py-1">
                                 PARCEIROS DESTE ROTEIRO
@@ -826,11 +891,17 @@
                 $('#passagDiv').html('');
                 $('#passagDiv').append('<table class="table table-sm table-bordered small"><thead class="thead-dark"><tr> <th>#</th></tH> <th>Nome</th> <th>CPF</th> <th>Faixa etária</th> <th>Venda</th> </tr></thead><tbody></tbody></table>');
 
-                res.clientes.forEach(function(c, key){
-                    $('#passagDiv table tbody').append('<tr> <td>'+(key+1)+'</td> <td><a href="javascript:void(0)" onclick="loadCliente('+c.id+')">'+c.nome+'</a></td> '+
-                    '<td>'+c.cpf+'</td> <td>'+c.faixa_etaria+'</td> '+
-                    '<td><a href="javascript:void(0)" onclick="getVenda('+c.venda+')">#'+c.venda+'</a></td> </tr>');
-                });
+                if(res.clientes.length > 0) {
+                    res.clientes.forEach(function(c, key){
+                        $('#passagDiv table tbody').append('<tr> <td>'+(key+1)+'</td> <td><a href="javascript:void(0)" onclick="loadCliente('+c.id+')">'+c.nome+'</a></td> '+
+                        '<td>'+c.cpf+'</td> <td>'+c.faixa_etaria+'</td> '+
+                        '<td><a href="javascript:void(0)" onclick="getVenda('+c.venda+')">#'+c.venda+'</a></td> </tr>');
+                    });
+                } else {
+                    $('#passagDiv table tbody').append('<tr> <td colspan="5" class="text-center font-italic py-2"><strong>Não há clientes para este roteiro.</strong><br><br>'+
+                    'Uma venda foi realizada e o(s) passageiro(s) não aparece(m)? Acesse a venda correspondente e informe os clientes que serão passageiros.</td></tr>');
+                }
+                
             } else {
                 alerta(res.mensagem, 'Falha ao carregar lista de passageiros.', 'warning');
             }

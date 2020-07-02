@@ -11,7 +11,9 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-            
+                <div class="alert alert-info small mb-2 py-1 px-2">
+                    <i class="fas fa-info-circle"></i> Serão exibidas até 800 vendas nesta página (200 vendas por categoria). Vendas mais antigas, devem ser localizadas através do <a href="#clientes">cliente</a> ou <a href="#clientes">roteiro</a>.
+                </div>
                 <div class="row">
                     <div class="col-12 col-xl-6">
                         <div class="card">

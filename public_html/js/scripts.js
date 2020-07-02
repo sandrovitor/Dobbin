@@ -2397,7 +2397,7 @@ function vendaConfirmarEstorno(sender)
     }
     //console.log(sender);
     let id = $(sender).parents('form').find('[name="id"]').val();
-    let outro = $(sender).parents('form').find('[name="valor_devolvido"]').val();
+    let outro = Dobbin.converteRealEmCentavo($(sender).parents('form').find('[name="valor_devolvido"]').val());
 
     $.post(PREFIX_POST+'vendas/'+id+'/situacao/editar',{
         situacao: 'Devolvida',
