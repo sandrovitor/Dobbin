@@ -47,9 +47,9 @@
                     <div class="col-12 col-xl-6">
                         <div class="card">
                             <div class="card-header bg-success text-white">
-                                PAGOS
+                                PAGAS
                             </div>
-                            <div class="card-body px-2" id="reservasDiv">
+                            <div class="card-body px-2" id="pagasDiv">
                                 <div class="text-center mx-2">
                                     Carregando...<br>
                                     <div class="spinner-grow text-primary"></div><br>
@@ -61,9 +61,9 @@
                     <div class="col-12 col-xl-6">
                         <div class="card">
                             <div class="card-header bg-dark text-light">
-                                ESTORNADOS
+                                ESTORNADAS/DEVOLVIDAS
                             </div>
-                            <div class="card-body px-2" id="aguardPagDiv">
+                            <div class="card-body px-2" id="estornadasDiv">
                                 <div class="text-center mx-2">
                                     Carregando...<br>
                                     <div class="spinner-grow text-primary"></div><br>

@@ -59,6 +59,10 @@ $router->map('POST', '/vendas/novo', 'ControllerPrincipal#vendasNovo');
 $router->map('POST', '/vendas/database', 'ControllerPrincipal#vendasDatabase');
 $router->map('POST', '/vendas/database/get/reservas', 'ControllerPrincipal#vendasDatabaseReservas'); // JSON
 $router->map('POST', '/vendas/database/get/aguardando', 'ControllerPrincipal#vendasDatabaseAguardando'); // JSON
+$router->map('POST', '/vendas/database/get/pagas', 'ControllerPrincipal#vendasDatabasePagas'); // JSON
+$router->map('POST', '/vendas/database/get/canceladas', 'ControllerPrincipal#vendasDatabaseCanceladas'); // JSON
+$router->map('POST', '/vendas/database/get/devolvidas', 'ControllerPrincipal#vendasDatabaseDevolvidas'); // JSON
+$router->map('POST', '/vendas/database/get/estornadas', 'ControllerPrincipal#vendasDatabaseDevolvidas'); // JSON
 $router->map('POST', '/vendas/database/load/venda/[i:vid]', 'ControllerJan#vendasLoad');
 
 

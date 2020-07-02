@@ -646,7 +646,7 @@ class ControllerPrincipal
         return json_encode($ret);
     }
 
-    static function vendasDatabasePaga($p) // Retorna JSON
+    static function vendasDatabasePagas($p) // Retorna JSON
     {
         self::validaConexao(3);
         $sgc = new SGCTUR();
@@ -654,11 +654,19 @@ class ControllerPrincipal
         return json_encode($ret);
     }
 
-    static function vendasDatabaseDevolvida($p) // Retorna JSON
+    static function vendasDatabaseDevolvidas($p) // Retorna JSON
     {
         self::validaConexao(3);
         $sgc = new SGCTUR();
         $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Devolvida'] ]);
+        return json_encode($ret);
+    }
+
+    static function vendasDatabaseCanceladas($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Cancelada'] ]);
         return json_encode($ret);
     }
 

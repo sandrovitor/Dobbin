@@ -174,6 +174,21 @@ function gatilhosLoadLanding()
                 setTimeout(function(){getClientesRoteiro();}, 1000);
                 geralIntervalo5Min = setInterval(function(){getClientesRoteiro(); getEstoqueRoteiro();}, 180000);
             }); break;
+
+        case /(vendas)/gi.test(local): // Vendas
+            $(document).ready(function(){
+                setTimeout(function(){
+                    getVendasReservas();getVendasAguardandoPagamento();
+                    getVendasPagas();getVendasEstornadas();
+                }, 1000);
+                geralIntervalo5Min = setInterval(function(){
+                    getVendasReservas();
+                    getVendasAguardandoPagamento();
+                    getVendasPagas();
+                    getVendasEstornadas();
+                }, 180000);
+            }); break;
+
     }
 }
 
@@ -2398,6 +2413,178 @@ function vendaConfirmarEstorno(sender)
             getAguardandoPagamento();
         } else {
             alerta(res.mensagem, 'Falha...', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasReservas()
+{
+    $.post('/vendas/database/get/reservas', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#reservasDiv > div').length == 0) {
+                    $('#reservasDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#reservasDiv > div').html('<i>Nada encontrado...</i>');
+                $('#reservasDiv').find('table').remove();
+            } else {
+                $('#reservasDiv').find('table').remove();
+                $('#reservasDiv').append('<table class="table table-sm table-bordered table-hover mb-0" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#reservasDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#reservasDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                    $('#reservasDiv table').slideDown();
+                });
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de reservas.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasAguardandoPagamento()
+{
+    $.post('/vendas/database/get/aguardando', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#aguardPagDiv > div').length == 0) {
+                    $('#aguardPagDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#aguardPagDiv > div').html('<i>Nada encontrado...</i>');
+                $('#aguardPagDiv').find('table').remove();
+            } else {
+                $('#aguardPagDiv').find('table').remove();
+                $('#aguardPagDiv').append('<table class="table table-sm table-bordered table-hover mb-0" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>Roteiro</th> <th>Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#aguardPagDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#aguardPagDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                    $('#aguardPagDiv table').slideDown();
+                });
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de vendas Aguardando Pagamento.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasPagas()
+{
+    $.post('/vendas/database/get/pagas', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#pagasDiv > div').length == 0) {
+                    $('#pagasDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#pagasDiv > div').html('<i>Nada encontrado...</i>');
+                $('#pagasDiv').find('table').remove();
+            } else {
+                $('#pagasDiv').find('table').remove();
+                $('#pagasDiv').append('<table class="table table-sm table-bordered table-hover mb-0" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#pagasDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#pagasDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                    $('#pagasDiv table').slideDown();
+                });
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de vendas pagas.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasEstornadas()
+{
+    $.post('/vendas/database/get/estornadas', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#estornadasDiv > div').length == 0) {
+                    $('#estornadasDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#estornadasDiv > div').html('<i>Nada encontrado...</i>');
+                $('#estornadasDiv').find('table').remove();
+            } else {
+                $('#estornadasDiv').find('table').remove();
+                $('#estornadasDiv').append('<table class="table table-sm table-bordered table-hover mb-0" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#estornadasDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#estornadasDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                    $('#estornadasDiv table').slideDown();
+                });
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de vendas estornadas/devolvidas.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
         }
     }, 'json').
     fail(function(ev){nativePOSTFail(ev);});
