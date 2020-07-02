@@ -146,7 +146,9 @@ class SGCTUR extends Master
         $retorno['consumo']['roteiros'] = (int)$reg->total;
 
         // Vendas
-        $retorno['consumo']['vendas'] = 0;
+        $abc = $this->pdo->query('SELECT COUNT(id) as total FROM vendas WHERE 1');
+        $reg = $abc->fetch(\PDO::FETCH_OBJ);
+        $retorno['consumo']['vendas'] = (int)$reg->total;
 
         // Usuários
         $abc = $this->pdo->query('SELECT COUNT(id) as total FROM login WHERE 1');
