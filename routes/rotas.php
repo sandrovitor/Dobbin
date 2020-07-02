@@ -54,6 +54,7 @@ $router->map('POST', '/roteiros/lixeira', 'ControllerPrincipal#roteirosLixeira')
 $router->map('POST', '/roteiros/lixeira/ver/[i:id]', 'ControllerPrincipal#roteirosLixeiraVer');
 
 // VENDAS
+$router->map('POST', '/vendas', 'ControllerPrincipal#vendas');
 $router->map('POST', '/vendas/novo', 'ControllerPrincipal#vendasNovo');
 $router->map('POST', '/vendas/database', 'ControllerPrincipal#vendasDatabase');
 $router->map('POST', '/vendas/database/get/reservas', 'ControllerPrincipal#vendasDatabaseReservas'); // JSON

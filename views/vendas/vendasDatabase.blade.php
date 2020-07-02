@@ -47,7 +47,13 @@
             @php
             $hoje = new DateTime();
             @endphp
-                <div class="mb-3"><small>Atualizado em: <i>{{$hoje->format('d/m/Y H:i:s')}}</i>.</small></div>
+                <div class="mb-3">
+                    <div class="alert alert-info small py-1 px-2 mb-2">
+                        <strong>OBS:</strong> As últimas 200 vendas serão exibidas. Para ver vendas mais antigas, consulte informações de um <a href="#clientes">cliente</a> ou de um <a href="#roteiros">roteiro</a>.<br>
+                    </div>
+                    <small>Atualizado em: <i>{{$hoje->format('d/m/Y H:i:s')}}</i>.</small>
+                    <a href="#vendas/database" class="btn btn-sm btn-info"><i class="fas fa-sync"></i></a>
+                </div>
                 <table class="table table-sm table-bordered table-hover">
                     <thead class="bg-secondary text-white">
                         <tr>

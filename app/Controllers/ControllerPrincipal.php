@@ -577,6 +577,24 @@ class ControllerPrincipal
      * 
      * 
      */
+    static function vendas($p)
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas',
+            'description' => 'Gerencie suas vendas.',
+            'page' => $blade->run("vendas.vendas", array(
+                'clientes' => $sgc->getClientesLista(0, 20, ['criado_em'], SGCTUR::ORDER_DESC),
+                'vendas' => $sgc->getVendasLista()['vendas'],
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
     static function vendasNovo($p)
     {
         self::validaConexao(3);
@@ -602,9 +620,9 @@ class ControllerPrincipal
         $blade = self::bladeStart();
         $retorno = array(
             'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Todas',
-            'description' => 'Veja todas as suas vendas concluídas, canceladas, aguardando pagamento e reservas.',
+            'description' => 'Veja as suas vendas concluídas, canceladas, aguardando pagamento e reservas. Nem todas serão exibidas aqui.',
             'page' => $blade->run("vendas.vendasDatabase", array(
-                'vendas' => $sgc->getVendasLista()['vendas'],
+                'vendas' => $sgc->getVendasLista(0,200)['vendas'],
                 'sgc' => $sgc,
             ))
         );
@@ -625,6 +643,22 @@ class ControllerPrincipal
         self::validaConexao(3);
         $sgc = new SGCTUR();
         $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Aguardando'] ]);
+        return json_encode($ret);
+    }
+
+    static function vendasDatabasePaga($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Paga'] ]);
+        return json_encode($ret);
+    }
+
+    static function vendasDatabaseDevolvida($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Devolvida'] ]);
         return json_encode($ret);
     }
 
