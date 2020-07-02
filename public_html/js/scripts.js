@@ -666,6 +666,11 @@ function vendaEstornarModal(id)
         modal.find('[name="id"]').val(v.id);
         modal.find('[name="valor_devolvido"]').val('0,00');
         modal.find('[name="valor_devolvido"]').attr('max',v.valor_total);
+        if(modal.find('[name="valor_devolvido"]').parent().next().hasClass('alert') == false) {
+            modal.find('[name="valor_devolvido"]').parent().after('<div class="alert alert-info small py-1 px-2">'+
+            'O valor estornado/devolvido não pode ser maior que o valor da venda (<strong>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</strong>).</div>');
+        }
+        modal.find('form button').attr('disabled', true);
         modal.modal('show');
     });
 }
@@ -2369,6 +2374,35 @@ function vendaAlteraSituacao(id, situacao, outro, sender)
     fail(function(ev){nativePOSTFail(ev);});
 }
 
+function vendaConfirmarEstorno(sender)
+{
+    if(sender == undefined) {
+        alerta('Erro lógico!', 'PAROU!', 'danger');
+        return false;
+    }
+    //console.log(sender);
+    let id = $(sender).parents('form').find('[name="id"]').val();
+    let outro = $(sender).parents('form').find('[name="valor_devolvido"]').val();
+
+    $.post(PREFIX_POST+'vendas/'+id+'/situacao/editar',{
+        situacao: 'Devolvida',
+        outro: outro
+    }, function(res){
+        if(res.success == true) {
+            $(sender).parents('.modal').modal('hide');
+            getVenda(id); // Atualiza janela dinâmica.
+            
+
+            alerta('Situação da venda alterada.', 'Sucesso!', 'success');
+            getReservas();
+            getAguardandoPagamento();
+        } else {
+            alerta(res.mensagem, 'Falha...', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
 
 
 /**
@@ -2459,13 +2493,13 @@ $(document).ready(function(){
         }
     });
 
-    $(document).on('click', 'a', function(ev){
+    $(document).on('click', 'a', function(ev){ // Evento desativado. Navegação agora é feita pelo evento PopState
+        /*
         let href = $(this).attr('href');
 
         if(href.charAt(0) == '#' && $(this).attr('target') != '_blank') {
             loadLanding(href.substring(1, href.length));
-        }
-
+        }*/
     });
 
     $(document).on('submit', 'form', function(ev){
@@ -3035,6 +3069,18 @@ $(document).ready(function(){
         $('[data-toggle="tooltip"]').tooltip();
     });
 
+    $(document).on('keyup change', '#modalEstornarVenda [name="valor_devolvido"]', function(ev){
+        let alvo = $(ev.currentTarget);
+        setTimeout(function(){
+            if(alvo.val() == '0,00') {
+                alvo.parents('form').find('button').attr('disabled', true);
+            } else {
+                alvo.parents('form').find('button').attr('disabled', false);
+            }
+        }, 100);
+        
+    });
+
     /**
      * EDITAR CAMPOS
      */
@@ -3124,6 +3170,7 @@ $(document).ready(function(){
      // Carrega a página quando botões de voltar e avançar forem alterados.
     $(window).on('popstate', function(ev){
         //console.log(ev.currentTarget.location.hash);
+        console.log('POPSTATE DISPAROU!');
         loadLanding(ev.currentTarget.location.hash);
     });
 });

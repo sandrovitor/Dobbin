@@ -1103,6 +1103,9 @@
                             <input type="hidden" name="id" value="">
                         </div>
                     </div>
+                    <div class="form-group text-right">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="vendaConfirmarEstorno(this)" disabled>Confirmar estorno</button>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">

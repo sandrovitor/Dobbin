@@ -44,6 +44,10 @@
                 BASE DE DADOS - Vendas
             </div>
             <div class="card-body" style="overflow-x:auto;">
+            @php
+            $hoje = new DateTime();
+            @endphp
+                <div class="mb-3"><small>Atualizado em: <i>{{$hoje->format('d/m/Y H:i:s')}}</i>.</small></div>
                 <table class="table table-sm table-bordered table-hover">
                     <thead class="bg-secondary text-white">
                         <tr>
