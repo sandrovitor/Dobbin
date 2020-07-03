@@ -554,6 +554,8 @@ function loadCoordenador(id)
 
 function loadCliente(id)
 {
+    id = parseInt(id);
+
     $.post('/clientes/ver/'+id, function(res){
         if(res.success == true) {
             console.log(res);
@@ -648,6 +650,64 @@ function loadCliente(id)
                     $('#modalClienteDetalhes .listaDependentes').hide();
             }
 
+            // Apaga espaço do histórico de compras
+            $('#modalClienteDetalhes [data-historico-compras]').html('');
+            getClienteVendas(id, function(vendas){
+                if(vendas === false) {
+                    $('#modalClienteDetalhes [data-historico-compras]').html('<div class="p-2 text-center font-italic">Houve um erro ao tentar retornar o histórico. Tente novamente mais tarde.</div>');
+                } else if(vendas.length == 0) { // Sem histórico
+                    $('#modalClienteDetalhes [data-historico-compras]').html('<div class="p-2 text-center font-italic">Nada no histórico.</div>');
+                } else {
+                    let html = '';
+                    let situVenda = '';
+                    let items, itemsStr = '';;
+                    vendas.forEach(function(v){
+                        switch(v.status) {
+                            case 'Devolvida': situVenda = '<span class="ml-2 badge badge-dark">Devolvida</span>'; break;
+                            case 'Cancelada': situVenda = '<span class="ml-2 badge badge-dark">Cancelada</span>'; break;
+                            case 'Paga': situVenda = '<span class="ml-2 badge badge-success">Paga</span>'; break;
+                            case 'Reserva': situVenda = '<span class="ml-2 badge badge-primary">Reserva</span>'; break;
+                            case 'Aguardando': situVenda = '<span class="ml-2 badge badge-primary">Aguardando pagamento</span>'; break;
+                            default: situVenda = '<span class="ml-2 badge badge-secondary">'+v.status+'</span>'; break;
+                        }
+                        if(v.items == '') {
+
+                        } else {
+                            items = JSON.parse(v.items);
+                            items.forEach(function(i, indice){
+                                itemsStr += "<tr> <td>"+(indice+1).toString()+"</td> <td>"+i.tarifa+"</td>  "+
+                                "<td>R$ "+Dobbin.converteCentavoEmReal(i.valorUNI)+"</td> <td><span>"+i.qtd+"</span> </td> "+
+                                "<td>R$ <span>"+Dobbin.converteCentavoEmReal(i.desconto)+"</span> </td> <td>R$ "+Dobbin.converteCentavoEmReal(i.subtotal)+"</td> </tr>"
+                            });
+                        }
+
+                        html = '<div class="border bloco-acord">'+
+                        '<div class="acord-header bg-light p-2 d-flex justify-content-between" style="cursor:pointer;">'+
+                        '<h6 class="font-weight-bold text-uppercase my-1 text-primary"># '+v.id+' '+
+                            '<small class="ml-2 text-dark">['+v.roteiro_nome+' - '+Dobbin.formataData(new Date(v.roteiro_data_ini), true)+' a '+
+                            Dobbin.formataData(new Date(v.roteiro_data_fim), true)+'] '+situVenda+'</small></h6>'+
+                        '<button class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>'+
+                        '</div>'+
+                        '<div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none">'+
+                        '<strong>Data da reserva:</strong> '+Dobbin.formataData(new Date(v.data_reserva), true)+'<br><br>'+
+                        '<table class="table table-sm table-bordered"> <thead> <tr>'+
+                        '<th>#</th> <th>Tarifa</th> <th>Valor UNI</th> <th>Qtd</th> <th>Desconto</th> <th>Subtotal</th> </tr>'+
+                        '</thead> <tbody> '+itemsStr+
+                        '<tr> <td colspan="4"><strong>TOTAL:</strong></td> <td class="table-dark">R$ '+Dobbin.converteCentavoEmReal(v.desconto_total)+'</td> '+
+                        '<td class="table-dark">R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr> </tbody> </table>'+
+                        '<a href="javascript:void(0)" onclick="getVenda('+v.id+')">Ver detalhes da compra...</a></div>'+
+                        '</div>';
+
+
+                        $('#modalClienteDetalhes [data-historico-compras]').append(html);
+                        html = ''; situVenda = ''; itemsStr = ''; items = undefined;
+                    });
+                    
+                }
+                console.log(vendas);
+
+            });
+
             
             $('#modalClienteDetalhes').modal('show');
             $('[data-toggle="popover"]').popover({'html':true});
@@ -695,6 +755,10 @@ function vendaEstornarModal(id)
  */
 
 
+/**
+ * RETORNO DE DADOS JSON
+ */
+
 function getClienteDados(id, callback)
 {
     id = parseInt(id);
@@ -705,6 +769,24 @@ function getClienteDados(id, callback)
             callback(res.cliente);
         } else {
             alerta(res.mensagem, 'Falha ao retornar dados do cliente.', 'danger');
+            callback(false);
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+        callback(false);
+    });
+}
+
+function getClienteVendas(id, callback)
+{
+    id = parseInt(id);
+
+    $.post('/clientes/ver/'+id+'/vendas', function(res){
+        //console.log(res);
+        if(res.success == true) {
+            callback(res.vendas);
+        } else {
+            alerta(res.mensagem, 'Falha ao retornar dados das compras do cliente.', 'danger');
             callback(false);
         }
     }, 'json').fail(function(ev){
@@ -752,7 +834,7 @@ function getRoteiroDados(id, callback)
 function getVenda(id)
 {
     $.post('/vendas/database/load/venda/'+id, function(res){
-        $('.modal:not(#janDinamica)').modal('hide');
+        //$('.modal:not(#janDinamica)').modal('hide');
         if(res.success) {
             let venda = res.venda;
             // AJUSTA TITULO DA JANELA DINÂMICA
@@ -788,6 +870,9 @@ function getVendaDados(id, callback)
         callback(false);
     });
 }
+/**
+ * ./RETORNO DE DADOS JSON
+ */
 
 /**
  * PÁGINAS

@@ -271,6 +271,20 @@
                         <strong>Atualizado em:</strong><br><span data-detalhes-atualizadoem></span>
                     </div>
                 </div>
+                <hr>
+
+                <h5 class="mt-3 mb-2 font-weight-bold">HISTÓRICO DE COMPRAS</h5>
+                <div data-historico-compras>
+                    <div class="border bloco-acord">
+                        <div class="acord-header bg-light p-2 d-flex justify-content-between" style="cursor:pointer;">
+                            <h6 class="font-weight-bold text-uppercase my-1 text-primary">
+                                <small class="ml-2 text-dark"></small>
+                            </h6>
+                            <button class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
+                        </div>
+                        <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none"></div>
+                    </div>
+                </div>
 
 
             </div>

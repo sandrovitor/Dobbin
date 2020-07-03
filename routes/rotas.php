@@ -32,6 +32,7 @@ $router->map('POST', '/clientes/buscar', 'ControllerPrincipal#clientesBuscar');
 $router->map('POST', '/clientes/database', 'ControllerPrincipal#clientesDatabase');
 $router->map('POST', '/clientes/lixeira', 'ControllerPrincipal#clientesLixeira');
 $router->map('POST', '/clientes/ver/[i:id]', 'ControllerPrincipal#clientesVer');
+$router->map('POST', '/clientes/ver/[i:id]/vendas', 'ControllerPrincipal#clientesVerVendas'); // JSON
 
 
 $router->map('POST', '/coordenadores', 'ControllerPrincipal#coordenadores');

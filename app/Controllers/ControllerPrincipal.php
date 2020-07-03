@@ -828,6 +828,27 @@ class ControllerPrincipal
         }
     }
 
+    static function clientesVerVendas($p)
+    {
+        self::validaConexao();
+        $retorno = array(
+            'success' => false,
+            'mensagem' => '',
+        );
+
+        if(!isset($p['id']) || $p['id'] == '' || $p['id'] == 0) {
+            $retorno['mensagem'] = Erro::getMessage(105);
+        } else {
+            $sgc = new SGCTUR();
+            $vendas = $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [ ['cliente_id', '=', $p['id'] ] ]);
+            
+            $retorno = $vendas;
+        }
+
+        
+        return json_encode($retorno);
+    }
+
     /**
      * 
      * 

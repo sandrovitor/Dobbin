@@ -1,9 +1,9 @@
 <div class="row mb-3">
     <div class="col-6 col-lg-3 mb-3">
-        <a href="#clientes/novo" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Novo</a>
+        <a href="#vendas/novo" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Novo</a>
     </div>
     <div class="col-12 col-sm-6 col-lg-3 mb-3">
-        <a href="#clientes/database" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Base de dados</a>
+        <a href="#vendas/database" class="btn btn-block btn-light rounded-0 shadow-sm font-weight-bold py-2">Base de dados</a>
     </div>
 </div>
 

@@ -4,8 +4,8 @@
             <div class="card-body">
                 <div class="row mb-3">
                     <div class="col-12">
-                        <button type="button" class="btn btn-sm btn-primary" onclick="$('.card-header.card-collapse').siblings('.card-body').not(':visible').slideDown('fast');">Mostrar todos</button>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="$('.card-header.card-collapse').siblings('.card-body:visible').slideUp('fast');">Ocultar todos</button>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="$('.card-header.card-collapse').siblings('.card-body').not(':visible').slideDown('fast');">Mostrar tudo</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="$('.card-header.card-collapse').siblings('.card-body:visible').slideUp('fast');">Esconder tudo</button>
 
                         <button type="button" class="btn btn-sm btn-light mr-2 disabled" disabled>|</button>
                         <button type="button" class="btn btn-sm btn-dark mr-2" onclick="$('.modal.show').modal('hide'); $('#janCriarCopiaRoteiro').modal('show')" data-id="{{$roteiro->id}}">Criar cópia do roteiro</button>
