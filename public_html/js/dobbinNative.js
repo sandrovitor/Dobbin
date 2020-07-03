@@ -256,8 +256,11 @@ const Dobbin = {
 
 $(document).ready(function(){
     $(document).on('change keyup', '[dobbin-validate-valor]', function(ev){ // VALOR|DINHEIRO
-        resetValidaOnChange(ev.currentTarget);
-        validaValorDinheiroOnChange(ev.currentTarget);
+        let alvo = ev.currentTarget;
+        setTimeout(function(){
+            resetValidaOnChange(alvo);
+            validaValorDinheiroOnChange(alvo);
+        }, 100);
     });
 
     $(document).on('blur', '[dobbin-validate-valor]', function(ev){ // VALOR|DINHEIRO

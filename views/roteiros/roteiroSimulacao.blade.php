@@ -124,7 +124,7 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text form-control-solid">R$</span>
                                                                 </div>
-                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" dobbin-validate-valor maxlength="30" required>
+                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" dobbin-mask-money dobbin-validate-valor maxlength="30" required>
                                                                 
                                                             </div>
                                                             
@@ -169,7 +169,7 @@
                                                                 <div class="input-group-prepend">
                                                                     <span class="input-group-text form-control-solid">R$</span>
                                                                 </div>
-                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" dobbin-validate-valor maxlength="30" required>
+                                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" dobbin-mask-money dobbin-validate-valor maxlength="30" required>
                                                                 
                                                             </div>
                                                             
