@@ -93,7 +93,7 @@
                 let criadoEm = new Date(x.criado_em);
 
                 $('.database table').find('tbody').last()
-                    .append('<tr> <td>'+x.id+'</td> <td>'+x.nome+'</td> <td>'+x.email+'</td> '+
+                    .append('<tr> <td>'+x.id+'</td> <td><a href="javascript:void(0)" onclick="loadCliente('+x.id+')">'+x.nome+'</a></td> <td>'+x.email+'</td> '+
                     '<td>'+x.cidade+'</td> <td>'+x.estado+'</td> '+
                     '<td><button type="button" class="btn btn-transparent btn-rounded btn-sm dropdown-toggle no-caret" data-toggle="dropdown"> <i class="fas fa-ellipsis-v fa-fw"></i> </button>'+
                     '<div class="dropdown-menu">'+
