@@ -107,6 +107,7 @@
                         <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#vendas/novo">Novo</a></li>
+                            <li><a class="nav-link" href="#vendas/buscar">Buscar</a></li>
                             <li><a class="nav-link" href="#vendas/database">Base de Dados</a></li>
                             <li><a class="nav-link" href="#vendas/canceladas">Vendas Canceladas</a></li>
                         </ul>

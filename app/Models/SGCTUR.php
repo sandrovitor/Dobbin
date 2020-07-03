@@ -532,6 +532,66 @@ class SGCTUR extends Master
 
         return $retorno;
     }
+
+    /**
+     * Faz a busca de uma string em NOME (do cliente), ROTEIRO, DATA_RESERVA,
+     * DATA_VENDA, DATA_PAGAMENTO, DATA_CANCELADO, DATA_ESTORNO, STATUS. (Não precisa enviar ID no construtor).
+     * 
+     * @param string $busca String para consulta.
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING, clientes => ARRAY]
+     */
+    public function getVendasBusca(string $busca = '')
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        if(trim($busca) == '') {
+            $abc= $this->pdo->query('SELECT vendas.*, clientes.nome as cliente_nome, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim '.
+            'FROM vendas LEFT JOIN clientes ON vendas.cliente_id = clientes.id LEFT JOIN roteiros ON vendas.roteiro_id = roteiros.id WHERE 1 ORDER BY id ASC');
+        } else {
+            
+            $abc = $this->pdo->prepare('SELECT vendas.*, clientes.nome as cliente_nome, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim '.
+            'FROM vendas LEFT JOIN clientes ON vendas.cliente_id = clientes.id LEFT JOIN roteiros ON vendas.roteiro_id = roteiros.id '.
+            'WHERE (clientes.nome LIKE :b1 OR roteiros.nome LIKE :b2 OR vendas.data_reserva LIKE :b3 OR vendas.data_venda LIKE :b4 '.
+            'OR vendas.data_pagamento LIKE :b5 OR vendas.data_cancelado LIKE :b6 OR vendas.data_estorno LIKE :b7 OR vendas.status LIKE :b8) '.
+            'ORDER BY id ASC');
+            $abc->bindValue(':b1', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b2', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b3', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b4', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b5', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b6', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b7', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b8', '%'.trim($busca).'%', \PDO::PARAM_STR);
+
+            try {
+                $abc->execute();
+            } catch(\PDOException $e) {
+                $retorno['mensagem'] = Erro::getMessage(70);
+                \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+                \error_log($e->getMessage(), 0);
+                return $retorno;
+            }
+        }
+
+        $retorno['success'] = true;
+        if($abc->rowCount() == 0) {
+            $retorno['vendas'] = array();
+        } else if($abc->rowCount() <= 400)  {
+            $retorno['vendas'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+        } else {
+            $retorno['vendas'] = array();
+            $retorno['mensagem'] = 'Total de '.$abc->rowCount().' registros encontrados. Mostrando os primeiros 400 registros. Tente refinar a busca.';
+            for($i = 0; $i < 400; $i++) {
+                array_push($retorno['vendas'], $abc->fetch(\PDO::FETCH_OBJ));
+            }
+        }
+
+        return $retorno;
+    }
     
     /**
      * Retorna clientes apagados (soft-delete).

@@ -1,3 +1,12 @@
+<div class="row mb-3">
+    <div class="col-6 col-lg-3 mb-3">
+        <a href="#vendas/novo" class="btn btn-block btn-info rounded-0 shadow-sm font-weight-bold py-2"><i class="fas fa-shopping-cart fa-fw"></i> Nova Venda</a>
+    </div>
+    <div class="col-6 col-lg-3 mb-3">
+        <a href="#roteiros/novo" class="btn btn-block btn-info rounded-0 shadow-sm font-weight-bold py-2"><i class="fas fa-luggage-cart fa-fw"></i> Novo Roteiro</a>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-12 col-md-11 col-lg-10 col-xl-8 mx-auto">
         <div class="card">

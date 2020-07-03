@@ -611,6 +611,24 @@ class ControllerPrincipal
 
     }
 
+    static function vendasBuscar($p)
+    {
+        self::validaConexao(3);
+
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Buscar',
+            'description' => 'Localize vendas na plataforma.',
+            'page' => $blade->run("vendas.vendasBuscar", array(
+                
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
     static function vendasDatabase($p)
     {
         self::validaConexao(3);

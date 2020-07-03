@@ -203,7 +203,7 @@ function checkSystemUpdate()
         }
     }, 'json');
 
-    timeoutUpdate = setTimeout(checkSystemUpdate, 600000); // Verifica a cada 10min (600000ms).
+    timeoutUpdate = setTimeout(checkSystemUpdate, 300000); // Verifica a cada 5min (300000ms).
 }
 
 function converteCentavoEmReal(centavos = 0) {
@@ -2871,7 +2871,7 @@ $(document).ready(function(){
         });
     });
 
-    $(document).on('keyup', 'form#buscarClientes [name="busca"], form#buscarUsuarios [name="busca"], form#buscarCoordenadores [name="busca"]', function(ev){
+    $(document).on('keyup', 'form#buscarClientes [name="busca"], form#buscarUsuarios [name="busca"], form#buscarCoordenadores [name="busca"] form#buscarVendas [name="busca"]', function(ev){
         let atual = $(this).val();
         let novo = atual.replace(/[=;]/gi, function(x){return '';});
         $(this).val(novo);
@@ -2984,6 +2984,60 @@ $(document).ready(function(){
                         $('#retornoBusca').append('<div class="alert alert-info">'+res.mensagem+'</div>')
                     }
                 }
+            }
+        }, 'json').
+        fail(function(ev){
+            alerta('Não foi possível recuperar esses dados agora.', 'Falha!', 'danger');
+            //console.log(ev);
+            debugador(ev);;
+        });
+    });
+
+    // Buscar vendas
+    $(document).on('submit', 'form#buscarVendas', function(ev){
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        let form = $(this);
+        let href = 'vendas/buscar';
+        let valor = form.find('[name="busca"]').val().trim();
+
+        $.post(PREFIX_POST+href, {busca: valor}, function(res){
+            //console.log(res);
+            if(res.success == false) {
+                alerta('Não conseguimos recuperar a pesquisa. Erro do servidor: '+res.mensagem, 'Falha!', 'warning');
+            } else {
+                
+                $('#retornoBusca').html('<table class="table table-bordered table-sm">'+
+                '<thead class="bg-dark text-white">'+
+                    '<tr><th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th>'+
+                    '<th>Status</th> <th>Data</th> <th>Valor Total</th></tr>'+
+                '</thead><tbody style="font-size: .9rem;"></tbody></table>');
+
+                $('#retornoBusca').prepend('<div class="mb-2">Total de registros: <span class="badge badge-info">'+res.vendas.length+'</span></div>');
+
+                if(res.vendas.length == 0) {
+                    $('#retornoBusca').find('table tbody').html('<tr><td class="text-center" colspan="6">Nada encontrado.</td></tr>');
+                } else {
+                    $('#retornoBusca').find('table tbody').html('');
+                    for(let i = 0; i < res.vendas.length; i++) {
+                        
+                        $('#retornoBusca').find('table tbody')
+                            .append('<tr class="cursor-pointer" onclick="getVenda('+res.vendas[i].id+')">'+
+                            '<td>'+res.vendas[i].id+'</td>'+
+                            '<td>( '+res.vendas[i].roteiro_id+' ) '+res.vendas[i].roteiro_nome+' ('+Dobbin.formataData(new Date(res.vendas[i].roteiro_data_ini))+' a '+Dobbin.formataData(new Date(res.vendas[i].roteiro_data_fim))+')</td>'+
+                            '<td>( '+res.vendas[i].cliente_id+' ) '+res.vendas[i].cliente_nome+'</td>'+
+                            '<td>'+res.vendas[i].status+'</td>'+
+                            '<td>'+Dobbin.formataDataHora(new Date(res.vendas[i].data_reserva))+'</td>'+
+                            '<td>R$ '+Dobbin.converteCentavoEmReal(res.vendas[i].valor_total)+'</td>'+
+                            '</tr>');
+                    }
+
+                    if(res.mensagem != '') {
+                        $('#retornoBusca').append('<div class="alert alert-info">'+res.mensagem+'</div>')
+                    }
+                }
+               console.log(res);
             }
         }, 'json').
         fail(function(ev){
