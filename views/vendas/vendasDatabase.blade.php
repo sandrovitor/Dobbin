@@ -54,7 +54,7 @@
                     <small>Atualizado em: <i>{{$hoje->format('d/m/Y H:i:s')}}</i>.</small>
                     <a href="#vendas/database" class="btn btn-sm btn-info"><i class="fas fa-sync"></i></a>
                 </div>
-                <table class="table table-sm table-bordered table-hover">
+                <table class="table table-sm table-bordered table-hover table-responsive-sm">
                     <thead class="bg-secondary text-white">
                         <tr>
                             <th>Cód</th>

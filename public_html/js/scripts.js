@@ -2520,7 +2520,7 @@ function getVendasReservas()
                 $('#reservasDiv').find('table').remove();
             } else {
                 $('#reservasDiv').find('table').remove();
-                $('#reservasDiv').append('<table class="table table-sm table-bordered table-hover mb-0" style="display:none;">'+
+                $('#reservasDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
                     '<thead class="thead-dark"> <tr>'+
                     '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
                     '</tr> </thead> <tbody> </tbody> </table>');
@@ -2563,7 +2563,7 @@ function getVendasAguardandoPagamento()
                 $('#aguardPagDiv').find('table').remove();
             } else {
                 $('#aguardPagDiv').find('table').remove();
-                $('#aguardPagDiv').append('<table class="table table-sm table-bordered table-hover mb-0" style="display:none;">'+
+                $('#aguardPagDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
                     '<thead class="thead-dark"> <tr>'+
                     '<th>Cód</th> <th>Roteiro</th> <th>Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
                     '</tr> </thead> <tbody> </tbody> </table>');
@@ -2606,7 +2606,7 @@ function getVendasPagas()
                 $('#pagasDiv').find('table').remove();
             } else {
                 $('#pagasDiv').find('table').remove();
-                $('#pagasDiv').append('<table class="table table-sm table-bordered table-hover mb-0" style="display:none;">'+
+                $('#pagasDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
                     '<thead class="thead-dark"> <tr>'+
                     '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
                     '</tr> </thead> <tbody> </tbody> </table>');
@@ -2649,7 +2649,7 @@ function getVendasEstornadas()
                 $('#estornadasDiv').find('table').remove();
             } else {
                 $('#estornadasDiv').find('table').remove();
-                $('#estornadasDiv').append('<table class="table table-sm table-bordered table-hover mb-0" style="display:none;">'+
+                $('#estornadasDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
                     '<thead class="thead-dark"> <tr>'+
                     '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
                     '</tr> </thead> <tbody> </tbody> </table>');

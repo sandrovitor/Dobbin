@@ -51,7 +51,7 @@
                             <div class="card-header bg-success text-white">
                                 PAGAS
                             </div>
-                            <div class="card-body px-2" id="pagasDiv">
+                            <div class="card-body px-2" id="pagasDiv" >
                                 <div class="text-center mx-2">
                                     Carregando...<br>
                                     <div class="spinner-grow text-primary"></div><br>

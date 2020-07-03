@@ -28,7 +28,7 @@
                         @endphp
                             <tr>
                                 <td>{{$c->id}}</td>
-                                <td>{{$c->nome}} ({{$data_ini->format('d/m/Y')}} a {{$data_fim->format('d/m/Y')}})</td>
+                                <td><a href="#roteiros/lixeira/ver/{{$c->id}}">{{$c->nome}} ({{$data_ini->format('d/m/Y')}} a {{$data_fim->format('d/m/Y')}})</a></td>
                                 <td>{{$apagado_em->format('d/m/Y H:i:s')}}</td>
                                 <td>{{$c->usuario}}</td>
                                 

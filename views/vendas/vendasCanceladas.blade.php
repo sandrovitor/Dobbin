@@ -9,7 +9,7 @@
                     <strong>Observação:</strong> Somente vendas canceladas <strong>(não inclui devolvidas/estornadas)</strong> são exibidas aqui. Se uma venda ainda não aparece, experimente acessar a página de novo.<br>
                     Quanto mais vendas na lista, mais a página pode ficar lenta para carregar (isso é normal devido ao volume de informação para processar).
                 </div>
-                <table class="table table-sm table-bordered table-hover">
+                <table class="table table-sm table-bordered table-hover table-responsive-sm">
                     <thead class="bg-secondary text-white">
                         <tr>
                             <th>Cód</th>

@@ -14,6 +14,9 @@
                                     <button type="button" class="btn-primary btn btn-sm px-2" data-toggle="tooltip" title="Criar novo cliente" onclick="location = location.origin+'/?return=vendas/novo#clientes/novo';"><i class="fas fa-plus fa-fw"></i></button>
                                 </div>
                             </div>
+                            <div class="alert alert-info d-block d-md-none">
+                                <strong>AVISO:</strong> Essa página pode ter problema em mostrar alguns itens em aparelhos celulares.<br>Dê preferência a dispositivos como tablets, laptops, desktops e etc.
+                            </div>
                         </div>
                     </div>
                     <hr>
@@ -79,7 +82,7 @@
                     <div class="row">
                         <div class="col-12 mb-2">
                             <div class="border rounded-0">
-                                <table class="table table-sm table-bordered">
+                                <table class="table table-sm table-bordered table-responsive-sm">
                                     <thead class="thead-dark">
                                         <tr>
                                             <th>Cód./Roteiro</th>
