@@ -55,7 +55,7 @@
                         @endphp
                             <tr>
                                 <td>{{$c->id}}</td>
-                                <td>{{$c->nome}}</td>
+                                <td><a href="javascript:void(0)" onclick="loadCoordenador({{$c->id}})">{{$c->nome}}</a></td>
                                 <td class="d-none d-lg-table-cell">{{$c->email}}</td>
                                 <td>{{$c->cidade}}</td>
                                 <td>{{$c->estado}}</td>
