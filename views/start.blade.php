@@ -181,6 +181,7 @@
                 <h3 class="">
                     <strong class="text-primary" data-detalhes-nome></strong> <small>[Cód.: <span data-detalhes-id></span>]</small>
                     <span class="ml-3" data-detalhes-deletado></span> <span class="ml-3 tipoCliente" style="cursor:pointer;"></span>
+                    <button class="btn btn-sm btn-primary" data-detalhes-id onclick="$(this).parents('.modal').modal('hide'); editaCliente($(this).data('id'))"><i class="fas fa-pen"></i></button>
                 </h3>
                 <div class="mt-n1 d-flex">
                     <small class="badge badge-info mr-2 mb-1">Criado em: &nbsp; <span data-detalhes-criadoem></span></small>

@@ -561,7 +561,8 @@ function loadCliente(id)
             console.log(res);
             let c = res.cliente;
             $('#modalClienteDetalhes [data-detalhes-nome]').text(c.nome);
-            $('#modalClienteDetalhes [data-detalhes-id]').text(c.id);
+            $('#modalClienteDetalhes [data-detalhes-id]:not(button)').text(c.id);
+            $('#modalClienteDetalhes button[data-detalhes-id]').data('id', c.id);
             $('#modalClienteDetalhes [data-detalhes-email]').text(c.email);
             $('#modalClienteDetalhes [data-detalhes-tel]').text(c.telefone);
             $('#modalClienteDetalhes [data-detalhes-faixaetaria]').html(function(){
@@ -717,6 +718,171 @@ function loadCliente(id)
             return false;
         }
     }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
+function editaCoordenador(id)
+{
+    $.post('/coordenadores/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let c = res.coordenador;
+            $('#modalCoordenadorEditar strong[data-detalhes-nome]').text(c.nome);
+            $('#modalCoordenadorEditar input[data-detalhes-nome]').val(c.nome);
+            $('#modalCoordenadorEditar span[data-detalhes-id]').text(c.id);
+            $('#modalCoordenadorEditar input[data-detalhes-id]').val(c.id);
+            $('#modalCoordenadorEditar [data-detalhes-email]').val(c.email);
+            $('#modalCoordenadorEditar [data-detalhes-tel]').val(c.telefone);
+            $('#modalCoordenadorEditar [data-detalhes-nascimento]').val(c.nascimento);
+            $('#modalCoordenadorEditar [data-detalhes-civil]').val(c.estado_civil);
+            $('#modalCoordenadorEditar [data-detalhes-rg]').val(c.rg);
+            $('#modalCoordenadorEditar [data-detalhes-cpf]').val(c.cpf);
+            $('#modalCoordenadorEditar [data-detalhes-sangue]').val(c.sangue);
+            $('#modalCoordenadorEditar [data-detalhes-endereco]').val(c.endereco);
+            $('#modalCoordenadorEditar [data-detalhes-complemento]').val(c.complemento);
+            $('#modalCoordenadorEditar [data-detalhes-pontoref]').val(c.ponto_referencia);
+            $('#modalCoordenadorEditar [data-detalhes-bairro]').val(c.bairro);
+            $('#modalCoordenadorEditar [data-detalhes-cep]').val(c.cep);
+            $('#modalCoordenadorEditar [data-detalhes-cidade]').val(c.cidade);
+            $('#modalCoordenadorEditar [data-detalhes-estado]').val(c.estado);
+            $('#modalCoordenadorEditar [data-detalhes-alergia]').val(c.alergia);
+            $('#modalCoordenadorEditar [data-detalhes-emergencianome]').val(c.emergencia_nome);
+            $('#modalCoordenadorEditar [data-detalhes-emergenciatel]').val(c.emergencia_telefone);
+            $('#modalCoordenadorEditar [data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
+            $('#modalCoordenadorEditar [data-detalhes-titular]').val(function(){
+                if(c.titular != 0) {return c.titular;} else {return ''};
+            });
+
+            $('#modalCoordenadorEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });;
+}
+
+function editaCliente(id)
+{
+    id = parseInt(id);
+
+    $.post('/clientes/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let c = res.cliente;
+            $('strong[data-detalhes-nome]').text(c.nome);
+            $('input[data-detalhes-nome]').val(c.nome);
+            $('span[data-detalhes-id]').text(c.id);
+            $('input[data-detalhes-id]').val(c.id);
+            $('[data-detalhes-email]').val(c.email);
+            $('[data-detalhes-tel]').val(c.telefone);
+            $('[data-detalhes-nascimento]').val(c.nascimento);
+            $('[data-detalhes-civil]').val(c.estado_civil);
+            $('[data-detalhes-rg]').val(c.rg);
+            $('[data-detalhes-cpf]').val(c.cpf);
+            $('[data-detalhes-sangue]').val(c.sangue);
+            $('[data-detalhes-endereco]').val(c.endereco);
+            $('[data-detalhes-complemento]').val(c.complemento);
+            $('[data-detalhes-pontoref]').val(c.ponto_referencia);
+            $('[data-detalhes-bairro]').val(c.bairro);
+            $('[data-detalhes-cep]').val(c.cep);
+            $('[data-detalhes-cidade]').val(c.cidade);
+            $('[data-detalhes-estado]').val(c.estado);
+            $('[data-detalhes-alergia]').val(c.alergia);
+            $('[data-detalhes-emergencianome]').val(c.emergencia_nome);
+            $('[data-detalhes-emergenciatel]').val(c.emergencia_telefone);
+            $('[data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
+            $('[data-detalhes-titular]').val(function(){
+                if(c.titular != 0) {return c.titular;} else {return ''};
+            });
+
+            $('#modalClienteEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });;
+}
+
+function loadUsuario(id)
+{
+    $.post('/usuarios/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').val(res.usuario.nome);
+            $('#modalUsuarioDetalhes').find('[data-usuario-avatar]').attr('src', 'media/images/av/'+res.usuario.avatar);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').text(res.usuario.nome + ' ' + res.usuario.sobrenome);
+            $('#modalUsuarioDetalhes').find('[data-usuario-usuario]').text('@'+res.usuario.usuario);
+            $('#modalUsuarioDetalhes').find('[data-usuario-email]').text(res.usuario.email);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nivel]').text(res.usuario.nivel);
+            $('#modalUsuarioDetalhes').find('[data-usuario-id]').attr('data-usuario-id', res.usuario.id);
+            $('#modalUsuarioDetalhes').find('[data-usuario-criado]').text(Dobbin.formataDataHora(new Date(res.usuario.criado_em)));
+            $('#modalUsuarioDetalhes').find('[data-usuario-atualizado]').text(Dobbin.formataDataHora(new Date(res.usuario.atualizado_em)));
+            $('#modalUsuarioDetalhes').find('[data-usuario-logadoem]').text(Dobbin.formataDataHora(new Date(res.usuario.logado_em)));
+
+
+            $('#modalUsuarioDetalhes').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    },'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
+function editaUsuario(id)
+{
+    $.post('/usuarios/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            $('#modalUsuarioEditar').find('[data-usuario-nome]').val(res.usuario.nome);
+            $('#modalUsuarioEditar').find('[data-usuario-sobrenome]').val(res.usuario.sobrenome);
+            $('#modalUsuarioEditar').find('[data-usuario-email]').val(res.usuario.email);
+            $('#modalUsuarioEditar').find('[data-usuario-usuario]').val(res.usuario.usuario);
+            $('#modalUsuarioEditar').find('[data-usuario-nivel]').val(res.usuario.nivel);
+            $('#modalUsuarioEditar').find('[data-usuario-id]').val(res.usuario.id);
+            $('#modalUsuarioEditar').find('[data-usuario-avatar]').attr('src', '/media/images/av/'+res.usuario.avatar);
+
+
+            $('#modalUsuarioEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    },'json').
     fail(function(ev){
         switch(ev.statusCode) {
             case 404:
@@ -1007,169 +1173,6 @@ function deleteClienteLixeira(id)
         alerta('Falha...','', 'warning');
     });
     return true;
-}
-
-function editaCoordenador(id)
-{
-    $.post('/coordenadores/ver/'+id, function(res){
-        if(res.success == true) {
-            console.log(res);
-            let c = res.coordenador;
-            $('#modalCoordenadorEditar strong[data-detalhes-nome]').text(c.nome);
-            $('#modalCoordenadorEditar input[data-detalhes-nome]').val(c.nome);
-            $('#modalCoordenadorEditar span[data-detalhes-id]').text(c.id);
-            $('#modalCoordenadorEditar input[data-detalhes-id]').val(c.id);
-            $('#modalCoordenadorEditar [data-detalhes-email]').val(c.email);
-            $('#modalCoordenadorEditar [data-detalhes-tel]').val(c.telefone);
-            $('#modalCoordenadorEditar [data-detalhes-nascimento]').val(c.nascimento);
-            $('#modalCoordenadorEditar [data-detalhes-civil]').val(c.estado_civil);
-            $('#modalCoordenadorEditar [data-detalhes-rg]').val(c.rg);
-            $('#modalCoordenadorEditar [data-detalhes-cpf]').val(c.cpf);
-            $('#modalCoordenadorEditar [data-detalhes-sangue]').val(c.sangue);
-            $('#modalCoordenadorEditar [data-detalhes-endereco]').val(c.endereco);
-            $('#modalCoordenadorEditar [data-detalhes-complemento]').val(c.complemento);
-            $('#modalCoordenadorEditar [data-detalhes-pontoref]').val(c.ponto_referencia);
-            $('#modalCoordenadorEditar [data-detalhes-bairro]').val(c.bairro);
-            $('#modalCoordenadorEditar [data-detalhes-cep]').val(c.cep);
-            $('#modalCoordenadorEditar [data-detalhes-cidade]').val(c.cidade);
-            $('#modalCoordenadorEditar [data-detalhes-estado]').val(c.estado);
-            $('#modalCoordenadorEditar [data-detalhes-alergia]').val(c.alergia);
-            $('#modalCoordenadorEditar [data-detalhes-emergencianome]').val(c.emergencia_nome);
-            $('#modalCoordenadorEditar [data-detalhes-emergenciatel]').val(c.emergencia_telefone);
-            $('#modalCoordenadorEditar [data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
-            $('#modalCoordenadorEditar [data-detalhes-titular]').val(function(){
-                if(c.titular != 0) {return c.titular;} else {return ''};
-            });
-
-            $('#modalCoordenadorEditar').modal('show');
-        } else {
-            alerta(res.mensagem, 'Erro!', 'warning');
-            return false;
-        }
-    }, 'json').
-    fail(function(ev){
-        switch(ev.statusCode) {
-            case 404:
-                alerta('Não encontrado.', 'Erro!', 'danger');
-                break;
-        }
-        //console.log(ev);
-        debugador(ev);
-    });;
-}
-
-function editaCliente(id)
-{
-    $.post('/clientes/ver/'+id, function(res){
-        if(res.success == true) {
-            console.log(res);
-            let c = res.cliente;
-            $('strong[data-detalhes-nome]').text(c.nome);
-            $('input[data-detalhes-nome]').val(c.nome);
-            $('span[data-detalhes-id]').text(c.id);
-            $('input[data-detalhes-id]').val(c.id);
-            $('[data-detalhes-email]').val(c.email);
-            $('[data-detalhes-tel]').val(c.telefone);
-            $('[data-detalhes-nascimento]').val(c.nascimento);
-            $('[data-detalhes-civil]').val(c.estado_civil);
-            $('[data-detalhes-rg]').val(c.rg);
-            $('[data-detalhes-cpf]').val(c.cpf);
-            $('[data-detalhes-sangue]').val(c.sangue);
-            $('[data-detalhes-endereco]').val(c.endereco);
-            $('[data-detalhes-complemento]').val(c.complemento);
-            $('[data-detalhes-pontoref]').val(c.ponto_referencia);
-            $('[data-detalhes-bairro]').val(c.bairro);
-            $('[data-detalhes-cep]').val(c.cep);
-            $('[data-detalhes-cidade]').val(c.cidade);
-            $('[data-detalhes-estado]').val(c.estado);
-            $('[data-detalhes-alergia]').val(c.alergia);
-            $('[data-detalhes-emergencianome]').val(c.emergencia_nome);
-            $('[data-detalhes-emergenciatel]').val(c.emergencia_telefone);
-            $('[data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
-            $('[data-detalhes-titular]').val(function(){
-                if(c.titular != 0) {return c.titular;} else {return ''};
-            });
-
-            $('#modalClienteEditar').modal('show');
-        } else {
-            alerta(res.mensagem, 'Erro!', 'warning');
-            return false;
-        }
-    }, 'json').
-    fail(function(ev){
-        switch(ev.statusCode) {
-            case 404:
-                alerta('Não encontrado.', 'Erro!', 'danger');
-                break;
-        }
-        //console.log(ev);
-        debugador(ev);
-    });;
-}
-
-function loadUsuario(id)
-{
-    $.post('/usuarios/ver/'+id, function(res){
-        if(res.success == true) {
-            console.log(res);
-            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').val(res.usuario.nome);
-            $('#modalUsuarioDetalhes').find('[data-usuario-avatar]').attr('src', 'media/images/av/'+res.usuario.avatar);
-            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').text(res.usuario.nome + ' ' + res.usuario.sobrenome);
-            $('#modalUsuarioDetalhes').find('[data-usuario-usuario]').text('@'+res.usuario.usuario);
-            $('#modalUsuarioDetalhes').find('[data-usuario-email]').text(res.usuario.email);
-            $('#modalUsuarioDetalhes').find('[data-usuario-nivel]').text(res.usuario.nivel);
-            $('#modalUsuarioDetalhes').find('[data-usuario-id]').attr('data-usuario-id', res.usuario.id);
-            $('#modalUsuarioDetalhes').find('[data-usuario-criado]').text(Dobbin.formataDataHora(new Date(res.usuario.criado_em)));
-            $('#modalUsuarioDetalhes').find('[data-usuario-atualizado]').text(Dobbin.formataDataHora(new Date(res.usuario.atualizado_em)));
-            $('#modalUsuarioDetalhes').find('[data-usuario-logadoem]').text(Dobbin.formataDataHora(new Date(res.usuario.logado_em)));
-
-
-            $('#modalUsuarioDetalhes').modal('show');
-        } else {
-            alerta(res.mensagem, 'Erro!', 'warning');
-            return false;
-        }
-    },'json').
-    fail(function(ev){
-        switch(ev.statusCode) {
-            case 404:
-                alerta('Não encontrado.', 'Erro!', 'danger');
-                break;
-        }
-        //console.log(ev);
-        debugador(ev);
-    });
-}
-
-function editaUsuario(id)
-{
-    $.post('/usuarios/ver/'+id, function(res){
-        if(res.success == true) {
-            console.log(res);
-            $('#modalUsuarioEditar').find('[data-usuario-nome]').val(res.usuario.nome);
-            $('#modalUsuarioEditar').find('[data-usuario-sobrenome]').val(res.usuario.sobrenome);
-            $('#modalUsuarioEditar').find('[data-usuario-email]').val(res.usuario.email);
-            $('#modalUsuarioEditar').find('[data-usuario-usuario]').val(res.usuario.usuario);
-            $('#modalUsuarioEditar').find('[data-usuario-nivel]').val(res.usuario.nivel);
-            $('#modalUsuarioEditar').find('[data-usuario-id]').val(res.usuario.id);
-            $('#modalUsuarioEditar').find('[data-usuario-avatar]').attr('src', '/media/images/av/'+res.usuario.avatar);
-
-
-            $('#modalUsuarioEditar').modal('show');
-        } else {
-            alerta(res.mensagem, 'Erro!', 'warning');
-            return false;
-        }
-    },'json').
-    fail(function(ev){
-        switch(ev.statusCode) {
-            case 404:
-                alerta('Não encontrado.', 'Erro!', 'danger');
-                break;
-        }
-        //console.log(ev);
-        debugador(ev);
-    });
 }
 
 function deleteUsuario(id)
