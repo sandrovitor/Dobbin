@@ -146,7 +146,9 @@ class SGCTUR extends Master
         $retorno['consumo']['roteiros'] = (int)$reg->total;
 
         // Vendas
-        $retorno['consumo']['vendas'] = 0;
+        $abc = $this->pdo->query('SELECT COUNT(id) as total FROM vendas WHERE 1');
+        $reg = $abc->fetch(\PDO::FETCH_OBJ);
+        $retorno['consumo']['vendas'] = (int)$reg->total;
 
         // Usuários
         $abc = $this->pdo->query('SELECT COUNT(id) as total FROM login WHERE 1');
@@ -525,6 +527,66 @@ class SGCTUR extends Master
                 array_push($retorno['roteiros'], $roteiro->getDados());
 
                 unset($tmp, $roteiro);
+            }
+        }
+
+        return $retorno;
+    }
+
+    /**
+     * Faz a busca de uma string em NOME (do cliente), ROTEIRO, DATA_RESERVA,
+     * DATA_VENDA, DATA_PAGAMENTO, DATA_CANCELADO, DATA_ESTORNO, STATUS. (Não precisa enviar ID no construtor).
+     * 
+     * @param string $busca String para consulta.
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING, clientes => ARRAY]
+     */
+    public function getVendasBusca(string $busca = '')
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        if(trim($busca) == '') {
+            $abc= $this->pdo->query('SELECT vendas.*, clientes.nome as cliente_nome, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim '.
+            'FROM vendas LEFT JOIN clientes ON vendas.cliente_id = clientes.id LEFT JOIN roteiros ON vendas.roteiro_id = roteiros.id WHERE 1 ORDER BY id ASC');
+        } else {
+            
+            $abc = $this->pdo->prepare('SELECT vendas.*, clientes.nome as cliente_nome, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim '.
+            'FROM vendas LEFT JOIN clientes ON vendas.cliente_id = clientes.id LEFT JOIN roteiros ON vendas.roteiro_id = roteiros.id '.
+            'WHERE (clientes.nome LIKE :b1 OR roteiros.nome LIKE :b2 OR vendas.data_reserva LIKE :b3 OR vendas.data_venda LIKE :b4 '.
+            'OR vendas.data_pagamento LIKE :b5 OR vendas.data_cancelado LIKE :b6 OR vendas.data_estorno LIKE :b7 OR vendas.status LIKE :b8) '.
+            'ORDER BY id ASC');
+            $abc->bindValue(':b1', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b2', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b3', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b4', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b5', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b6', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b7', '%'.trim($busca).'%', \PDO::PARAM_STR);
+            $abc->bindValue(':b8', '%'.trim($busca).'%', \PDO::PARAM_STR);
+
+            try {
+                $abc->execute();
+            } catch(\PDOException $e) {
+                $retorno['mensagem'] = Erro::getMessage(70);
+                \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+                \error_log($e->getMessage(), 0);
+                return $retorno;
+            }
+        }
+
+        $retorno['success'] = true;
+        if($abc->rowCount() == 0) {
+            $retorno['vendas'] = array();
+        } else if($abc->rowCount() <= 400)  {
+            $retorno['vendas'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+        } else {
+            $retorno['vendas'] = array();
+            $retorno['mensagem'] = 'Total de '.$abc->rowCount().' registros encontrados. Mostrando os primeiros 400 registros. Tente refinar a busca.';
+            for($i = 0; $i < 400; $i++) {
+                array_push($retorno['vendas'], $abc->fetch(\PDO::FETCH_OBJ));
             }
         }
 
@@ -1660,8 +1722,8 @@ class SGCTUR extends Master
             if($roteiro->estoque['total'] - $roteiro->estoque['vendidos'] >= $v->clientes_total) {
             
                 // Lança venda no sistema.
-                $abc = $this->pdo->prepare("INSERT INTO `vendas` (`id`, `cliente_id`, `roteiro_id`, `items`, `adultos`, `criancas`, `clientes_total`, `lista_clientes`, `desconto_total`, `valor_total`, `status`, `obs`, `forma_pagamento`, `usuario_id`, `data_reserva`, `data_venda`, `data_pagamento`, `data_cancelado`, `data_estorno`) VALUES ".
-                "(NULL, :cliente, :roteiro, :items, :adultos, :criancas, :clientesTotal, '', :descontoTotal, :valorTotal, :status, :obs, :formaPagamento, $vendedor, NOW(), NULL, NULL, NULL, NULL)");
+                $abc = $this->pdo->prepare("INSERT INTO `vendas` (`id`, `cliente_id`, `roteiro_id`, `items`, `adultos`, `criancas`, `clientes_total`, `lista_clientes`, `desconto_total`, `valor_total`, `valor_devolvido`, `status`, `obs`, `forma_pagamento`, `vencimento`, `usuario_id`, `data_reserva`, `data_venda`, `data_pagamento`, `data_cancelado`, `data_estorno`) VALUES ".
+                "(NULL, :cliente, :roteiro, :items, :adultos, :criancas, :clientesTotal, '', :descontoTotal, :valorTotal, NULL, :status, :obs, :formaPagamento, NULL, $vendedor, NOW(), NULL, NULL, NULL, NULL)");
 
                 $abc->bindValue(':cliente', $cliente, \PDO::PARAM_INT);
                 $abc->bindValue(':roteiro', $v->roteiroID, \PDO::PARAM_INT);
@@ -1684,6 +1746,16 @@ class SGCTUR extends Master
 
                 try{
                     $abc->execute();
+                    $ultID = $this->pdo->lastInsertId();
+
+                    /**
+                     * LOG
+                     */
+                    $log = new LOG();
+                    $log->novo('<a href="javascript:void(0)" onclick="getVenda('.$ultID.')">Fez uma venda para o roteiro '. $roteiro->nome.'.</a>', $_SESSION['auth']['id'], 1);
+                    /**
+                     * ./LOG
+                     */
                 } catch(\PDOException $e) {
                     $this->pdo->rollBack();
                     $retorno['mensagem'] = Erro::getMessage(70) . ' ERRO: '.$e->getMessage();
@@ -1771,6 +1843,12 @@ class SGCTUR extends Master
                     }
                     
                 break;
+
+                default:
+                    $retorno['mensagem'] = Erro::getMessage(9) +' (Filtro de ordem incorreto.)';
+                    return $retorno;
+                break;
+                
             }
 
             
@@ -1802,12 +1880,14 @@ class SGCTUR extends Master
         }
 
         try{
-            $abc = $this->pdo->query('SELECT vendas.*, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim, '.
+            $query = 'SELECT vendas.*, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim, '.
             'clientes.nome as cliente_nome '.
             'FROM vendas '.
             'LEFT JOIN roteiros ON vendas.roteiro_id = roteiros.id '.
             'LEFT JOIN clientes ON vendas.cliente_id = clientes.id '.
-            'WHERE '.$where.' ORDER BY '.$str_ordem.' '.$limit);
+            'WHERE '.$where.' ORDER BY '.$str_ordem.' '.$limit;
+
+            $abc = $this->pdo->query($query);
             $retorno['vendas'] = $abc->fetchAll(\PDO::FETCH_OBJ);
             $retorno['success'] = true;
 
@@ -1815,6 +1895,7 @@ class SGCTUR extends Master
         } catch(\PDOException $e) {
             $retorno['mensagem'] = Erro::getMessage(70) . ' ERRO: '.$e->getMessage();
             \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+            \error_log('QUERY DE CONSULTA COM ERRO: '.$query, 0);
             \error_log($e->getMessage(), 0);
             return $retorno;
         }

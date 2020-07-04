@@ -12,6 +12,7 @@ Use SGCTUR\Erro;
 Use SGCTUR\Parceiro;
 Use SGCTUR\Roteiro;
 Use SGCTUR\Venda;
+Use SGCTUR\Robot; // Excluir linha
 
 class ControllerPrincipal 
 {
@@ -577,6 +578,23 @@ class ControllerPrincipal
      * 
      * 
      */
+    static function vendas($p)
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas',
+            'description' => 'Gerencie suas vendas.',
+            'page' => $blade->run("vendas.vendas", array(
+                'vendas' => $sgc->getVendasLista()['vendas'],
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
     static function vendasNovo($p)
     {
         self::validaConexao(3);
@@ -594,6 +612,24 @@ class ControllerPrincipal
 
     }
 
+    static function vendasBuscar($p)
+    {
+        self::validaConexao(3);
+
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Buscar',
+            'description' => 'Localize vendas na plataforma.',
+            'page' => $blade->run("vendas.vendasBuscar", array(
+                
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
     static function vendasDatabase($p)
     {
         self::validaConexao(3);
@@ -602,10 +638,44 @@ class ControllerPrincipal
         $blade = self::bladeStart();
         $retorno = array(
             'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Todas',
-            'description' => 'Veja todas as suas vendas concluídas, canceladas, aguardando pagamento e reservas.',
+            'description' => 'Veja as suas vendas concluídas, canceladas, aguardando pagamento e reservas. Nem todas serão exibidas aqui.',
             'page' => $blade->run("vendas.vendasDatabase", array(
-                'vendas' => $sgc->getVendasLista()['vendas'],
+                'vendas' => $sgc->getVendasLista(0,200)['vendas'],
                 'sgc' => $sgc,
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+    
+    static function vendasCanceladas($p)
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Canceladas',
+            'description' => 'Vendas que foram canceladas antes de serem pagas.',
+            'page' => $blade->run("vendas.vendasCanceladas", array(
+                'vendas' => $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [['status', '=', 'Cancelada']])['vendas'],
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+    
+    static function vendasEstornadas($p)
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Estornadas',
+            'description' => 'Vendas que foram pagas e devolvidas/estornadas ao cliente.',
+            'page' => $blade->run("vendas.vendasEstornadas", array(
+                'vendas' => $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [['status', '=', 'Devolvida']])['vendas'],
             ))
         );
 
@@ -625,6 +695,30 @@ class ControllerPrincipal
         self::validaConexao(3);
         $sgc = new SGCTUR();
         $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Aguardando'] ]);
+        return json_encode($ret);
+    }
+
+    static function vendasDatabasePagas($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Paga'] ]);
+        return json_encode($ret);
+    }
+
+    static function vendasDatabaseDevolvidas($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Devolvida'] ]);
+        return json_encode($ret);
+    }
+
+    static function vendasDatabaseCanceladas($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Cancelada'] ]);
         return json_encode($ret);
     }
 
@@ -768,6 +862,27 @@ class ControllerPrincipal
                 return json_encode($retorno);
             }
         }
+    }
+
+    static function clientesVerVendas($p)
+    {
+        self::validaConexao();
+        $retorno = array(
+            'success' => false,
+            'mensagem' => '',
+        );
+
+        if(!isset($p['id']) || $p['id'] == '' || $p['id'] == 0) {
+            $retorno['mensagem'] = Erro::getMessage(105);
+        } else {
+            $sgc = new SGCTUR();
+            $vendas = $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [ ['cliente_id', '=', $p['id'] ] ]);
+            
+            $retorno = $vendas;
+        }
+
+        
+        return json_encode($retorno);
     }
 
     /**
@@ -1180,7 +1295,7 @@ class ControllerPrincipal
             'title' => '<i class="fas fa-cloud-download-alt"></i> Offline',
             'description' => 'Acesse o banco de dados da plataforma offline.',
             'page' => $blade->run("offline", array(
-                
+                'robot' => new Robot(),
             ))
         );
 

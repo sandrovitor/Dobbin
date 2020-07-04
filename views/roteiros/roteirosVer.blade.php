@@ -2,19 +2,26 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="$('.card-header.card-collapse').siblings('.card-body').not(':visible').slideDown('fast');">Mostrar tudo</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="$('.card-header.card-collapse').siblings('.card-body:visible').slideUp('fast');">Esconder tudo</button>
+
+                        <button type="button" class="btn btn-sm btn-light mr-2 disabled" disabled>|</button>
+                        <button type="button" class="btn btn-sm btn-dark mr-2" onclick="$('.modal.show').modal('hide'); $('#janCriarCopiaRoteiro').modal('show')" data-id="{{$roteiro->id}}">Criar cópia do roteiro</button>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-lg-8">
                         <!-- COLUNA 1 -->
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 GERAL
                             </div>
-                            <div class="card-body pt-3 pb-0 px-2">
+                            <div class="card-body pt-3 pb-0 px-2" >
                                 <div class="mb-3">
                                     <a href="#roteiros/editar/{{$roteiro->id}}" class="btn btn-sm btn-primary mr-2">Editar roteiro</a>
                                     <button type="button" class="btn btn-sm btn-danger mr-2" onclick="roteiroApagar(this)" data-id="{{$roteiro->id}}">Apagar roteiro</button>
-                                    <button type="button" class="btn btn-sm btn-light mr-2 disabled" disabled>|</button>
-                                    <button type="button" class="btn btn-sm btn-dark mr-2" onclick="$('.modal.show').modal('hide'); $('#janCriarCopiaRoteiro').modal('show')" data-id="{{$roteiro->id}}">Criar cópia do roteiro</button>
                                 </div>
                             @php
                                 $hoje = new DateTime();
@@ -22,6 +29,8 @@
                                 $retorno = new DateTime($roteiro->data_fim);
                                 $criado = new DateTime($roteiro->criado_em);
                                 $atualizado = new DateTime($roteiro->atualizado_em);
+
+                                $receita = 0; // Valor somado de todas as vendas.
 
                             @endphp
                                 <table class="table table-bordered table-sm">
@@ -64,7 +73,7 @@
                             </div>
                         </div>
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 VENDAS
                             </div>
                             <div class="card-body pt-3 pb-2 px-2">
@@ -112,9 +121,10 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            
                                             @if(empty($lista_vendas))
                                             <tr>
-                                                <td colspan="5" class="text-center py-2 font-italic">Sem vendas</td>
+                                                <td colspan="6" class="text-center py-2 font-italic">Sem vendas</td>
                                             </tr>
                                             @else
                                             @foreach($lista_vendas as $l)
@@ -128,6 +138,9 @@
                                                     $bgtr = '';
                                                     $situ = '<span class="badge badge-success py-1 px-2">'.$l->status.'</span> ('.$l->forma_pagamento.')';
                                                 }
+
+                                                // Incrementa valor da receita.
+                                                $receita += (int)$l->valor_total;
                                             @endphp
                                             <tr class="{{$bgtr}}">
                                                 <td><a href="javascript:void(0)" onclick="getVenda({{$l->id}})">{{$l->id}}</a></td>
@@ -150,7 +163,7 @@
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="card rounded-0">
-                                    <div class="card-header text-dark px-2 py-1">
+                                    <div class="card-header card-collapse text-dark px-2 py-1">
                                         CLIENTES/PASSAGEIROS
                                     </div>
                                     <div class="card-body pt-3 pb-2 px-2">
@@ -170,7 +183,7 @@
                             </div>
                             <div class="col-lg-6">
                                 <div class="card rounded-0">
-                                    <div class="card-header text-dark px-2 py-1">
+                                    <div class="card-header card-collapse text-dark px-2 py-1">
                                         COORDENADORES
                                     </div>
                                     <div class="card-body pt-3 pb-2 px-2">
@@ -198,7 +211,7 @@
                     <div class="col-lg-4">
                         <!-- COLUNA 2 -->
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 DESPESAS
                             </div>
                             <div class="card-body pt-3 pb-2 px-2">
@@ -303,7 +316,7 @@
                                             <td class="text-success">+</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="2"></td>
+                                            <td colspan="3"></td>
                                         </tr>
                                         <tr>
                                             <td>Lucro Total</td>
@@ -314,8 +327,67 @@
                                 </table>
                             </div>
                         </div>
+
                         <div class="card rounded-0">
-                            <div class="card-header text-dark px-2 py-1">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
+                                FATURAMENTO
+                            </div>
+                            <div class="card-body pt-3 pb-2 px-2">
+                                @php
+                                    $coberturaDespesa = round(($receita *100)/$despesasTotal, 2);
+                                    $coberturaDiff = $receita - $despesasTotal;
+                                    
+                                    if($coberturaDiff < 0) {
+                                        $bgCobertura = 'danger';
+                                    } else {
+                                        if($coberturaDespesa < 20) {
+                                            $bgCobertura = 'danger';
+                                        } else if($coberturaDespesa < 50) {
+                                            $bgCobertura = 'warning';
+                                        } else if($coberturaDespesa < 100) {
+                                            $bgCobertura = 'primary';
+                                        } else {
+                                            $bgCobertura = 'success';
+                                            $coberturaDespesa = 100;
+                                        }
+                                    }
+
+                                    if($receita > $despesasTotal) {
+                                        $lucroTotal = $receita - $despesasTotal;
+                                    } else {
+                                        $lucroTotal = 0;
+                                    }
+                                @endphp
+
+                                <h6><strong>Cobertura das despesas:</strong>
+                                <span class="badge badge-{{$bgCobertura}} py-1 px-2">R$ {{$coberturaDiff < 0 ? '-'.$sgc->converteCentavoParaReal($coberturaDiff*(-1)) : $sgc->converteCentavoParaReal($coberturaDiff)}}</span></h6>
+                                <div class="progress mb-3" style="height:10px;">
+                                    <div class="progress-bar bg-{{$bgCobertura}} progress-bar-striped progress-bar-animated"
+                                        title="Valor faturado até o momento: R$ {{$sgc->converteCentavoParaReal($receita)}}."
+                                        data-toggle="tooltip" style="width:{{$coberturaDespesa}}%; height: 10px;"></div>
+                                </div>
+                                <table class="table table-bordered table-sm">
+                                    <thead class="thead-dark small">
+                                        <tr>
+                                            <th colspan="3" class="text-center">DETALHES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="small">
+                                        <tr>
+                                            <td><strong>Despesas:</strong> R$ {{$sgc->converteCentavoParaReal($despesasTotal)}}</td>
+                                            <td><strong>Receita:</strong> R$ {{$sgc->converteCentavoParaReal($receita)}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2"><strong>Lucro real:</strong> R$ {{$sgc->converteCentavoParaReal($lucroTotal)}}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <small class="mt-3">Atualizado em: <i>{{$hoje->format('d/m/Y H:i:s')}}</i></small></small>
+                            </div>
+                        </div>
+
+                        <div class="card rounded-0">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
                                 PARCEIROS DESTE ROTEIRO
                             </div>
                             <div class="card-body pt-3 pb-2 px-2">
@@ -822,15 +894,33 @@
     {
         $.post('/roteiros/ver/'+roteiro.id+'/clientes', function(res){
             if(res.success) {
-                if(debugEnabled == true){console.log(res.clientes);}
+                if(debugEnabled == true){console.log(res);}
                 $('#passagDiv').html('');
+                $('#passagDiv').append('<div class="alert alert-info small px-2 py-1"><i class="fas fa-info-circle"></i> Após 2 dias de conclusão do roteiro, essa lista de clientes passa a ser <strong>definitiva</strong>. Antes disso, qualquer alteração pode ser feita na lista de passageiros da venda.</div>');
+                
+                
+                if(res.tipo == 'DEFINITIVO') {
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Lista definitiva já foi arquivada."><i class="fas fa-circle text-danger mr-2"></i> DEFINITIVA</div>');
+                } else if(res.tipo == 'PROVISORIO') {
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Alterações ainda são possíveis!"><i class="fas fa-circle text-success mr-2"></i> PROVISÓRIA</div>');
+                } else {
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Situação da lista é indefinida."><i class="fas fa-circle mr-2"></i> INDEFINIDA</div>');
+                }
+
                 $('#passagDiv').append('<table class="table table-sm table-bordered small"><thead class="thead-dark"><tr> <th>#</th></tH> <th>Nome</th> <th>CPF</th> <th>Faixa etária</th> <th>Venda</th> </tr></thead><tbody></tbody></table>');
 
-                res.clientes.forEach(function(c, key){
-                    $('#passagDiv table tbody').append('<tr> <td>'+(key+1)+'</td> <td><a href="javascript:void(0)" onclick="loadCliente('+c.id+')">'+c.nome+'</a></td> '+
-                    '<td>'+c.cpf+'</td> <td>'+c.faixa_etaria+'</td> '+
-                    '<td><a href="javascript:void(0)" onclick="getVenda('+c.venda+')">#'+c.venda+'</a></td> </tr>');
-                });
+                if(res.clientes.length > 0) {
+                    res.clientes.forEach(function(c, key){
+                        $('#passagDiv table tbody').append('<tr> <td>'+(key+1)+'</td> <td><a href="javascript:void(0)" onclick="loadCliente('+c.id+')">'+c.nome+'</a></td> '+
+                        '<td>'+c.cpf+'</td> <td>'+c.faixa_etaria+'</td> '+
+                        '<td><a href="javascript:void(0)" onclick="getVenda('+c.venda+')">#'+c.venda+'</a></td> </tr>');
+                    });
+                } else {
+                    $('#passagDiv table tbody').append('<tr> <td colspan="5" class="text-center font-italic py-2"><strong>Não há clientes para este roteiro.</strong><br><br>'+
+                    'Uma venda foi realizada e o(s) passageiro(s) não aparece(m)? Acesse a venda correspondente e informe os clientes que serão passageiros.</td></tr>');
+                }
+                
+                $('[data-toggle="tooltip"]').tooltip();
             } else {
                 alerta(res.mensagem, 'Falha ao carregar lista de passageiros.', 'warning');
             }

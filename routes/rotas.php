@@ -32,6 +32,7 @@ $router->map('POST', '/clientes/buscar', 'ControllerPrincipal#clientesBuscar');
 $router->map('POST', '/clientes/database', 'ControllerPrincipal#clientesDatabase');
 $router->map('POST', '/clientes/lixeira', 'ControllerPrincipal#clientesLixeira');
 $router->map('POST', '/clientes/ver/[i:id]', 'ControllerPrincipal#clientesVer');
+$router->map('POST', '/clientes/ver/[i:id]/vendas', 'ControllerPrincipal#clientesVerVendas'); // JSON
 
 
 $router->map('POST', '/coordenadores', 'ControllerPrincipal#coordenadores');
@@ -54,10 +55,18 @@ $router->map('POST', '/roteiros/lixeira', 'ControllerPrincipal#roteirosLixeira')
 $router->map('POST', '/roteiros/lixeira/ver/[i:id]', 'ControllerPrincipal#roteirosLixeiraVer');
 
 // VENDAS
+$router->map('POST', '/vendas', 'ControllerPrincipal#vendas');
 $router->map('POST', '/vendas/novo', 'ControllerPrincipal#vendasNovo');
+$router->map('POST', '/vendas/buscar', 'ControllerPrincipal#vendasBuscar');
 $router->map('POST', '/vendas/database', 'ControllerPrincipal#vendasDatabase');
+$router->map('POST', '/vendas/canceladas', 'ControllerPrincipal#vendasCanceladas');
+$router->map('POST', '/vendas/estornadas', 'ControllerPrincipal#vendasEstornadas');
 $router->map('POST', '/vendas/database/get/reservas', 'ControllerPrincipal#vendasDatabaseReservas'); // JSON
 $router->map('POST', '/vendas/database/get/aguardando', 'ControllerPrincipal#vendasDatabaseAguardando'); // JSON
+$router->map('POST', '/vendas/database/get/pagas', 'ControllerPrincipal#vendasDatabasePagas'); // JSON
+$router->map('POST', '/vendas/database/get/canceladas', 'ControllerPrincipal#vendasDatabaseCanceladas'); // JSON
+$router->map('POST', '/vendas/database/get/devolvidas', 'ControllerPrincipal#vendasDatabaseDevolvidas'); // JSON
+$router->map('POST', '/vendas/database/get/estornadas', 'ControllerPrincipal#vendasDatabaseDevolvidas'); // JSON
 $router->map('POST', '/vendas/database/load/venda/[i:vid]', 'ControllerJan#vendasLoad');
 
 
@@ -147,6 +156,7 @@ $router->addRoutes(array(
 
     // VENDAS!
     array('POST', $prefix.'vendas/novo', 'ControllerForm#vendasNovo'),
+    array('POST', $prefix.'vendas/buscar', 'ControllerForm#vendasBuscar'),
     array('POST', $prefix.'vendas/[i:id]/clientes/add/[i:cid]', 'ControllerForm#vendasAddCliente'),
     array('POST', $prefix.'vendas/[i:id]/situacao/editar', 'ControllerForm#vendasAlterarSituacao'),
 

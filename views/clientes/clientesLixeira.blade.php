@@ -5,6 +5,9 @@
                 Lixeira
             </div>
             <div class="card-body" style="overflow-x:auto">
+                <div class="alert alert-info small px-2 py-1">
+                    <i class="fas fa-info-circle"></i> Clientes permanecerão na lixeira por 72h e depois serão excluídos automaticamente.
+                </div>
                 @if(empty($clientes))
                     <h6 class="text-center my-3 font-italic">Não há nada aqui...</h6>
                 @else
@@ -28,7 +31,7 @@
                         @endphp
                             <tr>
                                 <td>{{$c->id}}</td>
-                                <td>{{$c->nome}}</td>
+                                <td><a href="javascript:void(0)" onclick="loadCliente({{$c->id}})">{{$c->nome}}</a></td>
                                 <td class="d-none d-lg-table-cell">{{$c->email}}</td>
                                 <td>{{$c->cidade}}</td>
                                 <td>{{$c->estado}}</td>

@@ -90,6 +90,15 @@ class Venda extends Master
             $abc = $this->pdo->prepare("UPDATE vendas SET lista_clientes = :lc WHERE id = $this->id");
             $abc->bindValue(':lc', json_encode($lista_clientes), \PDO::PARAM_STR);
             $abc->execute();
+
+            /**
+             * LOG
+             */
+            $log = new LOG();
+            $log->novo('Adicionou cliente na lista de passageiros da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>', $_SESSION['auth']['id'], 1);
+            /**
+             * ./LOG
+             */
             
             return true;
         } catch(PDOException $e) {
@@ -123,6 +132,14 @@ class Venda extends Master
                 } else {
                     try{
                         $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."' WHERE id = $this->id");
+                        /**
+                         * LOG
+                         */
+                        $log = new LOG();
+                        $log->novo('Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>'.strtoupper($situacao).'</b>.', $_SESSION['auth']['id'], 2);
+                        /**
+                         * ./LOG
+                         */
                         return true;
                     } catch(PDOException $e) {
                         error_log($e->getMessage(), 0);
@@ -138,6 +155,14 @@ class Venda extends Master
                 } else {
                     try{
                         $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', data_venda = NOW() WHERE id = $this->id");
+                        /**
+                         * LOG
+                         */
+                        $log = new LOG();
+                        $log->novo('Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>'.strtoupper($situacao).'</b>.', $_SESSION['auth']['id'], 2);
+                        /**
+                         * ./LOG
+                         */
                         return true;
                     } catch(PDOException $e) {
                         error_log($e->getMessage(), 0);
@@ -166,6 +191,14 @@ class Venda extends Master
 
                     try{
                         $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', forma_pagamento = '".$f."', data_pagamento = NOW(), data_venda = IF(data_venda IS NULL, NOW(), data_venda) WHERE id = $this->id");
+                        /**
+                         * LOG
+                         */
+                        $log = new LOG();
+                        $log->novo('Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>'.strtoupper($situacao).'</b>.', $_SESSION['auth']['id'], 2);
+                        /**
+                         * ./LOG
+                         */
                         return true;
                     } catch(PDOException $e) {
                         error_log($e->getMessage(), 0);
@@ -181,6 +214,14 @@ class Venda extends Master
                 } else {
                     try{
                         $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', data_cancelado = NOW() WHERE id = $this->id");
+                        /**
+                         * LOG
+                         */
+                        $log = new LOG();
+                        $log->novo('Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>'.strtoupper($situacao).'</b>.', $_SESSION['auth']['id'], 3);
+                        /**
+                         * ./LOG
+                         */
                         return true;
                     } catch(PDOException $e) {
                         error_log($e->getMessage(), 0);
@@ -197,6 +238,14 @@ class Venda extends Master
                     $valor = (int)$outro;
                     try{
                         $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', data_estorno = NOW(), valor_devolvido = $valor WHERE id = $this->id");
+                        /**
+                         * LOG
+                         */
+                        $log = new LOG();
+                        $log->novo('Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>'.strtoupper($situacao).'</b>.', $_SESSION['auth']['id'], 3);
+                        /**
+                         * ./LOG
+                         */
                         return true;
                     } catch(PDOException $e) {
                         error_log($e->getMessage(), 0);

@@ -133,7 +133,7 @@
                                 <div class="input-group-prepend">
                                     <div class="input-group-text form-control-solid">R$</div>
                                 </div>
-                                <input type="text" class="form-control form-control-solid" name="taxa_extra_casal" placeholder="" data-detalhes-taxaextracasal dobbin-validate-valor pattern="[0-9,]{0,10}">
+                                <input type="text" class="form-control form-control-solid" name="taxa_extra_casal" placeholder="" dobbin-mask-money data-detalhes-taxaextracasal dobbin-validate-valor pattern="[0-9,]{0,10}">
                             </div>
                         </div>
                     </div>

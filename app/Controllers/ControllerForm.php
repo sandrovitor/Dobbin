@@ -1078,6 +1078,16 @@ class ControllerForm
         return json_encode($ret);
     }
 
+    static function vendasBuscar($p)
+    {
+        self::validaConexao(3);
+        //return json_encode($_POST);
+
+        $sgc = new SGCTUR();
+
+        return json_encode($sgc->getVendasBusca($_POST['busca']));
+    }
+
     static function vendasAddCliente($p)
     {
         self::validaConexao(3);

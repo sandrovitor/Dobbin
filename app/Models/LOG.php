@@ -16,7 +16,7 @@ class LOG extends Master
     /**
      * Lança um evento no registro de atividades LOG.
      * 
-     * @param string $evento Descreve o evento. Máximo de 255 caracteres.
+     * @param string $evento Descreve o evento. Máximo de 400 caracteres.
      * @param int $usuario ID do usuário que disparou o evento. Usuário 0 é o SISTEMA.
      * @param int $grau Nível do registro. 1) Normal ou baixo; 2) Atenção; 3) Arriscado; 4) Perigoso!
      * 

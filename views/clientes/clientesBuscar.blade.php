@@ -33,7 +33,7 @@
                 
                 
                 @if($clientes['success'] == true)
-                <table class="table table-bordered table-sm">
+                <table class="table table-bordered table-sm table-responsive-sm">
                     <thead class="bg-dark text-white">
                         <tr>
                             <th>Cód.</th>
@@ -55,7 +55,7 @@
                         @endphp
                             <tr>
                                 <td>{{$c->id}}</td>
-                                <td>{{$c->nome}}</td>
+                                <td><a href="javascript:void(0)" onclick="loadCliente({{$c->id}})">{{$c->nome}}</a></td>
                                 <td class="d-none d-lg-table-cell">{{$c->email}}</td>
                                 <td>{{$c->cidade}}</td>
                                 <td>{{$c->estado}}</td>

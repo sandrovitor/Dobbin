@@ -5,7 +5,9 @@
                 Lixeira
             </div>
             <div class="card-body" style="overflow-x:auto">
-            
+                <div class="alert alert-info small px-2 py-1">
+                    <i class="fas fa-info-circle"></i> Roteiro permanecerão na lixeira por 7 dias e depois serão excluídos automaticamente.
+                </div>
                 @if(empty($roteiros['roteiros']))
                     <h6 class="text-center my-3 font-italic">Não há nada aqui...</h6>
                 @else
@@ -28,7 +30,7 @@
                         @endphp
                             <tr>
                                 <td>{{$c->id}}</td>
-                                <td>{{$c->nome}} ({{$data_ini->format('d/m/Y')}} a {{$data_fim->format('d/m/Y')}})</td>
+                                <td><a href="#roteiros/lixeira/ver/{{$c->id}}">{{$c->nome}} ({{$data_ini->format('d/m/Y')}} a {{$data_fim->format('d/m/Y')}})</a></td>
                                 <td>{{$apagado_em->format('d/m/Y H:i:s')}}</td>
                                 <td>{{$c->usuario}}</td>
                                 

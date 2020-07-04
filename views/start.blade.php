@@ -107,7 +107,10 @@
                         <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#vendas/novo">Novo</a></li>
+                            <li><a class="nav-link" href="#vendas/buscar">Buscar</a></li>
                             <li><a class="nav-link" href="#vendas/database">Base de Dados</a></li>
+                            <li><a class="nav-link" href="#vendas/canceladas">Vendas Canceladas</a></li>
+                            <li><a class="nav-link" href="#vendas/estornadas">Vendas Estornadas</a></li>
                         </ul>
                     </li>
 
@@ -180,6 +183,7 @@
                 <h3 class="">
                     <strong class="text-primary" data-detalhes-nome></strong> <small>[Cód.: <span data-detalhes-id></span>]</small>
                     <span class="ml-3" data-detalhes-deletado></span> <span class="ml-3 tipoCliente" style="cursor:pointer;"></span>
+                    <button class="btn btn-sm btn-primary" data-detalhes-id onclick="$(this).parents('.modal').modal('hide'); editaCliente($(this).data('id'))"><i class="fas fa-pen"></i></button>
                 </h3>
                 <div class="mt-n1 d-flex">
                     <small class="badge badge-info mr-2 mb-1">Criado em: &nbsp; <span data-detalhes-criadoem></span></small>
@@ -268,6 +272,20 @@
                     </div>
                     <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2">
                         <strong>Atualizado em:</strong><br><span data-detalhes-atualizadoem></span>
+                    </div>
+                </div>
+                <hr>
+
+                <h5 class="mt-3 mb-2 font-weight-bold">HISTÓRICO DE COMPRAS</h5>
+                <div data-historico-compras>
+                    <div class="border bloco-acord">
+                        <div class="acord-header bg-light p-2 d-flex justify-content-between" style="cursor:pointer;">
+                            <h6 class="font-weight-bold text-uppercase my-1 text-primary">
+                                <small class="ml-2 text-dark"></small>
+                            </h6>
+                            <button class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
+                        </div>
+                        <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none"></div>
                     </div>
                 </div>
 
@@ -1083,15 +1101,30 @@
     </div>
 </div>
 
-<div class="modal fade" id="">
+<div class="modal fade" id="modalEstornarVenda">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 px-3 font-weight-bold">
-                Titulo do modal
+                Estornar Venda
                 <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
             </div>
             <div class="modal-body">
-            
+                <h6></h6>
+                <form>
+                    <div class="form-group">
+                        <label>Valor a ser devolvido</label>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text ">R$</div>
+                            </div>
+                            <input type="text" class="form-control form-control-sm" name="valor_devolvido" dobbin-mask-money max="">
+                            <input type="hidden" name="id" value="">
+                        </div>
+                    </div>
+                    <div class="form-group text-right">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="vendaConfirmarEstorno(this)" disabled>Confirmar estorno</button>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>

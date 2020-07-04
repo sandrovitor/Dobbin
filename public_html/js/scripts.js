@@ -174,6 +174,21 @@ function gatilhosLoadLanding()
                 setTimeout(function(){getClientesRoteiro();}, 1000);
                 geralIntervalo5Min = setInterval(function(){getClientesRoteiro(); getEstoqueRoteiro();}, 180000);
             }); break;
+
+        case /(vendas)/gi.test(local): // Vendas
+            $(document).ready(function(){
+                setTimeout(function(){
+                    getVendasReservas();getVendasAguardandoPagamento();
+                    getVendasPagas();getVendasEstornadas();
+                }, 1000);
+                geralIntervalo5Min = setInterval(function(){
+                    getVendasReservas();
+                    getVendasAguardandoPagamento();
+                    getVendasPagas();
+                    getVendasEstornadas();
+                }, 180000);
+            }); break;
+
     }
 }
 
@@ -188,7 +203,7 @@ function checkSystemUpdate()
         }
     }, 'json');
 
-    timeoutUpdate = setTimeout(checkSystemUpdate, 600000); // Verifica a cada 10min (600000ms).
+    timeoutUpdate = setTimeout(checkSystemUpdate, 300000); // Verifica a cada 5min (300000ms).
 }
 
 function converteCentavoEmReal(centavos = 0) {
@@ -539,12 +554,15 @@ function loadCoordenador(id)
 
 function loadCliente(id)
 {
+    id = parseInt(id);
+
     $.post('/clientes/ver/'+id, function(res){
         if(res.success == true) {
             console.log(res);
             let c = res.cliente;
             $('#modalClienteDetalhes [data-detalhes-nome]').text(c.nome);
-            $('#modalClienteDetalhes [data-detalhes-id]').text(c.id);
+            $('#modalClienteDetalhes [data-detalhes-id]:not(button)').text(c.id);
+            $('#modalClienteDetalhes button[data-detalhes-id]').data('id', c.id);
             $('#modalClienteDetalhes [data-detalhes-email]').text(c.email);
             $('#modalClienteDetalhes [data-detalhes-tel]').text(c.telefone);
             $('#modalClienteDetalhes [data-detalhes-faixaetaria]').html(function(){
@@ -633,6 +651,64 @@ function loadCliente(id)
                     $('#modalClienteDetalhes .listaDependentes').hide();
             }
 
+            // Apaga espaço do histórico de compras
+            $('#modalClienteDetalhes [data-historico-compras]').html('');
+            getClienteVendas(id, function(vendas){
+                if(vendas === false) {
+                    $('#modalClienteDetalhes [data-historico-compras]').html('<div class="p-2 text-center font-italic">Houve um erro ao tentar retornar o histórico. Tente novamente mais tarde.</div>');
+                } else if(vendas.length == 0) { // Sem histórico
+                    $('#modalClienteDetalhes [data-historico-compras]').html('<div class="p-2 text-center font-italic">Nada no histórico.</div>');
+                } else {
+                    let html = '';
+                    let situVenda = '';
+                    let items, itemsStr = '';;
+                    vendas.forEach(function(v){
+                        switch(v.status) {
+                            case 'Devolvida': situVenda = '<span class="ml-2 badge badge-dark">Devolvida</span>'; break;
+                            case 'Cancelada': situVenda = '<span class="ml-2 badge badge-dark">Cancelada</span>'; break;
+                            case 'Paga': situVenda = '<span class="ml-2 badge badge-success">Paga</span>'; break;
+                            case 'Reserva': situVenda = '<span class="ml-2 badge badge-primary">Reserva</span>'; break;
+                            case 'Aguardando': situVenda = '<span class="ml-2 badge badge-primary">Aguardando pagamento</span>'; break;
+                            default: situVenda = '<span class="ml-2 badge badge-secondary">'+v.status+'</span>'; break;
+                        }
+                        if(v.items == '') {
+
+                        } else {
+                            items = JSON.parse(v.items);
+                            items.forEach(function(i, indice){
+                                itemsStr += "<tr> <td>"+(indice+1).toString()+"</td> <td>"+i.tarifa+"</td>  "+
+                                "<td>R$ "+Dobbin.converteCentavoEmReal(i.valorUNI)+"</td> <td><span>"+i.qtd+"</span> </td> "+
+                                "<td>R$ <span>"+Dobbin.converteCentavoEmReal(i.desconto)+"</span> </td> <td>R$ "+Dobbin.converteCentavoEmReal(i.subtotal)+"</td> </tr>"
+                            });
+                        }
+
+                        html = '<div class="border bloco-acord">'+
+                        '<div class="acord-header bg-light p-2 d-flex justify-content-between" style="cursor:pointer;">'+
+                        '<h6 class="font-weight-bold text-uppercase my-1 text-primary"># '+v.id+' '+
+                            '<small class="ml-2 text-dark">['+v.roteiro_nome+' - '+Dobbin.formataData(new Date(v.roteiro_data_ini), true)+' a '+
+                            Dobbin.formataData(new Date(v.roteiro_data_fim), true)+'] '+situVenda+'</small></h6>'+
+                        '<button class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>'+
+                        '</div>'+
+                        '<div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none">'+
+                        '<strong>Data da reserva:</strong> '+Dobbin.formataData(new Date(v.data_reserva), true)+'<br><br>'+
+                        '<table class="table table-sm table-bordered"> <thead> <tr>'+
+                        '<th>#</th> <th>Tarifa</th> <th>Valor UNI</th> <th>Qtd</th> <th>Desconto</th> <th>Subtotal</th> </tr>'+
+                        '</thead> <tbody> '+itemsStr+
+                        '<tr> <td colspan="4"><strong>TOTAL:</strong></td> <td class="table-dark">R$ '+Dobbin.converteCentavoEmReal(v.desconto_total)+'</td> '+
+                        '<td class="table-dark">R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr> </tbody> </table>'+
+                        '<a href="javascript:void(0)" onclick="getVenda('+v.id+')">Ver detalhes da compra...</a></div>'+
+                        '</div>';
+
+
+                        $('#modalClienteDetalhes [data-historico-compras]').append(html);
+                        html = ''; situVenda = ''; itemsStr = ''; items = undefined;
+                    });
+                    
+                }
+                console.log(vendas);
+
+            });
+
             
             $('#modalClienteDetalhes').modal('show');
             $('[data-toggle="popover"]').popover({'html':true});
@@ -653,10 +729,201 @@ function loadCliente(id)
     });
 }
 
+function editaCoordenador(id)
+{
+    $.post('/coordenadores/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let c = res.coordenador;
+            $('#modalCoordenadorEditar strong[data-detalhes-nome]').text(c.nome);
+            $('#modalCoordenadorEditar input[data-detalhes-nome]').val(c.nome);
+            $('#modalCoordenadorEditar span[data-detalhes-id]').text(c.id);
+            $('#modalCoordenadorEditar input[data-detalhes-id]').val(c.id);
+            $('#modalCoordenadorEditar [data-detalhes-email]').val(c.email);
+            $('#modalCoordenadorEditar [data-detalhes-tel]').val(c.telefone);
+            $('#modalCoordenadorEditar [data-detalhes-nascimento]').val(c.nascimento);
+            $('#modalCoordenadorEditar [data-detalhes-civil]').val(c.estado_civil);
+            $('#modalCoordenadorEditar [data-detalhes-rg]').val(c.rg);
+            $('#modalCoordenadorEditar [data-detalhes-cpf]').val(c.cpf);
+            $('#modalCoordenadorEditar [data-detalhes-sangue]').val(c.sangue);
+            $('#modalCoordenadorEditar [data-detalhes-endereco]').val(c.endereco);
+            $('#modalCoordenadorEditar [data-detalhes-complemento]').val(c.complemento);
+            $('#modalCoordenadorEditar [data-detalhes-pontoref]').val(c.ponto_referencia);
+            $('#modalCoordenadorEditar [data-detalhes-bairro]').val(c.bairro);
+            $('#modalCoordenadorEditar [data-detalhes-cep]').val(c.cep);
+            $('#modalCoordenadorEditar [data-detalhes-cidade]').val(c.cidade);
+            $('#modalCoordenadorEditar [data-detalhes-estado]').val(c.estado);
+            $('#modalCoordenadorEditar [data-detalhes-alergia]').val(c.alergia);
+            $('#modalCoordenadorEditar [data-detalhes-emergencianome]').val(c.emergencia_nome);
+            $('#modalCoordenadorEditar [data-detalhes-emergenciatel]').val(c.emergencia_telefone);
+            $('#modalCoordenadorEditar [data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
+            $('#modalCoordenadorEditar [data-detalhes-titular]').val(function(){
+                if(c.titular != 0) {return c.titular;} else {return ''};
+            });
+
+            $('#modalCoordenadorEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });;
+}
+
+function editaCliente(id)
+{
+    id = parseInt(id);
+
+    $.post('/clientes/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            let c = res.cliente;
+            $('strong[data-detalhes-nome]').text(c.nome);
+            $('input[data-detalhes-nome]').val(c.nome);
+            $('span[data-detalhes-id]').text(c.id);
+            $('input[data-detalhes-id]').val(c.id);
+            $('[data-detalhes-email]').val(c.email);
+            $('[data-detalhes-tel]').val(c.telefone);
+            $('[data-detalhes-nascimento]').val(c.nascimento);
+            $('[data-detalhes-civil]').val(c.estado_civil);
+            $('[data-detalhes-rg]').val(c.rg);
+            $('[data-detalhes-cpf]').val(c.cpf);
+            $('[data-detalhes-sangue]').val(c.sangue);
+            $('[data-detalhes-endereco]').val(c.endereco);
+            $('[data-detalhes-complemento]').val(c.complemento);
+            $('[data-detalhes-pontoref]').val(c.ponto_referencia);
+            $('[data-detalhes-bairro]').val(c.bairro);
+            $('[data-detalhes-cep]').val(c.cep);
+            $('[data-detalhes-cidade]').val(c.cidade);
+            $('[data-detalhes-estado]').val(c.estado);
+            $('[data-detalhes-alergia]').val(c.alergia);
+            $('[data-detalhes-emergencianome]').val(c.emergencia_nome);
+            $('[data-detalhes-emergenciatel]').val(c.emergencia_telefone);
+            $('[data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
+            $('[data-detalhes-titular]').val(function(){
+                if(c.titular != 0) {return c.titular;} else {return ''};
+            });
+
+            $('#modalClienteEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    }, 'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });;
+}
+
+function loadUsuario(id)
+{
+    $.post('/usuarios/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').val(res.usuario.nome);
+            $('#modalUsuarioDetalhes').find('[data-usuario-avatar]').attr('src', 'media/images/av/'+res.usuario.avatar);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').text(res.usuario.nome + ' ' + res.usuario.sobrenome);
+            $('#modalUsuarioDetalhes').find('[data-usuario-usuario]').text('@'+res.usuario.usuario);
+            $('#modalUsuarioDetalhes').find('[data-usuario-email]').text(res.usuario.email);
+            $('#modalUsuarioDetalhes').find('[data-usuario-nivel]').text(res.usuario.nivel);
+            $('#modalUsuarioDetalhes').find('[data-usuario-id]').attr('data-usuario-id', res.usuario.id);
+            $('#modalUsuarioDetalhes').find('[data-usuario-criado]').text(Dobbin.formataDataHora(new Date(res.usuario.criado_em)));
+            $('#modalUsuarioDetalhes').find('[data-usuario-atualizado]').text(Dobbin.formataDataHora(new Date(res.usuario.atualizado_em)));
+            $('#modalUsuarioDetalhes').find('[data-usuario-logadoem]').text(Dobbin.formataDataHora(new Date(res.usuario.logado_em)));
+
+
+            $('#modalUsuarioDetalhes').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    },'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
+function editaUsuario(id)
+{
+    $.post('/usuarios/ver/'+id, function(res){
+        if(res.success == true) {
+            console.log(res);
+            $('#modalUsuarioEditar').find('[data-usuario-nome]').val(res.usuario.nome);
+            $('#modalUsuarioEditar').find('[data-usuario-sobrenome]').val(res.usuario.sobrenome);
+            $('#modalUsuarioEditar').find('[data-usuario-email]').val(res.usuario.email);
+            $('#modalUsuarioEditar').find('[data-usuario-usuario]').val(res.usuario.usuario);
+            $('#modalUsuarioEditar').find('[data-usuario-nivel]').val(res.usuario.nivel);
+            $('#modalUsuarioEditar').find('[data-usuario-id]').val(res.usuario.id);
+            $('#modalUsuarioEditar').find('[data-usuario-avatar]').attr('src', '/media/images/av/'+res.usuario.avatar);
+
+
+            $('#modalUsuarioEditar').modal('show');
+        } else {
+            alerta(res.mensagem, 'Erro!', 'warning');
+            return false;
+        }
+    },'json').
+    fail(function(ev){
+        switch(ev.statusCode) {
+            case 404:
+                alerta('Não encontrado.', 'Erro!', 'danger');
+                break;
+        }
+        //console.log(ev);
+        debugador(ev);
+    });
+}
+
+function vendaEstornarModal(id)
+{
+    getVendaDados(id, function(v){
+        console.log(v);
+        if(v === false) {return false;}
+        let modal = $('#modalEstornarVenda');
+        modal.find('h6').html('<strong>Venda:</strong> #'+v.id+'<br>'+
+        '<strong>Forma de Pagamento:</strong> '+v.forma_pagamento+'<br>'+
+        '<strong>Cliente:</strong> '+v.cliente_nome);
+
+        modal.find('[name="id"]').val(v.id);
+        modal.find('[name="valor_devolvido"]').val('0,00');
+        modal.find('[name="valor_devolvido"]').attr('max',v.valor_total);
+        if(modal.find('[name="valor_devolvido"]').parent().next().hasClass('alert') == false) {
+            modal.find('[name="valor_devolvido"]').parent().after('<div class="alert alert-info small py-1 px-2">'+
+            'O valor estornado/devolvido não pode ser maior que o valor da venda (<strong>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</strong>).</div>');
+        }
+        modal.find('form button').attr('disabled', true);
+        modal.modal('show');
+    });
+}
+
 /**
  * ./MODAIS E JANELAS SUSPENSAS
  */
 
+
+/**
+ * RETORNO DE DADOS JSON
+ */
 
 function getClienteDados(id, callback)
 {
@@ -668,6 +935,24 @@ function getClienteDados(id, callback)
             callback(res.cliente);
         } else {
             alerta(res.mensagem, 'Falha ao retornar dados do cliente.', 'danger');
+            callback(false);
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+        callback(false);
+    });
+}
+
+function getClienteVendas(id, callback)
+{
+    id = parseInt(id);
+
+    $.post('/clientes/ver/'+id+'/vendas', function(res){
+        //console.log(res);
+        if(res.success == true) {
+            callback(res.vendas);
+        } else {
+            alerta(res.mensagem, 'Falha ao retornar dados das compras do cliente.', 'danger');
             callback(false);
         }
     }, 'json').fail(function(ev){
@@ -715,7 +1000,7 @@ function getRoteiroDados(id, callback)
 function getVenda(id)
 {
     $.post('/vendas/database/load/venda/'+id, function(res){
-        $('.modal:not(#janDinamica)').modal('hide');
+        //$('.modal:not(#janDinamica)').modal('hide');
         if(res.success) {
             let venda = res.venda;
             // AJUSTA TITULO DA JANELA DINÂMICA
@@ -733,6 +1018,27 @@ function getVenda(id)
     }, 'json').
     fail(function(ev){nativePOSTFail(ev);});
 }
+
+function getVendaDados(id, callback)
+{
+    id = parseInt(id);
+
+    $.post('/vendas/database/load/venda/'+id, function(res){
+        
+        if(res.success == true) {
+            callback(res.venda);
+        } else {
+            alerta(res.mensagem, 'Falha ao retornar dados da venda.', 'danger');
+            callback(false);
+        }
+    }, 'json').fail(function(ev){
+        nativePOSTFail(ev);
+        callback(false);
+    });
+}
+/**
+ * ./RETORNO DE DADOS JSON
+ */
 
 /**
  * PÁGINAS
@@ -867,169 +1173,6 @@ function deleteClienteLixeira(id)
         alerta('Falha...','', 'warning');
     });
     return true;
-}
-
-function editaCoordenador(id)
-{
-    $.post('/coordenadores/ver/'+id, function(res){
-        if(res.success == true) {
-            console.log(res);
-            let c = res.coordenador;
-            $('#modalCoordenadorEditar strong[data-detalhes-nome]').text(c.nome);
-            $('#modalCoordenadorEditar input[data-detalhes-nome]').val(c.nome);
-            $('#modalCoordenadorEditar span[data-detalhes-id]').text(c.id);
-            $('#modalCoordenadorEditar input[data-detalhes-id]').val(c.id);
-            $('#modalCoordenadorEditar [data-detalhes-email]').val(c.email);
-            $('#modalCoordenadorEditar [data-detalhes-tel]').val(c.telefone);
-            $('#modalCoordenadorEditar [data-detalhes-nascimento]').val(c.nascimento);
-            $('#modalCoordenadorEditar [data-detalhes-civil]').val(c.estado_civil);
-            $('#modalCoordenadorEditar [data-detalhes-rg]').val(c.rg);
-            $('#modalCoordenadorEditar [data-detalhes-cpf]').val(c.cpf);
-            $('#modalCoordenadorEditar [data-detalhes-sangue]').val(c.sangue);
-            $('#modalCoordenadorEditar [data-detalhes-endereco]').val(c.endereco);
-            $('#modalCoordenadorEditar [data-detalhes-complemento]').val(c.complemento);
-            $('#modalCoordenadorEditar [data-detalhes-pontoref]').val(c.ponto_referencia);
-            $('#modalCoordenadorEditar [data-detalhes-bairro]').val(c.bairro);
-            $('#modalCoordenadorEditar [data-detalhes-cep]').val(c.cep);
-            $('#modalCoordenadorEditar [data-detalhes-cidade]').val(c.cidade);
-            $('#modalCoordenadorEditar [data-detalhes-estado]').val(c.estado);
-            $('#modalCoordenadorEditar [data-detalhes-alergia]').val(c.alergia);
-            $('#modalCoordenadorEditar [data-detalhes-emergencianome]').val(c.emergencia_nome);
-            $('#modalCoordenadorEditar [data-detalhes-emergenciatel]').val(c.emergencia_telefone);
-            $('#modalCoordenadorEditar [data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
-            $('#modalCoordenadorEditar [data-detalhes-titular]').val(function(){
-                if(c.titular != 0) {return c.titular;} else {return ''};
-            });
-
-            $('#modalCoordenadorEditar').modal('show');
-        } else {
-            alerta(res.mensagem, 'Erro!', 'warning');
-            return false;
-        }
-    }, 'json').
-    fail(function(ev){
-        switch(ev.statusCode) {
-            case 404:
-                alerta('Não encontrado.', 'Erro!', 'danger');
-                break;
-        }
-        //console.log(ev);
-        debugador(ev);
-    });;
-}
-
-function editaCliente(id)
-{
-    $.post('/clientes/ver/'+id, function(res){
-        if(res.success == true) {
-            console.log(res);
-            let c = res.cliente;
-            $('strong[data-detalhes-nome]').text(c.nome);
-            $('input[data-detalhes-nome]').val(c.nome);
-            $('span[data-detalhes-id]').text(c.id);
-            $('input[data-detalhes-id]').val(c.id);
-            $('[data-detalhes-email]').val(c.email);
-            $('[data-detalhes-tel]').val(c.telefone);
-            $('[data-detalhes-nascimento]').val(c.nascimento);
-            $('[data-detalhes-civil]').val(c.estado_civil);
-            $('[data-detalhes-rg]').val(c.rg);
-            $('[data-detalhes-cpf]').val(c.cpf);
-            $('[data-detalhes-sangue]').val(c.sangue);
-            $('[data-detalhes-endereco]').val(c.endereco);
-            $('[data-detalhes-complemento]').val(c.complemento);
-            $('[data-detalhes-pontoref]').val(c.ponto_referencia);
-            $('[data-detalhes-bairro]').val(c.bairro);
-            $('[data-detalhes-cep]').val(c.cep);
-            $('[data-detalhes-cidade]').val(c.cidade);
-            $('[data-detalhes-estado]').val(c.estado);
-            $('[data-detalhes-alergia]').val(c.alergia);
-            $('[data-detalhes-emergencianome]').val(c.emergencia_nome);
-            $('[data-detalhes-emergenciatel]').val(c.emergencia_telefone);
-            $('[data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
-            $('[data-detalhes-titular]').val(function(){
-                if(c.titular != 0) {return c.titular;} else {return ''};
-            });
-
-            $('#modalClienteEditar').modal('show');
-        } else {
-            alerta(res.mensagem, 'Erro!', 'warning');
-            return false;
-        }
-    }, 'json').
-    fail(function(ev){
-        switch(ev.statusCode) {
-            case 404:
-                alerta('Não encontrado.', 'Erro!', 'danger');
-                break;
-        }
-        //console.log(ev);
-        debugador(ev);
-    });;
-}
-
-function loadUsuario(id)
-{
-    $.post('/usuarios/ver/'+id, function(res){
-        if(res.success == true) {
-            console.log(res);
-            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').val(res.usuario.nome);
-            $('#modalUsuarioDetalhes').find('[data-usuario-avatar]').attr('src', 'media/images/av/'+res.usuario.avatar);
-            $('#modalUsuarioDetalhes').find('[data-usuario-nome]').text(res.usuario.nome + ' ' + res.usuario.sobrenome);
-            $('#modalUsuarioDetalhes').find('[data-usuario-usuario]').text('@'+res.usuario.usuario);
-            $('#modalUsuarioDetalhes').find('[data-usuario-email]').text(res.usuario.email);
-            $('#modalUsuarioDetalhes').find('[data-usuario-nivel]').text(res.usuario.nivel);
-            $('#modalUsuarioDetalhes').find('[data-usuario-id]').attr('data-usuario-id', res.usuario.id);
-            $('#modalUsuarioDetalhes').find('[data-usuario-criado]').text(Dobbin.formataDataHora(new Date(res.usuario.criado_em)));
-            $('#modalUsuarioDetalhes').find('[data-usuario-atualizado]').text(Dobbin.formataDataHora(new Date(res.usuario.atualizado_em)));
-            $('#modalUsuarioDetalhes').find('[data-usuario-logadoem]').text(Dobbin.formataDataHora(new Date(res.usuario.logado_em)));
-
-
-            $('#modalUsuarioDetalhes').modal('show');
-        } else {
-            alerta(res.mensagem, 'Erro!', 'warning');
-            return false;
-        }
-    },'json').
-    fail(function(ev){
-        switch(ev.statusCode) {
-            case 404:
-                alerta('Não encontrado.', 'Erro!', 'danger');
-                break;
-        }
-        //console.log(ev);
-        debugador(ev);
-    });
-}
-
-function editaUsuario(id)
-{
-    $.post('/usuarios/ver/'+id, function(res){
-        if(res.success == true) {
-            console.log(res);
-            $('#modalUsuarioEditar').find('[data-usuario-nome]').val(res.usuario.nome);
-            $('#modalUsuarioEditar').find('[data-usuario-sobrenome]').val(res.usuario.sobrenome);
-            $('#modalUsuarioEditar').find('[data-usuario-email]').val(res.usuario.email);
-            $('#modalUsuarioEditar').find('[data-usuario-usuario]').val(res.usuario.usuario);
-            $('#modalUsuarioEditar').find('[data-usuario-nivel]').val(res.usuario.nivel);
-            $('#modalUsuarioEditar').find('[data-usuario-id]').val(res.usuario.id);
-            $('#modalUsuarioEditar').find('[data-usuario-avatar]').attr('src', '/media/images/av/'+res.usuario.avatar);
-
-
-            $('#modalUsuarioEditar').modal('show');
-        } else {
-            alerta(res.mensagem, 'Erro!', 'warning');
-            return false;
-        }
-    },'json').
-    fail(function(ev){
-        switch(ev.statusCode) {
-            case 404:
-                alerta('Não encontrado.', 'Erro!', 'danger');
-                break;
-        }
-        //console.log(ev);
-        debugador(ev);
-    });
 }
 
 function deleteUsuario(id)
@@ -2334,6 +2477,209 @@ function vendaAlteraSituacao(id, situacao, outro, sender)
     fail(function(ev){nativePOSTFail(ev);});
 }
 
+function vendaConfirmarEstorno(sender)
+{
+    if(sender == undefined) {
+        alerta('Erro lógico!', 'PAROU!', 'danger');
+        return false;
+    }
+    //console.log(sender);
+    let id = $(sender).parents('form').find('[name="id"]').val();
+    let outro = Dobbin.converteRealEmCentavo($(sender).parents('form').find('[name="valor_devolvido"]').val());
+
+    $.post(PREFIX_POST+'vendas/'+id+'/situacao/editar',{
+        situacao: 'Devolvida',
+        outro: outro
+    }, function(res){
+        if(res.success == true) {
+            $(sender).parents('.modal').modal('hide');
+            getVenda(id); // Atualiza janela dinâmica.
+            
+
+            alerta('Situação da venda alterada.', 'Sucesso!', 'success');
+            getReservas();
+            getAguardandoPagamento();
+        } else {
+            alerta(res.mensagem, 'Falha...', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasReservas()
+{
+    $.post('/vendas/database/get/reservas', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#reservasDiv > div').length == 0) {
+                    $('#reservasDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#reservasDiv > div').html('<i>Nada encontrado...</i>');
+                $('#reservasDiv').find('table').remove();
+            } else {
+                $('#reservasDiv').find('table').remove();
+                $('#reservasDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#reservasDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#reservasDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                    $('#reservasDiv table').slideDown();
+                });
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de reservas.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasAguardandoPagamento()
+{
+    $.post('/vendas/database/get/aguardando', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#aguardPagDiv > div').length == 0) {
+                    $('#aguardPagDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#aguardPagDiv > div').html('<i>Nada encontrado...</i>');
+                $('#aguardPagDiv').find('table').remove();
+            } else {
+                $('#aguardPagDiv').find('table').remove();
+                $('#aguardPagDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>Roteiro</th> <th>Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#aguardPagDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#aguardPagDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                    $('#aguardPagDiv table').slideDown();
+                });
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de vendas Aguardando Pagamento.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasPagas()
+{
+    $.post('/vendas/database/get/pagas', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#pagasDiv > div').length == 0) {
+                    $('#pagasDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#pagasDiv > div').html('<i>Nada encontrado...</i>');
+                $('#pagasDiv').find('table').remove();
+            } else {
+                $('#pagasDiv').find('table').remove();
+                $('#pagasDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#pagasDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#pagasDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                    $('#pagasDiv table').slideDown();
+                });
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de vendas pagas.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasEstornadas()
+{
+    $.post('/vendas/database/get/estornadas', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#estornadasDiv > div').length == 0) {
+                    $('#estornadasDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#estornadasDiv > div').html('<i>Nada encontrado...</i>');
+                $('#estornadasDiv').find('table').remove();
+            } else {
+                $('#estornadasDiv').find('table').remove();
+                $('#estornadasDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#estornadasDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#estornadasDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                    $('#estornadasDiv table').slideDown();
+                });
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de vendas estornadas/devolvidas.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+
+
 /**
  * ./FIM MODAIS E PÁGINAS
  */
@@ -2422,13 +2768,13 @@ $(document).ready(function(){
         }
     });
 
-    $(document).on('click', 'a', function(ev){
+    $(document).on('click', 'a', function(ev){ // Evento desativado. Navegação agora é feita pelo evento PopState
+        /*
         let href = $(this).attr('href');
 
         if(href.charAt(0) == '#' && $(this).attr('target') != '_blank') {
             loadLanding(href.substring(1, href.length));
-        }
-
+        }*/
     });
 
     $(document).on('submit', 'form', function(ev){
@@ -2525,7 +2871,7 @@ $(document).ready(function(){
         });
     });
 
-    $(document).on('keyup', 'form#buscarClientes [name="busca"], form#buscarUsuarios [name="busca"], form#buscarCoordenadores [name="busca"]', function(ev){
+    $(document).on('keyup', 'form#buscarClientes [name="busca"], form#buscarUsuarios [name="busca"], form#buscarCoordenadores [name="busca"] form#buscarVendas [name="busca"]', function(ev){
         let atual = $(this).val();
         let novo = atual.replace(/[=;]/gi, function(x){return '';});
         $(this).val(novo);
@@ -2638,6 +2984,60 @@ $(document).ready(function(){
                         $('#retornoBusca').append('<div class="alert alert-info">'+res.mensagem+'</div>')
                     }
                 }
+            }
+        }, 'json').
+        fail(function(ev){
+            alerta('Não foi possível recuperar esses dados agora.', 'Falha!', 'danger');
+            //console.log(ev);
+            debugador(ev);;
+        });
+    });
+
+    // Buscar vendas
+    $(document).on('submit', 'form#buscarVendas', function(ev){
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        let form = $(this);
+        let href = 'vendas/buscar';
+        let valor = form.find('[name="busca"]').val().trim();
+
+        $.post(PREFIX_POST+href, {busca: valor}, function(res){
+            //console.log(res);
+            if(res.success == false) {
+                alerta('Não conseguimos recuperar a pesquisa. Erro do servidor: '+res.mensagem, 'Falha!', 'warning');
+            } else {
+                
+                $('#retornoBusca').html('<table class="table table-bordered table-sm">'+
+                '<thead class="bg-dark text-white">'+
+                    '<tr><th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th>'+
+                    '<th>Status</th> <th>Data</th> <th>Valor Total</th></tr>'+
+                '</thead><tbody style="font-size: .9rem;"></tbody></table>');
+
+                $('#retornoBusca').prepend('<div class="mb-2">Total de registros: <span class="badge badge-info">'+res.vendas.length+'</span></div>');
+
+                if(res.vendas.length == 0) {
+                    $('#retornoBusca').find('table tbody').html('<tr><td class="text-center" colspan="6">Nada encontrado.</td></tr>');
+                } else {
+                    $('#retornoBusca').find('table tbody').html('');
+                    for(let i = 0; i < res.vendas.length; i++) {
+                        
+                        $('#retornoBusca').find('table tbody')
+                            .append('<tr class="cursor-pointer" onclick="getVenda('+res.vendas[i].id+')">'+
+                            '<td>'+res.vendas[i].id+'</td>'+
+                            '<td>( '+res.vendas[i].roteiro_id+' ) '+res.vendas[i].roteiro_nome+' ('+Dobbin.formataData(new Date(res.vendas[i].roteiro_data_ini))+' a '+Dobbin.formataData(new Date(res.vendas[i].roteiro_data_fim))+')</td>'+
+                            '<td>( '+res.vendas[i].cliente_id+' ) '+res.vendas[i].cliente_nome+'</td>'+
+                            '<td>'+res.vendas[i].status+'</td>'+
+                            '<td>'+Dobbin.formataDataHora(new Date(res.vendas[i].data_reserva))+'</td>'+
+                            '<td>R$ '+Dobbin.converteCentavoEmReal(res.vendas[i].valor_total)+'</td>'+
+                            '</tr>');
+                    }
+
+                    if(res.mensagem != '') {
+                        $('#retornoBusca').append('<div class="alert alert-info">'+res.mensagem+'</div>')
+                    }
+                }
+               console.log(res);
             }
         }, 'json').
         fail(function(ev){
@@ -2880,6 +3280,19 @@ $(document).ready(function(){
         }
     });
 
+    $(document).on('click', '.card-header.card-collapse', function(ev){
+        let sender = $(ev.currentTarget);
+
+        if(sender.siblings('.card-body').is(':visible')) {
+            // Oculta os detalhes
+            sender.siblings('.card-body').slideUp('fast');
+        } else {
+            // Exibe os detalhes
+            sender.siblings('.card-body').slideDown('fast');
+            
+        }
+    });
+
     // Adiciona contador aos TEXTAREA
     $(document).on('change keyup', 'textarea[maxlength]', function(ev){
         if($(this).prop('maxlength') != '' && $(this).prop('maxlength') > 0){
@@ -2996,6 +3409,18 @@ $(document).ready(function(){
     $(document).on('click', '#janDinamica [data-dismiss="modal"]', function(ev){
         $(this).parents('.modal').eq(0).find('.modal-body').html('<div class="text-center py-2"><div class="spinner-grow text-primary"></div></div>');
         $('[data-toggle="tooltip"]').tooltip();
+    });
+
+    $(document).on('keyup change', '#modalEstornarVenda [name="valor_devolvido"]', function(ev){
+        let alvo = $(ev.currentTarget);
+        setTimeout(function(){
+            if(alvo.val() == '0,00') {
+                alvo.parents('form').find('button').attr('disabled', true);
+            } else {
+                alvo.parents('form').find('button').attr('disabled', false);
+            }
+        }, 100);
+        
     });
 
     /**

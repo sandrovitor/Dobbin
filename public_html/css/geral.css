@@ -367,6 +367,7 @@ button.toggleMinMax {
   font-family: "Ubuntu Mono", monospace !important;
 }
 
+.card-collapse,
 .cursor-pointer {
   cursor: pointer;
 }
@@ -376,5 +377,32 @@ button.toggleMinMax {
   font-size: .65rem;
   line-height: 1.5;
   border-radius: .2rem;
+}
+
+/* SCROLLBAR PARA CHROME */
+/* width */
+.sidebar-content::-webkit-scrollbar,
+#content::-webkit-scrollbar {
+  width: 8px;
+  -webkit-transition: all .2s linear;
+  transition: all .2s linear;
+}
+
+/* Track */
+.sidebar-content::-webkit-scrollbar-track,
+#content::-webkit-scrollbar-track {
+  background: #eff3f9;
+}
+
+/* Handle */
+.sidebar-content::-webkit-scrollbar-thumb,
+#content::-webkit-scrollbar-thumb {
+  background: #b9b9b9;
+}
+
+/* Handle on hover */
+.sidebar-content::-webkit-scrollbar-thumb:hover,
+#content::-webkit-scrollbar-thumb:hover {
+  background: #7a7a7a;
 }
 /*# sourceMappingURL=geral.css.map */

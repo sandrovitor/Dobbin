@@ -256,8 +256,11 @@ const Dobbin = {
 
 $(document).ready(function(){
     $(document).on('change keyup', '[dobbin-validate-valor]', function(ev){ // VALOR|DINHEIRO
-        resetValidaOnChange(ev.currentTarget);
-        validaValorDinheiroOnChange(ev.currentTarget);
+        let alvo = ev.currentTarget;
+        setTimeout(function(){
+            resetValidaOnChange(alvo);
+            validaValorDinheiroOnChange(alvo);
+        }, 100);
     });
 
     $(document).on('blur', '[dobbin-validate-valor]', function(ev){ // VALOR|DINHEIRO
@@ -301,6 +304,25 @@ $(document).ready(function(){
         x[0] = valor.slice(0,valor.length-2);
         x[1] = valor.slice(valor.length-2, valor.length); // Casas decimais
         decimal = x[1];
+
+        
+        // Verifica se foi definido um valor máximo.
+        if($(ev.currentTarget).attr('max') != undefined && $(ev.currentTarget).attr('max') != '') {
+            let maxValor = parseInt($(ev.currentTarget).attr('max'));
+            // Se valor for maior que o máximo, abaixa para o limite
+            if(parseInt(x.join('')) > maxValor) {
+                if(maxValor > 100) {
+                    x[0] = maxValor.toString().substr(0, maxValor.toString().length-2);
+                    x[1] = maxValor.toString().substr(maxValor.toString().length-2, 2);
+                } else if(maxValor > 10) {
+                    x[0] = "0";
+                    x[1] = maxValor.toString();
+                } else {
+                    x[0] = "0";
+                    x[1] = "0"+maxValor.toString();
+                }
+            }
+        }
         
         if(x[0].length > 3) {
             let i = x[0].length;
@@ -320,6 +342,10 @@ $(document).ready(function(){
         }
 
         //console.log(x);
+        
+
+        
+
         $(ev.currentTarget).val(reais+','+decimal);
         
     });
