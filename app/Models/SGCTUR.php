@@ -1746,6 +1746,16 @@ class SGCTUR extends Master
 
                 try{
                     $abc->execute();
+                    $ultID = $this->pdo->lastInsertId();
+
+                    /**
+                     * LOG
+                     */
+                    $log = new LOG();
+                    $log->novo('<a href="javascript:void(0)" onclick="getVenda('.$ultID.')">Fez uma venda para o roteiro '. $roteiro->nome.'.</a>', $_SESSION['auth']['id'], 1);
+                    /**
+                     * ./LOG
+                     */
                 } catch(\PDOException $e) {
                     $this->pdo->rollBack();
                     $retorno['mensagem'] = Erro::getMessage(70) . ' ERRO: '.$e->getMessage();
