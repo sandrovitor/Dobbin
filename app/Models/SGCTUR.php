@@ -1722,8 +1722,8 @@ class SGCTUR extends Master
             if($roteiro->estoque['total'] - $roteiro->estoque['vendidos'] >= $v->clientes_total) {
             
                 // Lança venda no sistema.
-                $abc = $this->pdo->prepare("INSERT INTO `vendas` (`id`, `cliente_id`, `roteiro_id`, `items`, `adultos`, `criancas`, `clientes_total`, `lista_clientes`, `desconto_total`, `valor_total`, `status`, `obs`, `forma_pagamento`, `usuario_id`, `data_reserva`, `data_venda`, `data_pagamento`, `data_cancelado`, `data_estorno`) VALUES ".
-                "(NULL, :cliente, :roteiro, :items, :adultos, :criancas, :clientesTotal, '', :descontoTotal, :valorTotal, :status, :obs, :formaPagamento, $vendedor, NOW(), NULL, NULL, NULL, NULL)");
+                $abc = $this->pdo->prepare("INSERT INTO `vendas` (`id`, `cliente_id`, `roteiro_id`, `items`, `adultos`, `criancas`, `clientes_total`, `lista_clientes`, `desconto_total`, `valor_total`, `valor_devolvido`, `status`, `obs`, `forma_pagamento`, `vencimento`, `usuario_id`, `data_reserva`, `data_venda`, `data_pagamento`, `data_cancelado`, `data_estorno`) VALUES ".
+                "(NULL, :cliente, :roteiro, :items, :adultos, :criancas, :clientesTotal, '', :descontoTotal, :valorTotal, NULL, :status, :obs, :formaPagamento, NULL, $vendedor, NOW(), NULL, NULL, NULL, NULL)");
 
                 $abc->bindValue(':cliente', $cliente, \PDO::PARAM_INT);
                 $abc->bindValue(':roteiro', $v->roteiroID, \PDO::PARAM_INT);

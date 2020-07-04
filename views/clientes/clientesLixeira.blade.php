@@ -5,6 +5,9 @@
                 Lixeira
             </div>
             <div class="card-body" style="overflow-x:auto">
+                <div class="alert alert-info small px-2 py-1">
+                    <i class="fas fa-info-circle"></i> Clientes permanecerão na lixeira por 72h e depois serão excluídos automaticamente.
+                </div>
                 @if(empty($clientes))
                     <h6 class="text-center my-3 font-italic">Não há nada aqui...</h6>
                 @else

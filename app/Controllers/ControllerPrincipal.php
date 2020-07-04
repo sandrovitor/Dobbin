@@ -12,6 +12,7 @@ Use SGCTUR\Erro;
 Use SGCTUR\Parceiro;
 Use SGCTUR\Roteiro;
 Use SGCTUR\Venda;
+Use SGCTUR\Robot; // Excluir linha
 
 class ControllerPrincipal 
 {
@@ -663,6 +664,23 @@ class ControllerPrincipal
 
         return json_encode($retorno);
     }
+    
+    static function vendasEstornadas($p)
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Estornadas',
+            'description' => 'Vendas que foram pagas e devolvidas/estornadas ao cliente.',
+            'page' => $blade->run("vendas.vendasEstornadas", array(
+                'vendas' => $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [['status', '=', 'Devolvida']])['vendas'],
+            ))
+        );
+
+        return json_encode($retorno);
+    }
 
     static function vendasDatabaseReservas($p) // Retorna JSON
     {
@@ -1277,7 +1295,7 @@ class ControllerPrincipal
             'title' => '<i class="fas fa-cloud-download-alt"></i> Offline',
             'description' => 'Acesse o banco de dados da plataforma offline.',
             'page' => $blade->run("offline", array(
-                
+                'robot' => new Robot(),
             ))
         );
 

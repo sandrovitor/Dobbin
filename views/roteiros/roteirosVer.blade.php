@@ -894,8 +894,19 @@
     {
         $.post('/roteiros/ver/'+roteiro.id+'/clientes', function(res){
             if(res.success) {
-                if(debugEnabled == true){console.log(res.clientes);}
+                if(debugEnabled == true){console.log(res);}
                 $('#passagDiv').html('');
+                $('#passagDiv').append('<div class="alert alert-info small px-2 py-1"><i class="fas fa-info-circle"></i> Após 2 dias de conclusão do roteiro, essa lista de clientes passa a ser <strong>definitiva</strong>. Antes disso, qualquer alteração pode ser feita na lista de passageiros da venda.</div>');
+                
+                
+                if(res.tipo == 'DEFINITIVO') {
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Lista definitiva já foi arquivada."><i class="fas fa-circle text-danger mr-2"></i> DEFINITIVA</div>');
+                } else if(res.tipo == 'PROVISORIO') {
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Alterações ainda são possíveis!"><i class="fas fa-circle text-success mr-2"></i> PROVISÓRIA</div>');
+                } else {
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Situação da lista é indefinida."><i class="fas fa-circle mr-2"></i> INDEFINIDA</div>');
+                }
+
                 $('#passagDiv').append('<table class="table table-sm table-bordered small"><thead class="thead-dark"><tr> <th>#</th></tH> <th>Nome</th> <th>CPF</th> <th>Faixa etária</th> <th>Venda</th> </tr></thead><tbody></tbody></table>');
 
                 if(res.clientes.length > 0) {
@@ -909,6 +920,7 @@
                     'Uma venda foi realizada e o(s) passageiro(s) não aparece(m)? Acesse a venda correspondente e informe os clientes que serão passageiros.</td></tr>');
                 }
                 
+                $('[data-toggle="tooltip"]').tooltip();
             } else {
                 alerta(res.mensagem, 'Falha ao carregar lista de passageiros.', 'warning');
             }

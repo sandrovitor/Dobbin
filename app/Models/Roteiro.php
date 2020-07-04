@@ -161,42 +161,51 @@ class Roteiro extends Master
             'clientes' => []
         ];
 
-        $lista_vendas = $this->getVendidosLista();
-        $temp1 = array(); // Array temporário com todos os clientes desordenados.
-        foreach($lista_vendas as $l) {
-            if($l->lista_clientes == '') {
-                $temp2 = array();
-            } else {
-                $temp2 = json_decode($l->lista_clientes);
-            }
-
-            if(!empty($temp2)) {
-                foreach($temp2 as $temp3) {
-                    // Busca cliente no Banco de dados.
-                    $cliente = new Cliente($temp3);
-                    $c = $cliente->getDados();
-                    if($c->cpf == ''){$cpf = '-';} else {$cpf = $c->cpf;}
-                    array_push($temp1, [
-                        'id' => $c->id,
-                        'nome' => $c->nome,
-                        'faixa_etaria' => $c->faixa_etaria,
-                        'cpf' => $cpf,
-                        'titular' => $c->titular, // Código do titular (caso seja dependente)
-                        'venda' => $l->id // ID da venda
-                    ]);
+        // Primeiro verifica se já existe lista de clientes DEFINITIVA no roteiro.
+        if($this->dados->clientes != '') {
+            // Definitiva
+            $retorno['tipo'] = 'DEFINITIVO';
+            $retorno['clientes'] = json_decode($this->dados->clientes);
+        } else {
+            // Provisória
+            $lista_vendas = $this->getVendidosLista();
+            $temp1 = array(); // Array temporário com todos os clientes desordenados.
+            foreach($lista_vendas as $l) {
+                if($l->lista_clientes == '') {
+                    $temp2 = array();
+                } else {
+                    $temp2 = json_decode($l->lista_clientes);
                 }
 
-                unset($cliente, $c);
+                if(!empty($temp2)) {
+                    foreach($temp2 as $temp3) {
+                        // Busca cliente no Banco de dados.
+                        $cliente = new Cliente($temp3);
+                        $c = $cliente->getDados();
+                        if($c->cpf == ''){$cpf = '-';} else {$cpf = $c->cpf;}
+                        array_push($temp1, [
+                            'id' => $c->id,
+                            'nome' => $c->nome,
+                            'faixa_etaria' => $c->faixa_etaria,
+                            'cpf' => $cpf,
+                            'titular' => $c->titular, // Código do titular (caso seja dependente)
+                            'venda' => $l->id // ID da venda
+                        ]);
+                    }
 
-                // organiza array pelo nome
-                usort($temp1, function($a, $b){
-                    return strcmp($a["nome"], $b["nome"]);
-                });
-                
+                    unset($cliente, $c);
+
+                    // organiza array pelo nome
+                    usort($temp1, function($a, $b){
+                        return strcmp($a["nome"], $b["nome"]);
+                    });
+                    
+                }
             }
-        }
 
-        $retorno['clientes'] = $temp1;
+            $retorno['tipo'] = 'PROVISORIO';
+            $retorno['clientes'] = $temp1;
+        }
 
         return $retorno;
     }

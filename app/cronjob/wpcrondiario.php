@@ -37,4 +37,7 @@ $robot = new Robot();
 // Exclui clientes da lixeira
 $robot->deletaClientesLixeira();
 
+// Verifica
+$robot->checaLimiteBancoDados();
+
 exit();

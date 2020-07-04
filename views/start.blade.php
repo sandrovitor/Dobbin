@@ -110,6 +110,7 @@
                             <li><a class="nav-link" href="#vendas/buscar">Buscar</a></li>
                             <li><a class="nav-link" href="#vendas/database">Base de Dados</a></li>
                             <li><a class="nav-link" href="#vendas/canceladas">Vendas Canceladas</a></li>
+                            <li><a class="nav-link" href="#vendas/estornadas">Vendas Estornadas</a></li>
                         </ul>
                     </li>
 
