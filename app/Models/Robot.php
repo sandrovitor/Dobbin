@@ -1,7 +1,7 @@
 <?php
 namespace SGCTUR;
 Use SGCTUR\LOG;
-Use SGCTUR\SGCTUR;
+Use SGCTUR\SGCTUR, SGCTUR\Roteiro, SGCTUR\Cliente;
 
 class Robot extends Master
 {
@@ -192,5 +192,60 @@ class Robot extends Master
             return true;
         }
         
+    }
+
+    public function geraListaClientesFixa()
+    {
+        $hoje = new \DateTime();
+        $hoje->sub(new \DateInterval('P2D'));
+        $abc = $this->pdo->query("SELECT id FROM roteiros WHERE data_fim <= '".$hoje->format('Y-m-d')."'");
+        if($abc->rowCount() > 0) {
+            $lin = $abc->fetchAll(\PDO::FETCH_OBJ);
+            foreach($lin as $l) { // Varre roteiro por roteiro.
+                $rot = new Roteiro($l->id);
+                $roteiro = $rot->getDados();
+                $clientes = $rot->getClientesLista();
+                //var_dump($clientes['clientes']);
+
+                if($clientes['tipo'] == 'PROVISORIO') {
+                    $fixo = [];
+                
+
+                    if($clientes['success'] == true && !empty($clientes['clientes'])) {
+                        // Escreve lista de clientes.
+                        foreach($clientes['clientes'] as $c) {
+                            array_push($fixo, (object)$c);
+                        }
+
+                        $x = json_encode($fixo);
+                        if(strlen($x) <= 65535) { // Abaixo do limite do tamanho do campo TEXT no BANCO.
+                            $abc = $this->pdo->prepare("UPDATE roteiros SET clientes = :fixo WHERE id = $roteiro->id");
+                            $abc->bindValue(':fixo', $x, \PDO::PARAM_STR);
+                            $abc->execute();
+
+                            $log = new LOG();
+                            $log->novo('<b>Dobbin Robot:</b> "Gerei uma lista definitiva de clientes <a href="#roteiros/ver/'.$roteiro->id.'" target="_blank">deste roteiro</a>. Agora não é mais possível alterar."',0, 4);
+                        } else {
+                            $log = new LOG();
+                            $log->novo('<b>Dobbin Robot:</b> "Não foi possível gerar uma lista definitiva de clientes <a href="#roteiros/ver/'.$roteiro->id.'" target="_blank">deste roteiro</a>. O campo no Banco de Dados não suporta tantos clientes."',0,4);
+                        }
+                        
+                    } else if($clientes['success'] == true && !empty($clientes['clientes'])) {
+                        // Escreve lista de clientes VAZIA.
+                        $abc = $this->pdo->query("UPDATE roteiros SET clientes = '[]' WHERE id = $roteiro->id");
+
+                        $log = new LOG();
+                        $log->novo('<b>Dobbin Robot:</b> "Gerei uma lista definitiva VAZIA de clientes <a href="#roteiros/ver/'.$roteiro->id.'" target="_blank">deste roteiro</a>. Agora não é mais possível alterar."',0, 4);
+                    } else {
+                        // Ocorreu algum erro.
+                        $log = new LOG();
+                        $log->novo('<b>Dobbin Robot:</b> "Não consegui gerar a lista definitiva de clientes <a href="#roteiros/ver/'.$roteiro->id.'" target="_blank">deste roteiro</a>."',0,1);
+                    }
+                }
+
+            }
+        }
+        // FIM
+
     }
 }

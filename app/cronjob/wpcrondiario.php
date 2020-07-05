@@ -37,7 +37,10 @@ $robot = new Robot();
 // Exclui clientes da lixeira
 $robot->deletaClientesLixeira();
 
-// Verifica
+// Verifica limites do banco de dados diariamente.
 $robot->checaLimiteBancoDados();
+
+// Gera lista de clientes definitiva no roteiro.
+$robot->geraListaClientesFixa();
 
 exit();

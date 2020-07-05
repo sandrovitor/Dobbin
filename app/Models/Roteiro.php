@@ -188,6 +188,8 @@ class Roteiro extends Master
                             'nome' => $c->nome,
                             'faixa_etaria' => $c->faixa_etaria,
                             'cpf' => $cpf,
+                            'cidade' => $c->cidade,
+                            'estado' => $c->estado,
                             'titular' => $c->titular, // Código do titular (caso seja dependente)
                             'venda' => $l->id // ID da venda
                         ]);
