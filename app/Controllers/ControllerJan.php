@@ -207,7 +207,7 @@ class ControllerJan
                             <td>'.$idade.' ANO(S)</td>
                             <td>'.$c->faixa_etaria.'</td>
                             <td>'.$cpf.'</td>
-                            <td></td>
+                            <td><button type="button" class="btn btn-danger btn-sm" data-venda="'.$ret->id.'" onclick="vendaRemovePassageiroLista('.$c->id.', this)"><i class="fas fa-trash"></i></button></td>
                         </tr>
                         ';
 

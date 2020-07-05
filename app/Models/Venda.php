@@ -109,6 +109,64 @@ class Venda extends Master
     }
 
     /**
+     * Remove cliente da lista.
+     * @param int $cid ID do cliente.
+     */
+    public function setListaClienteRemove(int $cid)
+    {
+        if($this->dados == null) {
+            return false;
+        }
+
+        $lista_clientes = $this->dados->lista_clientes;
+        $lista_clientes = json_decode($lista_clientes);
+
+        if($lista_clientes == null) { // Lista vazia. Não tem o que remover.
+            $lista_clientes = array();
+            return true;
+        }
+
+        if(!empty($lista_clientes)) {
+            // Remove cliente
+            $key = array_search($cid, $lista_clientes);
+            if($key === FALSE) {
+                return true; // cliente não encontrado. Não remove nada
+            } else {
+                unset($lista_clientes[$key]);
+                $x = $lista_clientes;
+                $lista_clientes = [];
+                
+                foreach($x as $y) {
+                    array_push($lista_clientes, $y);
+                }
+            }
+        } else {
+            return true; // Não há o que remover.
+        }
+
+        try {
+            $abc = $this->pdo->prepare("UPDATE vendas SET lista_clientes = :lc WHERE id = $this->id");
+            $abc->bindValue(':lc', json_encode($lista_clientes), \PDO::PARAM_STR);
+            $abc->execute();
+
+            /**
+             * LOG
+             */
+            $log = new LOG();
+            $log->novo('Removeu cliente na lista de passageiros da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>', $_SESSION['auth']['id'], 1);
+            /**
+             * ./LOG
+             */
+            
+            return true;
+        } catch(PDOException $e) {
+            error_log($e->getMessage(), 0);
+
+            return false;
+        }
+    }
+
+    /**
      * Define o status da venda.
      * 
      * @param string $situacao Situação da venda: Reserva, Aguardando, Paga, Cancelada, Devolvida.
