@@ -2423,29 +2423,32 @@ function vendaAddPassageiroLista(c, sender)
         alerta('A faixa etária deste cliente não corresponde à vaga.', 'Escolha outro cliente.', 'warning');
         $(sender).val('');
     }
+}
 
-    /*
-    // verifica se o cliente é da faixa etária permitida.
-    if(faixa == 'CRIANCA' && (c.faixa_etaria == '0-5' || c.faixa_etaria == '6-12')) { // CRIANÇA
-        $(target).val(c.id +' - '+c.nome);
-        alerta('OK CRIANCA');
-    } else if(faixa === c.faixa_etaria || c.faixa_etaria == '0-5' || c.faixa_etaria == '6-12') { // ADULTO
-        $(target).val(c.id +' - '+c.nome);
-        alerta('OK ADULTO');
-    } else if(faixa == 'IDOSO' && c.faixa_etaria == '60+'){
-        $(target).val(c.id +' - '+c.nome);
-        alerta('OK IDOSO');
-    } else {
-        if(faixa === 'CRIANCA') {
-            alerta('Esse cliente não pode ser adicionado, pois essa vaga é destinada à uma CRIANÇA (0-12).', 'Não foi possível continuar', 'info');
-        } else if(faixa === 'IDOSO') {
-            alerta('Esse cliente não pode ser adicionado, pois essa vaga é destinada à um IDOSO (60+).', 'Não foi possível continuar', 'info');
+/**
+ * 
+ * @param {int} c ID do cliente a ser removido.
+ * @param {Element} sender Elemento que disparou a função
+ */
+function vendaRemovePassageiroLista(c, sender)
+{
+    let venda = $(sender).data('venda');
+
+    
+    $.post(PREFIX_POST+'vendas/'+venda+'/clientes/del/'+c, function(res){
+        if(res.success == true) {
+            // Verifica se é janela dinâmica.
+            if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
+                getVenda(venda); // Atualiza janela dinâmica.
+            }
+
+            alerta('Cliente removido.', 'Sucesso!', 'success');
         } else {
-            alerta('Erro inexplicável.', 'Não foi possível continuar', 'info');
+            alerta(res.mensagem, 'Falha...', 'warning');
         }
-        $(sender).val('');
-    }
-    */
+    },'json').
+    fail(function(ev){nativePOSTFail(ev);});
+    
 }
 
 /**

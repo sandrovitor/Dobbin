@@ -1127,6 +1127,42 @@ class ControllerForm
        
     }
 
+    static function vendasDelCliente($p)
+    {
+        self::validaConexao(3);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $venda = new Venda($p['id']);
+        $v = $venda->getDados();
+
+        // Captura lista de clientes.
+        if($v->lista_clientes == '') {
+            $temp1 = array();
+        } else {
+            $temp1 = json_decode($v->lista_clientes);
+
+        }
+        // Busca cliente na lista.
+        if(array_search($p['cid'], $temp1) !== FALSE) {
+            // Remove cliente e salva.
+            $res = $venda->setListaClienteRemove($p['cid']);
+
+            if($res === true) {
+                $retorno['success'] = true;
+            } else {
+                $retorno['mensagem'] = 'Não foi possível remover o cliente da lista.';
+            }
+        } else {
+            // Cliente não está na lista
+            $retorno['mensagem'] = 'Este cliente não pertence à lista de passageiros.';
+        }
+
+        return json_encode($retorno);
+    }
+
     static function vendasAlterarSituacao($p)
     {
         self::validaConexao(3);
