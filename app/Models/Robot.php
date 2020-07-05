@@ -198,7 +198,7 @@ class Robot extends Master
     {
         $hoje = new \DateTime();
         $hoje->sub(new \DateInterval('P2D'));
-        $abc = $this->pdo->query("SELECT id FROM roteiros WHERE data_fim <= '".$hoje->format('Y-m-d')."'");
+        $abc = $this->pdo->query("SELECT id FROM roteiros WHERE clientes = '' AND data_fim <= '".$hoje->format('Y-m-d')."'");
         if($abc->rowCount() > 0) {
             $lin = $abc->fetchAll(\PDO::FETCH_OBJ);
             foreach($lin as $l) { // Varre roteiro por roteiro.
