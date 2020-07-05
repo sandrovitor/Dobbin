@@ -207,6 +207,106 @@ class SGCTUR extends Master
     }
 
     /**
+     * Retorna aniversariantes de uma determinada data.
+     * 
+     * @param string $data Data do aniversário (aaaa-mm-dd). Ex.: 2020-01-01.
+     * @return array [success => TRUE|FALSE, mensagem => STRING, hoje => ARRAY, amanha => ARRAY, ontem => ARRAY]
+     */
+    public function getClienteAniversario(string $data)
+    {
+        $retorno = [
+            'success' => false,
+            'mensagem' => '',
+            'hoje' => [],
+            'amanha' => [],
+            'ontem' => []
+        ];
+
+        try {
+            
+            $hoje = new \DateTime($data);
+            $ontem = new \DateTime($data);
+            $ontem->sub(new \DateInterval('P1D'));
+            $amanha = new \DateTime($data);
+
+            // HOJE
+            $abc = $this->pdo->query("SELECT id, nome, cidade, estado, nascimento FROM `clientes` WHERE nascimento LIKE '%-".$hoje->format('m-d')."'");
+            if($abc->rowCount() > 0) {
+                while($reg = $abc->fetch(\PDO::FETCH_OBJ)) {
+                    $x = new \DateTime($reg->nascimento);
+                    $reg->nascimento_str = $x->format('d/m/Y');
+                    $reg->idade = $hoje->diff($x)->y;
+
+                    array_push($retorno['hoje'], $reg);
+                    unset($reg, $x);
+                }
+            }
+
+            // ONTEM
+            $abc = $this->pdo->query("SELECT id, nome, cidade, estado, nascimento FROM `clientes` WHERE nascimento LIKE '%-".$ontem->format('m-d')."'");
+            if($abc->rowCount() > 0) {
+                while($reg = $abc->fetch(\PDO::FETCH_OBJ)) {
+                    $x = new \DateTime($reg->nascimento);
+                    $reg->nascimento_str = $x->format('d/m/Y');
+                    $reg->idade = $hoje->diff($x)->y;
+
+                    array_push($retorno['ontem'], $reg);
+                    unset($reg, $x);
+                }
+            }
+
+            // SEMANA SEGUINTE
+            $dias = 1;
+            while($dias < 7) {
+                $dias++;
+                
+                $amanha->add(new \DateInterval('P1D'));
+
+                $query = "SELECT id, nome, cidade, estado, nascimento FROM `clientes` WHERE nascimento LIKE '%-".$amanha->format('m-d')."' ";
+                $abc = $this->pdo->query($query);
+                if($abc->rowCount() > 0) {
+                    while($reg = $abc->fetch(\PDO::FETCH_OBJ)) {
+                        $x = new \DateTime($reg->nascimento);
+                        $reg->nascimento_str = $x->format('d/m/Y');
+                        $reg->idade = $hoje->diff($x)->y;
+
+                        array_push($retorno['amanha'], $reg);
+                        unset($reg, $x);
+                    }
+                }
+            }
+
+            
+
+            if($hoje->format('m-d') == '03-01' && $ontem->format('m-d') == '02-28') {
+                // Não é ano bissexto. Inclui os aniversariantes do dia 29/02.
+                $abc = $this->pdo->query("SELECT id, nome, cidade, estado, nascimento FROM `clientes` WHERE nascimento LIKE '%-02-29'");
+                if($abc->rowCount() > 0) {
+                    $bissexto = $abc->fetchAll(\PDO::FETCH_OBJ);
+                }
+
+                if(!empty($bissexto)) {
+                    foreach($bissexto as $b) {
+                        $x = new \DateTime($b->nascimento);
+                        $b->nascimento_str = $x->format('d/m/Y');
+                        $b->idade = $hoje->diff($x)->y;
+                        
+                        array_push($retorno['hoje'], $b);
+                        unset($x);
+                    }
+                }
+            }
+
+            $retorno['success'] = true;
+            
+            return $retorno;
+        } catch(Exception $e) {
+            $retorno['mensagem'] = $e->getMessage();
+            return $retorno;
+        }
+    }
+
+    /**
      * Retorna lista de clientes na plataforma.
      * 
      * @param int $inicio Onde o ponteiro de busca deve iniciar.

@@ -222,6 +222,7 @@ class ControllerPrincipal
         self::validaConexao();
 
         $sgc = new SGCTUR();
+        $hoje = new \DateTime();
 
         $blade = self::bladeStart();
         $retorno = array(
@@ -229,6 +230,7 @@ class ControllerPrincipal
             'description' => 'Informações gerais sobre o sistema.',
             'page' => $blade->run("index", array(
                 'sistema' => $sgc->getSistemaConsumo(),
+                'aniversarios' => $sgc->getClienteAniversario($hoje->format('Y-m-d'))
             ))
         );
 
