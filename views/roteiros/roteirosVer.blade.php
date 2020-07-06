@@ -1022,7 +1022,9 @@
         $.post('/roteiros/ver/'+roteiro.id+'/estoque', function(res){
             if(res.success) {
                 if(debugEnabled == true){console.log(res.estoque);}
-                
+                if(parseInt($('[data-poltrona-livre]').text()) != res.estoque.livre) {
+                    loadLanding(location.hash);
+                }
                 
                 $('#graficoVendas').children('.progress').eq(0).attr('title', 'Poltronas vendidas: '+res.estoque.vendidos);
                 $('#graficoVendas').children('.progress').eq(0).css('width', res.estoque.vendidos_perc+'%');

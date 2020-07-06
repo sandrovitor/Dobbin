@@ -1761,6 +1761,8 @@ class SGCTUR extends Master
         $cliente = $venda->clienteID;
         $obs = $venda->obs;
         $formaPagamento = $venda->formaPagamento;
+        $parcelas = $venda->parcelas;
+        $vencimento = $venda->vencimento;
 
         // Verifica os itens da venda e checa se são do mesmo roteiro.
         $listaRoteiros = array();
@@ -1822,8 +1824,16 @@ class SGCTUR extends Master
             if($roteiro->estoque['total'] - $roteiro->estoque['vendidos'] >= $v->clientes_total) {
             
                 // Lança venda no sistema.
-                $abc = $this->pdo->prepare("INSERT INTO `vendas` (`id`, `cliente_id`, `roteiro_id`, `items`, `adultos`, `criancas`, `clientes_total`, `lista_clientes`, `desconto_total`, `valor_total`, `valor_devolvido`, `status`, `obs`, `forma_pagamento`, `vencimento`, `usuario_id`, `data_reserva`, `data_venda`, `data_pagamento`, `data_cancelado`, `data_estorno`) VALUES ".
-                "(NULL, :cliente, :roteiro, :items, :adultos, :criancas, :clientesTotal, '', :descontoTotal, :valorTotal, NULL, :status, :obs, :formaPagamento, NULL, $vendedor, NOW(), NULL, NULL, NULL, NULL)");
+                if($formaPagamento !== 'Reserva') {
+                    $dataVenda = 'NOW()';
+                } else {
+                    $dataVenda = 'NULL';
+                }
+                $abc = $this->pdo->prepare("INSERT INTO `vendas` (`id`, `cliente_id`, `roteiro_id`, `items`, `adultos`, `criancas`, `clientes_total`, `lista_clientes`, `desconto_total`, `valor_total`, ".
+                "`valor_devolvido`, `status`, `obs`, `forma_pagamento`, `parcelas`, `parcelas_pagas`, `total_pago`, `detalhes_pagamento`, `vencimento`, `usuario_id`, `data_reserva`, `data_venda`, ".
+                "`data_pagamento`, `data_cancelado`, `data_estorno`) VALUES ".
+                "(NULL, :cliente, :roteiro, :items, :adultos, :criancas, :clientesTotal, '', :descontoTotal, :valorTotal, NULL, :status, :obs, :formaPagamento, :parcelas, 0, 0, '', ".
+                ":venc, $vendedor, NOW(), $dataVenda, NULL, NULL, NULL)");
 
                 $abc->bindValue(':cliente', $cliente, \PDO::PARAM_INT);
                 $abc->bindValue(':roteiro', $v->roteiroID, \PDO::PARAM_INT);
@@ -1843,6 +1853,9 @@ class SGCTUR extends Master
                     $abc->bindValue(':status', 'Aguardando', \PDO::PARAM_STR);
                     $abc->bindValue(':formaPagamento', $formaPagamento, \PDO::PARAM_STR);
                 }
+                
+                $abc->bindValue(':parcelas', $parcelas, \PDO::PARAM_INT);
+                $abc->bindValue(':venc', $vencimento, \PDO::PARAM_STR);
 
                 try{
                     $abc->execute();
