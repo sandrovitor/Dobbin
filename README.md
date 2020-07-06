@@ -13,5 +13,5 @@ Com o Dobbin você poderá cadastrar e excluir os clientes da sua plataforma, ge
 - cocur/slugify: ^3.2-stable
 
 #### Configuração do Banco de Dados
-Detalhe sobre a configuração do [Banco de Dados](https://github.com/sandrovitor/Dobbin/blob/master/README.md).
+Detalhe sobre a configuração do [Banco de Dados](https://github.com/sandrovitor/Dobbin/blob/master/database.md).
 
