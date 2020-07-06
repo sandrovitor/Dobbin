@@ -1,4 +1,4 @@
-# Dobbin
+# Dobbin - Banco de Dados
 ## Primeiros passos
 
 O banco de dados principal do Dobbin é o MySQL (5.4 ou superior).
