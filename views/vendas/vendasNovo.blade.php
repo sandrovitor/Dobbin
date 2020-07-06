@@ -59,7 +59,7 @@
                             </div>
                         </div>
                         <div class="mr-md-3">
-                            <label class="font-weight-bold">Desconto Unitário</label>
+                            <label class="font-weight-bold">Desconto no Item</label>
                             <div class="input-group input-group-sm">
                                 <div class="input-group-prepend">
                                     <div class="input-group-text ">R$</div>
@@ -86,7 +86,11 @@
                                     <thead class="thead-dark">
                                         <tr>
                                             <th>Cód./Roteiro</th>
-                                            <th>Qtd</th>
+                                            <th>Qtd
+                                            <span class="badge badge-pill badge-info" data-toggle="popover" title="<strong>O que é isso?</strong>" data-trigger="hover"
+                                            data-content="Aqui consta a quantidade do item que o cliente deseja adquirir.<br><br><ul><li>Para alterá-lo, dê um duplo clique no valor;</li> <li>Para cancelar a edição, aperte ESC;</li> <li>Para manter a edição, aperte ENTER.</li></ul>">
+                                            <i class="fas fa-question-circle"></i></span>
+                                            </th>
                                             <th>Tarifa</th>
                                             <th>Valor (R$)</th>
                                             <th>Desconto (R$)</th>
@@ -335,6 +339,8 @@ $(document).ready(function(){
         '</td> </tr>');
 
         $('#vendasNovoFecharVenda').attr('disabled', false);
+        $('#vendasNovo').find('[name="qtd"]').val('1'); // Redefine quantidade para 1.
+        $('#vendasNovo').find('[name="desconto_unitario"]').val('0,00'); // Redefine o desconto unitário
 
         vendasNovoCalcularTotal();
         

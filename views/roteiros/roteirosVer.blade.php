@@ -585,6 +585,87 @@
                 </div>
                 <hr>
                 <div class="row">
+                    <div class="col-12 mb-3">
+                        <button type="button" class="btn btn-sm btn-info px-3" data-target="#ajudaModalRoteiroTarifas" data-toggle="collapse">Ajuda <i class="fas fa-question-circle"></i></button>
+                        <div id="ajudaModalRoteiroTarifas" class="collapse border px-2 py-1 border-info bg-light">
+                        <strong>O que cada campo da tabela significa?</strong><br>
+                            <ul>
+                                <li><strong>Nome da tarifa:</strong> Especifique o nome da tarifa que irá aparecer na página de <a href="#vendas/novo" target="_blank">Vendas > Novo</a>. Não repita nomes;</li>
+                                <li><strong>Valor:</strong> Valor dessa tarifa. Os valores, é você quem define. Eles irão aparecer na página de <a href="#vendas/novo" target="_blank">Vendas > Novo</a>.</li>
+                                <li><strong>Quantidade de Clientes:</strong> Em cada tarifa, quantos clientes estão cobertos por ela. Veja exemplos: <br><br><b>Ex. 1:</b> Espera-se que uma tarifa "Meia"
+                                seja só preenchida por CRIANÇAS e não ADULTOS, por isso preencha com 1 Criança e 0 Adultos;
+                                <br><b>Ex. 2:</b> Uma tarifa "Pacote Família" talvez inclua 2 ADULTOS (os pais) e 1 CRIANÇA, por isso preencha com 1 Criança e 2 Adultos;
+                                <br><b>Ex. 3:</b> Espera-se que uma tarifa "CASADINHA" seja preenchida por 2 ADULTOS, por isso preencha com 0 Crianças e 2 Adultos.</li>
+                            </ul>
+                            <div class="alert alert-info small">
+                                <b class="font-weight-bold">OBSERVAÇÃO: </b><br>
+                                A plataforma entende que CRIANÇA (0-5 ANOS e 6-12 ANOS) ou IDOSO (60+) possuem tarifação diferenciada (desconto). Por isso, NENHUM ADULTO pode ocupar a vaga deles;<br>
+                                No entanto, uma CRIANÇA ou IDOSO (60+) pode ocupar a vaga de um ADULTO (pagar o mesmo valor de um ADULTO e ocupar a VAGA de um ADULTO na tarifa).
+                            </div>
+                            Ex.:
+                            <table class="table table-bordered table-sm">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <label class="small">Nome da tarifa</label><br>
+                                            Integral
+                                        </td>
+                                        <td>
+                                            <label class="small">Valor</label><br>
+                                            R$ 250,00
+                                        </td>
+                                        <td>
+                                            <label class="small">Quantidade de Clientes</label><br>
+                                            ADULTOS: 1<br>
+                                            CRIANÇAS: 0
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="small">Nome da tarifa</label><br>
+                                            Meia
+                                        </td>
+                                        <td>
+                                            <label class="small">Valor</label><br>
+                                            R$ 125,00
+                                        </td>
+                                        <td>
+                                            <label class="small">Quantidade de Clientes</label><br>
+                                            ADULTOS: 0<br>
+                                            CRIANÇAS: 1
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="small">Nome da tarifa</label><br>
+                                            Pacote Família (tri)
+                                        </td>
+                                        <td>
+                                            <label class="small">Valor</label><br>
+                                            R$ 350,00
+                                        </td>
+                                        <td>
+                                            <label class="small">Quantidade de Clientes</label><br>
+                                            ADULTOS: 2<br>
+                                            CRIANÇAS: 1
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table><br>
+                            <strong>Problemas</strong>
+                            <ul>
+                                <li>Se você não definir nenhuma quantidade de clientes, depois de efetuar a venda e lançar o passageiro na lista, <strong>a plataforma vai recusar a ação</strong> porque
+                                a tarifa foi configurada incorretamente. A plataforma vai receber a informação de que AQUELA TARIFA tem permissão de adicionar <b>0</b> ADULTOS e <b>0</b> CRIANÇAS ou seja, ninguém.<br><br>
+                                Não há como corrigir a venda, por isso 1) ela deverá ser <strong>CANCELADA/ESTORNADA</strong>, 2) a correção na tarifa
+                                deve ser feita e 3) uma nova venda correspondente terá que ser criada.</li>
+                                <li>Se você pretende remover ou suspender uma tarifa depois de um tempo, edite as tarifas e a remova. As vendas anteriores com aquela tarifa não serão afetadas, SOMENTE
+                                as novas vendas que não terão mais essa tarifa listada.</li>
+                            </ul><br>
+                            <a href="javascript:void(0)" data-target="#ajudaModalRoteiroTarifas" data-toggle="collapse"><i class="fas fa-angle-up mr-2"></i> Fechar ajuda</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
                     <div class="col-12">
                         <form method="post">
                             <table class="table table-bordered table-sm">
@@ -861,6 +942,14 @@
 
         // Varre cada linha para preencher array de tarifas
         for(let i = 0; i < form.find('tr:not([data-example])').length; i++) {
+            if(
+                parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_adultos"]').val()) == 0 && 
+                parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_criancas"]').val()) == 0
+            ) {
+                alerta('Você não informou a quantidade de clientes (ADULTO ou CRIANÇA) na tarifa "'+
+                form.find('tr:not([data-example])').eq(i).find('[name="nome_tarifa"]').val()+'".','Ainda tem algo faltando...', 'info');
+                return false;
+            }
             tarifas.push({
                 nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_tarifa"]').val(),
                 valor: Dobbin.converteRealEmCentavo(form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val()),
