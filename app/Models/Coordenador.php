@@ -43,6 +43,7 @@ class Coordenador extends Master
                 }
 
                 // Faixa etária    
+                /*
                 try{
                     $nasc = new \DateTime($this->dados->nascimento);
                     $hoje = new \DateTime();
@@ -59,6 +60,7 @@ class Coordenador extends Master
                 }catch(Exception $e) {
                     $this->dados->faixa_etaria = '-';
                 }
+                */
                 
                 return true;
                 
