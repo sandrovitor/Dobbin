@@ -179,13 +179,13 @@ function gatilhosLoadLanding()
             $(document).ready(function(){
                 setTimeout(function(){
                     getVendasReservas();getVendasAguardandoPagamento();
-                    getVendasPagas();getVendasEstornadas();
+                    getVendasPagas();getVendasEstornadas(true);
                 }, 1000);
                 geralIntervalo5Min = setInterval(function(){
                     getVendasReservas();
                     getVendasAguardandoPagamento();
                     getVendasPagas();
-                    getVendasEstornadas();
+                    getVendasEstornadas(true);
                 }, 180000);
             }); break;
 
@@ -283,6 +283,12 @@ function highlight(texto, destaque)
     
     
     return novo;
+}
+
+function restartTooltip()
+{
+    $('[data-toggle="popover"]').popover({'html':true});
+    $('[data-toggle="tooltip"]').tooltip();
 }
 
 /**
@@ -417,6 +423,7 @@ function janClienteSelect(target)
 
 
         $('#janClienteSelect').modal('show');
+        restartTooltip();
         //console.log($('#janClienteSelect [data-selecionar]').data('target'));
         
     }
@@ -435,6 +442,7 @@ function janParceirosSelect()
 
 
     $('#janParceirosSelect').modal('show');
+    restartTooltip();
     //console.log($('#janClienteSelect [data-selecionar]').data('target'));
         
 }
@@ -458,6 +466,7 @@ function janCoordenadorSelect(sender)
 
 
     $('#janCoordenadorSelect').modal('show');
+    restartTooltip();
         
 }
 
@@ -480,6 +489,7 @@ function janRoteiroSelect(sender)
 
 
     $('#janRoteirosSelect').modal('show');
+    restartTooltip();
 }
 
 
@@ -534,8 +544,7 @@ function loadCoordenador(id)
 
             
             $('#modalCoordenadorDetalhes').modal('show');
-            $('[data-toggle="popover"]').popover({'html':true});
-            $('[data-toggle="tooltip"]').tooltip();
+            restartTooltip();
         } else {
             alerta(res.mensagem, 'Erro!', 'warning');
             return false;
@@ -711,8 +720,7 @@ function loadCliente(id)
 
             
             $('#modalClienteDetalhes').modal('show');
-            $('[data-toggle="popover"]').popover({'html':true});
-            $('[data-toggle="tooltip"]').tooltip();
+            restartTooltip();
         } else {
             alerta(res.mensagem, 'Erro!', 'warning');
             return false;
@@ -762,6 +770,7 @@ function editaCoordenador(id)
             });
 
             $('#modalCoordenadorEditar').modal('show');
+            restartTooltip();
         } else {
             alerta(res.mensagem, 'Erro!', 'warning');
             return false;
@@ -813,6 +822,7 @@ function editaCliente(id)
             });
 
             $('#modalClienteEditar').modal('show');
+            restartTooltip();
         } else {
             alerta(res.mensagem, 'Erro!', 'warning');
             return false;
@@ -847,6 +857,7 @@ function loadUsuario(id)
 
 
             $('#modalUsuarioDetalhes').modal('show');
+            restartTooltip();
         } else {
             alerta(res.mensagem, 'Erro!', 'warning');
             return false;
@@ -878,6 +889,7 @@ function editaUsuario(id)
 
 
             $('#modalUsuarioEditar').modal('show');
+            restartTooltip();
         } else {
             alerta(res.mensagem, 'Erro!', 'warning');
             return false;
@@ -913,6 +925,7 @@ function vendaEstornarModal(id)
         }
         modal.find('form button').attr('disabled', true);
         modal.modal('show');
+        restartTooltip();
     });
 }
 
@@ -1007,7 +1020,8 @@ function getVenda(id)
             $('#janDinamica').find('.tituloModal').text('Venda #'+venda.id);
             $('#janDinamica').find('.modal-body').html(res.page);
             
-            setTimeout(function(){$('#janDinamica').modal('show');}, 400);
+            setTimeout(function(){$('#janDinamica').modal('show');
+            restartTooltip();}, 400);
             $('#janDinamica').find('.modal-dialog').removeClass('modal-sm').addClass('modal-xl');
             janDinamicaGatilhos(); // Dispara gatilhos na janela dinâmica.
             console.log(res);
@@ -1214,7 +1228,8 @@ function loadMinhaConta(trig)
         $('#modalMinhaContaEditar').find('[data-minhaconta-email]').val(res.email);
         $('#modalMinhaContaEditar').find('[data-minhaconta-nivel]').val(res.nivel);
         
-        $('#modalMinhaConta').modal('show'); 
+        $('#modalMinhaConta').modal('show');
+        restartTooltip();
         $(trig).parents('.nav-dropdown:eq(0)').fadeOut(100);
     }, 'json').
     fail(function(ev){
@@ -1233,12 +1248,14 @@ function editaMinhaConta()
     $('#modalMinhaConta').modal('hide');
 
     $('#modalMinhaContaEditar').modal('show');
+    restartTooltip();
 }
 
 function alterarMinhaSenha()
 {
     $('#modalMinhaConta').modal('hide');
     $('#modalAlterarMinhaSenha').modal('show');
+    restartTooltip();
 }
 
 function loadMinhaContaFotoAlterar()
@@ -1246,6 +1263,7 @@ function loadMinhaContaFotoAlterar()
     let id = $('#modalMinhaConta').find('[data-minhaconta-id]').attr('data-minhaconta-id');
     $('#modalMinhaConta').modal('hide');
     $('#modalMinhaContaFotoAlterar').modal('show');
+    restartTooltip();
     $('#modalMinhaContaFotoAlterar').find('[data-minhaconta-id]').attr('data-minhaconta-id', id);
     
     $('#modalMinhaContaFotoAlterar').find('[data-minhaconta-avatar]').
@@ -1524,6 +1542,7 @@ function janServicoAdd()
     $('#modalParceiroServicoAdd .beneficiosHospedagem :input').attr('disabled', true);
     $('#modalParceiroServicoAdd .beneficiosTransporte :input').attr('disabled', true);
     $('#modalParceiroServicoAdd').modal('show');
+    restartTooltip();
 }
 
 function parcAddCampoTarifario(sender)
@@ -1713,6 +1732,7 @@ function parcServicoEdita(id, parceiro)
 
             // Exibe o modal.
             modal.modal('show');
+            restartTooltip();
             modal.find(':input[name="SID"]').val(servico.id);
 
             // Preenche o modal com os valores.
@@ -1920,6 +1940,7 @@ function parcServicoSalvar() {
 function janParcFinanceiroAdd()
 {
     $('#modalParceiroFinanceiroAdd').modal('show');
+    restartTooltip();
 }
 
 function parcFinanceiroNovo() {
@@ -1983,6 +2004,7 @@ function parcFinanceiroEdita(id, parceiro) {
             modal.find('[name="FID"]').val(fin.id);
 
             modal.modal('show');
+            restartTooltip();
         } else {
             alerta(res.mensagem, 'Falha!', 'warning');
         }
@@ -2471,7 +2493,7 @@ function vendaAlteraSituacao(id, situacao, outro, sender)
             }
 
             alerta('Situação da venda alterada.', 'Sucesso!', 'success');
-            getReservas();
+            getVendasReservas();
             getAguardandoPagamento();
         } else {
             alerta(res.mensagem, 'Falha...', 'warning');
@@ -2500,7 +2522,7 @@ function vendaConfirmarEstorno(sender)
             
 
             alerta('Situação da venda alterada.', 'Sucesso!', 'success');
-            getReservas();
+            getVendasReservas();
             getAguardandoPagamento();
         } else {
             alerta(res.mensagem, 'Falha...', 'warning');
@@ -2538,8 +2560,8 @@ function getVendasReservas()
 
                 $('#reservasDiv > div').fadeOut('fast', function(){
                     $(this).remove();
-                    $('#reservasDiv table').slideDown();
                 });
+                $('#reservasDiv table').slideDown();
             }
             
         } else {
@@ -2581,8 +2603,8 @@ function getVendasAguardandoPagamento()
 
                 $('#aguardPagDiv > div').fadeOut('fast', function(){
                     $(this).remove();
-                    $('#aguardPagDiv table').slideDown();
                 });
+                $('#aguardPagDiv table').slideDown();
             }
             
         } else {
@@ -2624,8 +2646,8 @@ function getVendasPagas()
 
                 $('#pagasDiv > div').fadeOut('fast', function(){
                     $(this).remove();
-                    $('#pagasDiv table').slideDown();
                 });
+                $('#pagasDiv table').slideDown();
             }
             
         } else {
@@ -2638,9 +2660,15 @@ function getVendasPagas()
     fail(function(ev){nativePOSTFail(ev);});
 }
 
-function getVendasEstornadas()
+function getVendasEstornadas(temporario = false)
 {
-    $.post('/vendas/database/get/estornadas', function(res){
+    let temp = 0;
+    if(temporario === true) {temp = 1;}
+    else if(temporario === false) {temp = 0;}
+    
+    $.post('/vendas/database/get/estornadas', {
+        temporario: temp
+    }, function(res){
         if(res.success) {
             //console.log(res.vendas);
             //console.log(res.vendas.length);
@@ -2667,8 +2695,8 @@ function getVendasEstornadas()
 
                 $('#estornadasDiv > div').fadeOut('fast', function(){
                     $(this).remove();
-                    $('#estornadasDiv table').slideDown();
                 });
+                $('#estornadasDiv table').slideDown();
             }
             
         } else {
