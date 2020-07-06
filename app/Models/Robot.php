@@ -230,7 +230,7 @@ class Robot extends Master
                             $log->novo('<b>Dobbin Robot:</b> "Não foi possível gerar uma lista definitiva de clientes <a href="#roteiros/ver/'.$roteiro->id.'" target="_blank">deste roteiro</a>. O campo no Banco de Dados não suporta tantos clientes."',0,4);
                         }
                         
-                    } else if($clientes['success'] == true && !empty($clientes['clientes'])) {
+                    } else if($clientes['success'] == true && empty($clientes['clientes'])) {
                         // Escreve lista de clientes VAZIA.
                         $abc = $this->pdo->query("UPDATE roteiros SET clientes = '[]' WHERE id = $roteiro->id");
 

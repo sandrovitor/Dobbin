@@ -286,10 +286,14 @@ class ControllerJan
         <h4 class="font-weight-bold">Informações da venda</h4>
         <div class="row">
             <div class="col-12">
-                <strong>Destino:</strong> {$ret->roteiro_nome} ({$data_ini->format('d/m/Y')} a {$data_fim->format('d/m/Y')})<br>
+                <strong>Destino:</strong> <a href="#roteiros/ver/{$ret->roteiro_id}" target="_blank">{$ret->roteiro_nome} ({$data_ini->format('d/m/Y')} a {$data_fim->format('d/m/Y')})</a><br>
                 <strong>Cliente:</strong> {$ret->cliente_nome} <small>[Cód: {$ret->cliente_id}]</small><br>
                 <strong>Vendedor:</strong> {$ret->usuario_nome}<br>
-                <strong>OBSERVAÇÃO:</strong> <i>{$ret->obs}</i><br><br>
+                <strong>OBSERVAÇÃO:</strong> <span class="badge badge-pill badge-info mx-2" data-toggle="popover" title="Quer editar?" data-trigger="hover" data-content="Dê um duplo clique no texto para editá-lo."><i class="fas fa-question-circle"></i></span><br>
+                <div class="font-italic border border-top-0 border-bottom-0 border-right-0 border-info ml-1 py-2 pl-2 cursor-pointer"
+                    dobbin-campo-edita dobbin-campo-tipo="textarea" dobbin-campo-nome="obs" dobbin-url-form="vendas/{$ret->id}/obs/editar">{$ret->obs}</div>
+
+                <br>
                 <strong>Situação:</strong> <span class="badge badge-dark text-uppercase px-2">{$situacao}</span> <a href="javascript:void(0)" class="ml-2" onclick="$(this).next().fadeToggle();">Alterar situação</a>
                 
                 <div class="border rounded-sm p-2 mb-3 mt-1 border-primary mb-0" style="display:none">

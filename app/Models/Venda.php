@@ -199,7 +199,7 @@ class Venda extends Master
                          * ./LOG
                          */
                         return true;
-                    } catch(PDOException $e) {
+                    } catch(\PDOException $e) {
                         error_log($e->getMessage(), 0);
                         return false;
                     }
@@ -222,7 +222,7 @@ class Venda extends Master
                          * ./LOG
                          */
                         return true;
-                    } catch(PDOException $e) {
+                    } catch(\PDOException $e) {
                         error_log($e->getMessage(), 0);
                         return false;
                     }
@@ -258,7 +258,7 @@ class Venda extends Master
                          * ./LOG
                          */
                         return true;
-                    } catch(PDOException $e) {
+                    } catch(\PDOException $e) {
                         error_log($e->getMessage(), 0);
                         return false;
                     }
@@ -281,7 +281,7 @@ class Venda extends Master
                          * ./LOG
                          */
                         return true;
-                    } catch(PDOException $e) {
+                    } catch(\PDOException $e) {
                         error_log($e->getMessage(), 0);
                         return false;
                     }
@@ -305,7 +305,7 @@ class Venda extends Master
                          * ./LOG
                          */
                         return true;
-                    } catch(PDOException $e) {
+                    } catch(\PDOException $e) {
                         error_log($e->getMessage(), 0);
                         return false;
                     }
@@ -315,6 +315,26 @@ class Venda extends Master
             default:
                 return false;
             break;
+        }
+    }
+
+    /**
+     * Define OBSERVAÇÃO DA VENDA.
+     */
+    public function setObservacao(string $obs)
+    {
+        if($this->dados == null) {
+            return false;
+        }
+        try{
+            $abc = $this->pdo->prepare("UPDATE vendas SET vendas.obs = :obs WHERE id = $this->id");
+            $abc->bindValue(':obs', $obs, \PDO::PARAM_STR);
+
+            $abc->execute();
+            return true;
+        } catch(\PDOException $e) {
+            error_log($e->getMessage(), 0);
+            return false;
         }
     }
 }

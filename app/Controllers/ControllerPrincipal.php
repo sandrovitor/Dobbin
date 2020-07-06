@@ -661,6 +661,7 @@ class ControllerPrincipal
             'description' => 'Vendas que foram canceladas antes de serem pagas.',
             'page' => $blade->run("vendas.vendasCanceladas", array(
                 'vendas' => $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [['status', '=', 'Cancelada']])['vendas'],
+                'sgc' => $sgc,
             ))
         );
 
@@ -678,6 +679,7 @@ class ControllerPrincipal
             'description' => 'Vendas que foram pagas e devolvidas/estornadas ao cliente.',
             'page' => $blade->run("vendas.vendasEstornadas", array(
                 'vendas' => $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [['status', '=', 'Devolvida']])['vendas'],
+                'sgc' => $sgc,
             ))
         );
 
@@ -712,7 +714,19 @@ class ControllerPrincipal
     {
         self::validaConexao(3);
         $sgc = new SGCTUR();
-        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Devolvida'] ]);
+        
+        if(isset($_POST['temporario']) && (int)$_POST['temporario'] === 1) {
+            // Retorna período de 7 dias (temporário)
+            $semana = new \DateTime();
+            $semana->sub(new \DateInterval('P7D'));
+
+            $filtro = [ ['status', '=', 'Devolvida'], ['data_estorno', '>=', $semana->format('Y-m-d')] ];
+        } else {
+            // Retorna todos
+            $filtro = [ ['status', '=', 'Devolvida'] ];
+        }
+
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], $filtro);
         return json_encode($ret);
     }
 

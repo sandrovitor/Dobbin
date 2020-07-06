@@ -1184,4 +1184,32 @@ class ControllerForm
         return json_encode($retorno);
     }
 
+    static function vendasAlterarObservacao($p)
+    {
+        self::validaConexao(3);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        if(isset($_POST['obs'])) {
+            $venda = new Venda($p['id']);
+            $v = $venda->getDados();
+            if($v === false) {
+                $retorno['mensagem'] = Erro::getMessage(302);
+            } else {
+                $ret = $venda->setObservacao($_POST['obs']);
+                if($ret === true) {
+                    $retorno['success'] = true;
+                } else {
+                    $retorno['mensagem'] = Erro::getMessage(70);
+                }
+            }
+        } else {
+            $retorno['mensagem'] = Erro::getMessage(10);
+        }
+
+        return json_encode($retorno);
+    }
+
 }
