@@ -642,7 +642,7 @@ class ControllerPrincipal
             'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Todas',
             'description' => 'Veja as suas vendas concluídas, canceladas, aguardando pagamento e reservas. Nem todas serão exibidas aqui.',
             'page' => $blade->run("vendas.vendasDatabase", array(
-                'vendas' => $sgc->getVendasLista(0,200)['vendas'],
+                'vendas' => $sgc->getVendasLista(0,1000)['vendas'],
                 'sgc' => $sgc,
             ))
         );
@@ -686,6 +686,24 @@ class ControllerPrincipal
         return json_encode($retorno);
     }
 
+    static function vendasPagando($p)
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-shopping-cart"></i> Vendas > Em Pagamento',
+            'description' => 'Vendas que ainda estão sendo quitadas pelos clientes.',
+            'page' => $blade->run("vendas.vendasPagando", array(
+                'vendas' => $sgc->getVendasLista(0, 0, ['data_reserva'], [SGCTUR::ORDER_DESC], [['status', '=', 'Pagando']])['vendas'],
+                'sgc' => $sgc,
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
     static function vendasDatabaseReservas($p) // Retorna JSON
     {
         self::validaConexao(3);
@@ -699,6 +717,14 @@ class ControllerPrincipal
         self::validaConexao(3);
         $sgc = new SGCTUR();
         $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Aguardando'] ]);
+        return json_encode($ret);
+    }
+
+    static function vendasDatabasePagando($p) // Retorna JSON
+    {
+        self::validaConexao(3);
+        $sgc = new SGCTUR();
+        $ret = $sgc->getVendasLista(0,200,['data_reserva'],[SGCTUR::ORDER_DESC], [ ['status', '=', 'Pagando'] ]);
         return json_encode($ret);
     }
 

@@ -13,7 +13,12 @@
                             - Serão retornados 400 resultados no máximo;<br>
                             - Itens que serão pesquisados: NOME DO CLIENTE, ROTEIRO, DATA_RESERVA, DATA_VENDA, DATA_PAGAMENTO, DATA_CANCELADO, DATA_ESTORNO e STATUS/SITUAÇÃO;<br>
                             - Somente a data da reserva será exibida em primeira instância, para as demais datas consultar os detalhes da venda;<br>
-                            - Para buscar vendas pela situação, use somente palavras como Aguardando, Reserva, Paga, Cancelada e Devolvida
+                            - Para buscar vendas pela situação, use somente palavras como <a href="javascript:void(0)" onclick="$(this).parents('form').find('[name=\'busca\']').val('Aguardando')">Aguardando</a>,
+                            <a href="javascript:void(0)" onclick="$(this).parents('form').find('[name=\'busca\']').val('Reserva')">Reserva</a>,
+                            <a href="javascript:void(0)" onclick="$(this).parents('form').find('[name=\'busca\']').val('Pagando')">Paga</a>,
+                            <a href="javascript:void(0)" onclick="$(this).parents('form').find('[name=\'busca\']').val('Paga')">Paga</a>,
+                            <a href="javascript:void(0)" onclick="$(this).parents('form').find('[name=\'busca\']').val('Cancelada')">Cancelada</a>,
+                            <a href="javascript:void(0)" onclick="$(this).parents('form').find('[name=\'busca\']').val('Devolvida')">Devolvida</a>.
                         </div>
                     </div>
                     <div class="form-group text-right">

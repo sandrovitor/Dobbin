@@ -96,6 +96,9 @@
                 <h5 class="font-weight-bold"><i class="fas fa-gift"></i> HOJE</h5>
                 <table class="table table-hover table-sm mb-4">
                     <tbody>
+                    @if(empty($aniversarios['hoje']))
+                    <tr><td class="text-center">Nenhum aniversário hoje</td></tr>
+                    @else
                     @foreach($aniversarios['hoje'] as $h)
                     <tr onclick="loadCliente({{$h->id}})" class="cursor-pointer">
                         <td class="">
@@ -109,12 +112,16 @@
                         </td>
                     </tr>
                     @endforeach
+                    @endif
                     </tbody>
                 </table><br>
 
                 <h5 class="font-weight-bold">PRÓXIMOS ANIVERSÁRIOS</h5>
                 <table class="table table-sm table-hover">
                     <tbody>
+                    @if(empty($aniversarios['amanha']))
+                    <tr><td class="text-center">Nenhum aniversário nos próximos dias</td></tr>
+                    @else
                     @foreach($aniversarios['amanha'] as $h)
                     <tr onclick="loadCliente({{$h->id}})" class="cursor-pointer">
                         <td class="">
@@ -128,6 +135,7 @@
                         </td>
                     </tr>
                     @endforeach
+                    @endif
                     </tbody>
                 </table>
             @else

@@ -38,6 +38,16 @@ class Venda extends Master
                 return false;
             } else {
                 $this->dados = $abc->fetch(\PDO::FETCH_OBJ);
+
+                // Formata alguns valores para ficar mais amigável.
+                switch($this->dados->status) {
+                    case 'Reserva': $this->dados->status_html = '<span class="badge badge-info py-1 px-2">Reserva</span>'; break;
+                    case 'Aguardando': $this->dados->status_html = '<span class="badge badge-primary py-1 px-2">Aguardando Pagamento</span>'; break;
+                    case 'Pagando': $this->dados->status_html = '<span class="badge badge-success py-1 px-2">Em Pagamento</span>'; break;
+                    case 'Paga': $this->dados->status_html = '<span class="badge badge-success py-1 px-2">Paga</span>'; break;
+                    case 'Cancelada': $this->dados->status_html = '<span class="badge badge-secondary py-1 px-2">Cancelada</span>'; break;
+                    case 'Devolvida': $this->dados->status_html = '<span class="badge badge-dark py-1 px-2">Devolvida</span>'; break;
+                }
                 return true;
             }
         } else {
@@ -170,17 +180,17 @@ class Venda extends Master
      * Define o status da venda.
      * 
      * @param string $situacao Situação da venda: Reserva, Aguardando, Paga, Cancelada, Devolvida.
-     * @param string $outro Se situação "PAGA": informar forma de pagamento; se situação "DEVOLVIDA": informar valor devolvido em centavos.
+     * @param array $outro Pode conter alguns desses valores: ['forma_pagamento' = STRING, 'vencimento' => INT, 'parcelas' => INT, 'valor_parcela' => INT]
      * 
      * @return bool
      */
-    public function setSituacao(string $situacao, string $outro = '')
+    public function setSituacao(string $situacao, array $outro = [])
     {
         if($this->dados == null) {
             return false;
         }
 
-        $atual = $this->dados->status;
+        $atual = $this->dados->status;  
 
         switch($situacao)
         {
@@ -208,11 +218,26 @@ class Venda extends Master
 
 
             case 'Aguardando':
+
                 if($atual == 'Devolvida' || $atual == 'Cancelada' || $atual == 'Paga') {
                     return false;
                 } else {
+                    // Verifica se todas as informações necessárias foram enviadas.
+                    if(
+                        !isset($outro['forma_pagamento']) || $outro['forma_pagamento'] == '' ||
+                        !isset($outro['parcelas']) || $outro['parcelas'] == '' ||
+                        !isset($outro['vencimento']) || $outro['vencimento'] == ''
+                    ) {
+                        return false;
+                    }
+
                     try{
-                        $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', data_venda = NOW() WHERE id = $this->id");
+                        $abc = $this->pdo->prepare("UPDATE vendas SET status = :status, forma_pagamento = :f_p, parcelas = :parc, vencimento = :venc, data_venda = NOW() WHERE id = $this->id");
+                        $abc->bindValue(':status', $situacao, \PDO::PARAM_STR);
+                        $abc->bindValue(':f_p', $outro['forma_pagamento'], \PDO::PARAM_STR);
+                        $abc->bindValue(':parc', $outro['parcelas'], \PDO::PARAM_INT);
+                        $abc->bindValue(':venc', $outro['vencimento'], \PDO::PARAM_INT);
+                        $abc->execute();
                         /**
                          * LOG
                          */
@@ -230,11 +255,162 @@ class Venda extends Master
             break;
 
 
+            case 'Pagando':
+                if($atual == 'Devolvida' || $atual == 'Cancelada' || $atual == 'Paga') {
+                    return false;
+                } else {
+                    // Verifica se todas as informações necessárias foram enviadas.
+                    if(
+                        !isset($outro['valor_parcela']) || $outro['valor_parcela'] == '' || (int)$outro['valor_parcela'] == 0
+                    ) {
+                        return false;
+                    }
+
+                    // Verifica quantidade de parcelas.
+                    // Se for última parcela, o TOTAL_PAGO + VALOR_PARCELA precisa ser igual ao VALOR_TOTAL
+                    if((int)$this->dados->parcelas - (int)$this->dados->parcelas_pagas == 1) {
+                        if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] < (int)$this->dados->valor_total) {
+                            // O valor não pode ser menor.
+                            return 'Valor da parcela é baixo. Na última (ou única) parcela, o valor da parcela precisa cobrir o valor restante do total da compra.';
+                        } else if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] > (int)$this->dados->valor_total) {
+                            // O valor pago é maior que o esperado.
+                            return 'Valor da parcela é alto. O valor da parcela extrapolou o valor da compra. Não permitido.';
+                        }
+
+                        // Organiza os dados para persistir no banco O ÚLTIMO PAGAMENTO.
+                        $detalhes = json_decode($this->dados->detalhes_pagamento);
+                        if($detalhes == NULL) {
+                            $detalhes = [];
+                        }
+
+                        array_push($detalhes, [
+                            'valor' => (int)$outro['valor_parcela'],
+                            'parcela' => (int)$this->dados->parcelas_pagas+1,
+                            'data' => date('Y-m-d')
+                        ]);
+
+                        // Persiste
+                        try{
+                            $abc = $this->pdo->prepare("UPDATE vendas SET status = :status, parcelas_pagas = :parc, ".
+                            "total_pago = :t_pag, detalhes_pagamento = :d_pag, data_pagamento = NOW() WHERE id = $this->id");
+                            $abc->bindValue(':status', 'Paga', \PDO::PARAM_STR); // Concluiu o pagamento.
+                            $abc->bindValue(':parc', (int)$this->dados->parcelas_pagas+1, \PDO::PARAM_INT);
+                            $abc->bindValue(':t_pag', (int)$this->dados->total_pago + (int)$outro['valor_parcela'], \PDO::PARAM_INT);
+                            $abc->bindValue(':d_pag', json_encode($detalhes), \PDO::PARAM_STR);
+                            $abc->execute();
+                            /**
+                             * LOG
+                             */
+                            $log = new LOG();
+                            $log->novo('Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>Paga</b>.', $_SESSION['auth']['id'], 2);
+                            /**
+                             * ./LOG
+                             */
+                            return true;
+                        } catch(\PDOException $e) {
+                            error_log($e->getMessage(), 0);
+                            return false;
+                        }
+
+                    } else if((int)$this->dados->parcelas - (int)$this->dados->parcelas_pagas <= 0) {
+                        // ERRO: A quantidade de parcelas extrapolou.
+                        return 'A quantidade de parcelas já extrapolou. Não é possível mais fazer pagamentos. Solicite que o desenvolvedor '.
+                        'aumente a quantidade de parcelas manualmente no Banco de Dados.';
+                    } else {
+                        // Ainda restam parcelas.
+
+                        $detalhes = json_decode($this->dados->detalhes_pagamento);
+                        if($detalhes == NULL) {
+                            $detalhes = [];
+                        }
+
+                        // Verifica se a parcela paga cobre todo o valor da compra:
+                        // TOTAL_PAGO + VALOR_PARCELA é maior ao VALOR_TOTAL
+                        if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] > (int)$this->dados->valor_total) {
+                            // O valor pago é maior que o esperado.
+                            return 'Valor da parcela é alto. O valor da parcela extrapolou o valor da compra. Não permitido.';
+                        } else if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] == (int)$this->dados->valor_total) {
+                            // O valor da parcela cobriu todo o valor.
+                            // A venda deve ser definida como PAGA;
+                            // O campo PARCELAS_PAGAS deve ser igual a PARCELAS;
+
+                            // Organiza dados para persistir no banco.
+                            
+
+                            array_push($detalhes, [
+                                'valor' => (int)$outro['valor_parcela'],
+                                'parcela' => (int)$this->dados->parcelas_pagas+1,
+                                'data' => date('Y-m-d')
+                            ]);
+
+                            // Adiciona informação zerada nas parcelas seguintes.
+                            for($i = (int)$this->dados->parcelas_pagas+2; $i <= (int)$this->dados->parcelas; $i++) {
+                                array_push($detalhes, [
+                                    'valor' => 0,
+                                    'parcela' => $i,
+                                    'data' => date('Y-m-d')
+                                ]);
+                            }
+
+                            $parcPagas = (int)$this->dados->parcelas; // PARCELAS_PAGAS
+                            $situ = 'Paga'; // STATUS
+                            $dataPagamento = ', data_pagamento = NOW() ';
+                            $logStr = 'Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>Paga</b>.'; // MENSAGEM DO LOG
+                        } else {
+                            // Pagamento de uma parcela normalmente.
+                            // Valor mínimo: R$ 0,01 ou (1 centavo).
+
+                            array_push($detalhes, [
+                                'valor' => (int)$outro['valor_parcela'],
+                                'parcela' => (int)$this->dados->parcelas_pagas+1,
+                                'data' => date('Y-m-d')
+                            ]);
+
+                            $parcPagas = (int)$this->dados->parcelas_pagas+1; // PARCELAS_PAGAS
+                            $situ = 'Pagando'; // STATUS
+                            $dataPagamento = '';
+                            $logStr = 'Lançou pagamento de parcela (<b>'.$parcPagas.'</b> de <b>'.$this->dados->parcelas.'</b>) da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b>.'; // MENSAGEM DO LOG
+                        }
+
+                        // Persiste
+                        try{
+                            $abc = $this->pdo->prepare("UPDATE vendas SET status = :status, parcelas_pagas = :parc, ".
+                            "total_pago = :t_pag, detalhes_pagamento = :d_pag $dataPagamento WHERE id = $this->id");
+                            $abc->bindValue(':status', $situ, \PDO::PARAM_STR); // Concluiu o pagamento.
+                            $abc->bindValue(':parc', $parcPagas, \PDO::PARAM_INT);
+                            $abc->bindValue(':t_pag', (int)$this->dados->total_pago + (int)$outro['valor_parcela'], \PDO::PARAM_INT);
+                            $abc->bindValue(':d_pag', json_encode($detalhes), \PDO::PARAM_STR);
+                            $abc->execute();
+                            /**
+                             * LOG
+                             */
+                            $log = new LOG();
+                            $log->novo('', $_SESSION['auth']['id'], 2);
+                            /**
+                             * ./LOG
+                             */
+                            return true;
+                        } catch(\PDOException $e) {
+                            error_log($e->getMessage(), 0);
+                            return false;
+                        }
+                    }
+                }
+            break;
+
+
             case 'Paga':
                 if($atual == 'Devolvida' || $atual == 'Cancelada') {
                     return false;
                 } else {
-                    switch($outro) {
+                    // Verifica se todas as informações necessárias foram enviadas.
+                    if(
+                        !isset($outro['forma_pagamento']) || $outro['forma_pagamento'] == ''
+                    ) {
+                        return false;
+                    }
+
+                    switch($outro['forma_pagamento']) {
                         case 'Crédito':
                         case 'Débito':
                         case 'Boleto':
@@ -242,13 +418,35 @@ class Venda extends Master
                         case 'Transferência':
                         case 'Dinheiro':
                         case 'Outro':
-                            $f = $outro; break;
+                            $f = $outro['forma_pagamento']; break;
 
                         default: return false; break;
                     }
 
+                    if($this->dados->data_venda == NULL) {
+                        $dataVenda = 'data_venda = NOW(), ';
+                    } else {
+                        $dataVenda = '';
+                    }
+                    if((int)date('j') > 28){$venc = 1;} else {$venc = (int)date('j');}
+
                     try{
-                        $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', forma_pagamento = '".$f."', data_pagamento = NOW(), data_venda = IF(data_venda IS NULL, NOW(), data_venda) WHERE id = $this->id");
+                        //$abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', forma_pagamento = '".$f."', data_pagamento = NOW(), data_venda = IF(data_venda IS NULL, NOW(), data_venda) WHERE id = $this->id");
+                        $abc = $this->pdo->prepare("UPDATE vendas SET status = :status, forma_pagamento = :f_p, parcelas_pagas = :parc, vencimento = :venc, $dataVenda total_pago = :t_pago, ".
+                        "data_pagamento = NOW(), detalhes_pagamento = :det_pag WHERE id = $this->id");
+                        $abc->bindValue(':status', $situacao, \PDO::PARAM_STR);
+                        $abc->bindValue(':f_p', $f, \PDO::PARAM_STR);
+                        $abc->bindValue(':parc', $this->dados->parcelas, \PDO::PARAM_INT);
+                        $abc->bindValue(':venc', $venc, \PDO::PARAM_INT); // Dia de hoje
+                        $abc->bindValue(':t_pago', $this->dados->valor_total, \PDO::PARAM_INT);
+                        $abc->bindValue(':det_pag', json_encode([
+                            'valor' => $this->dados->valor_total,
+                            'parcela' => 1,
+                            'data' => date('Y-m-d')
+                        ]), \PDO::PARAM_STR);
+
+                        $abc->execute();
+
                         /**
                          * LOG
                          */
@@ -267,7 +465,7 @@ class Venda extends Master
 
 
             case 'Cancelada':
-                if($atual == 'Devolvida' || $atual == 'Paga') {
+                if($atual == 'Devolvida' || $atual == 'Pagando' || $atual == 'Paga') {
                     return false;
                 } else {
                     try{
@@ -293,9 +491,15 @@ class Venda extends Master
                 if($atual == 'Devolvida' || $atual == 'Cancelada' || $atual == 'Reserva' || $atual == 'Aguardando') {
                     return false;
                 } else {
-                    $valor = (int)$outro;
+                    // Verifica se todas as informações necessárias foram enviadas.
+                    if(
+                        !isset($outro['valor_estorno']) || $outro['valor_estorno'] == '' || (int)$outro['valor_estorno'] == 0
+                    ) {
+                        return false;
+                    }
+                    $valor = (int)$outro['valor_estorno'];
                     try{
-                        $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', data_estorno = NOW(), valor_devolvido = $valor WHERE id = $this->id");
+                        $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', parcelas_pagas = $this->parcelas, data_estorno = NOW(), valor_devolvido = $valor WHERE id = $this->id");
                         /**
                          * LOG
                          */

@@ -37,7 +37,7 @@
                             <td>{{$v->id}}</td>
                             <td>( {{$v->roteiro_id}} ) {{$v->roteiro_nome}} ({{$data_ini->format('d/m/Y')}} a {{$data_fim->format('d/m/Y')}})</td>
                             <td>( {{$v->cliente_id}} ) {{$v->cliente_nome}}</td>
-                            <td>{{$v->status}}</td>
+                            <td>{!!$v->status_html!!}</td>
                             <td>{{$data_reserva->format('d/m/Y H:i:s')}}</td>
                             <td>R$ {{$sgc->converteCentavoParaReal($v->valor_total)}}</td>
                         </tr>

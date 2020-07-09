@@ -1173,12 +1173,16 @@ class ControllerForm
 
         $venda = new Venda($p['id']);
         $v = $venda->getDados();
-        $ret = $venda->setSituacao($_POST['situacao'], $_POST['outro']);
+        $outro = json_decode($_POST['outro']);
+        $ret = $venda->setSituacao($_POST['situacao'], (array)$outro);
 
         if($ret === false) {
             $retorno['mensagem'] = 'Não foi possível alterar a situação desta venda.';
-        } else {
+        } else if($ret === true) {
             $retorno['success'] = true;
+        } else {
+            // Mensagem personalizada da classe.
+            $retorno['mensagem'] = $ret;
         }
 
         return json_encode($retorno);

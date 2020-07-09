@@ -48,10 +48,10 @@
                 <div class="row">
                     <div class="col-12 col-xl-6">
                         <div class="card">
-                            <div class="card-header bg-success text-white">
-                                PAGAS
+                            <div class="card-header bg-success text-light">
+                                EM PAGAMENTO...
                             </div>
-                            <div class="card-body px-2" id="pagasDiv" >
+                            <div class="card-body px-2" id="pagandoDiv">
                                 <div class="text-center mx-2">
                                     Carregando...<br>
                                     <div class="spinner-grow text-primary"></div><br>
@@ -62,10 +62,10 @@
                     </div>
                     <div class="col-12 col-xl-6">
                         <div class="card">
-                            <div class="card-header bg-dark text-light">
-                                ESTORNADAS/DEVOLVIDAS
+                            <div class="card-header bg-success text-white">
+                                PAGAS
                             </div>
-                            <div class="card-body px-2" id="estornadasDiv">
+                            <div class="card-body px-2" id="pagasDiv" >
                                 <div class="text-center mx-2">
                                     Carregando...<br>
                                     <div class="spinner-grow text-primary"></div><br>

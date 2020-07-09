@@ -682,11 +682,34 @@ class SGCTUR extends Master
             $retorno['vendas'] = array();
         } else if($abc->rowCount() <= 400)  {
             $retorno['vendas'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+
+            foreach($retorno['vendas'] as $key => $val) {
+                // Formata alguns valores para ficar mais amigável.
+                switch($val->status) {
+                    case 'Reserva': $retorno['vendas'][$key]->status_html = '<span class="badge badge-info py-1 px-2">Reserva</span>'; break;
+                    case 'Aguardando': $retorno['vendas'][$key]->status_html = '<span class="badge badge-primary py-1 px-2">Aguardando Pagamento</span>'; break;
+                    case 'Pagando': $retorno['vendas'][$key]->status_html = '<span class="badge badge-success py-1 px-2">Em Pagamento</span>'; break;
+                    case 'Paga': $retorno['vendas'][$key]->status_html = '<span class="badge badge-success py-1 px-2">Paga</span>'; break;
+                    case 'Cancelada': $retorno['vendas'][$key]->status_html = '<span class="badge badge-secondary py-1 px-2">Cancelada</span>'; break;
+                    case 'Devolvida': $retorno['vendas'][$key]->status_html = '<span class="badge badge-dark py-1 px-2">Devolvida</span>'; break;
+                }
+            }
         } else {
             $retorno['vendas'] = array();
             $retorno['mensagem'] = 'Total de '.$abc->rowCount().' registros encontrados. Mostrando os primeiros 400 registros. Tente refinar a busca.';
             for($i = 0; $i < 400; $i++) {
-                array_push($retorno['vendas'], $abc->fetch(\PDO::FETCH_OBJ));
+                $val = $abc->fetch(\PDO::FETCH_OBJ);
+                
+                // Formata alguns valores para ficar mais amigável.
+                switch($val->status) {
+                    case 'Reserva': $val->status_html = '<span class="badge badge-info py-1 px-2">Reserva</span>'; break;
+                    case 'Aguardando': $val->status_html = '<span class="badge badge-primary py-1 px-2">Aguardando Pagamento</span>'; break;
+                    case 'Pagando': $val->status_html = '<span class="badge badge-success py-1 px-2">Em Pagamento</span>'; break;
+                    case 'Paga': $val->status_html = '<span class="badge badge-success py-1 px-2">Paga</span>'; break;
+                    case 'Cancelada': $val->status_html = '<span class="badge badge-secondary py-1 px-2">Cancelada</span>'; break;
+                    case 'Devolvida': $val->status_html = '<span class="badge badge-dark py-1 px-2">Devolvida</span>'; break;
+                }
+                array_push($retorno['vendas'], $val);
             }
         }
 
@@ -2002,6 +2025,18 @@ class SGCTUR extends Master
 
             $abc = $this->pdo->query($query);
             $retorno['vendas'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+
+            foreach($retorno['vendas'] as $key => $val) {
+                // Formata alguns valores para ficar mais amigável.
+                switch($val->status) {
+                    case 'Reserva': $retorno['vendas'][$key]->status_html = '<span class="badge badge-info py-1 px-2">Reserva</span>'; break;
+                    case 'Aguardando': $retorno['vendas'][$key]->status_html = '<span class="badge badge-primary py-1 px-2">Aguardando Pagamento</span>'; break;
+                    case 'Pagando': $retorno['vendas'][$key]->status_html = '<span class="badge badge-success py-1 px-2">Em Pagamento</span>'; break;
+                    case 'Paga': $retorno['vendas'][$key]->status_html = '<span class="badge badge-success py-1 px-2">Paga</span>'; break;
+                    case 'Cancelada': $retorno['vendas'][$key]->status_html = '<span class="badge badge-secondary py-1 px-2">Cancelada</span>'; break;
+                    case 'Devolvida': $retorno['vendas'][$key]->status_html = '<span class="badge badge-dark py-1 px-2">Devolvida</span>'; break;
+                }
+            }
             $retorno['success'] = true;
 
             return $retorno;

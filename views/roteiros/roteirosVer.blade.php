@@ -30,7 +30,8 @@
                                 $criado = new DateTime($roteiro->criado_em);
                                 $atualizado = new DateTime($roteiro->atualizado_em);
 
-                                $receita = 0; // Valor somado de todas as vendas.
+                                $receita = 0; // Soma de valores pagos até agora em todas as vendas. [TOTAL REAL]
+                                $receita_esperada = 0; // Valor total esperado com todas as vendas. [PROJETADA]
 
                             @endphp
                                 <table class="table table-bordered table-sm">
@@ -131,7 +132,11 @@
                                             @php
                                                 if($l->status == 'Reserva') {
                                                     $temp = new DateTime($l->data_reserva);
-                                                    $bgtr = 'table-secondary';
+                                                    $bgtr = 'table-info';
+                                                    $situ = '<span class="badge badge-info py-1 px-2">'.$l->status.'</span>';
+                                                } else if($l->status == 'Devolvida') {
+                                                    $temp = new DateTime($l->data_reserva);
+                                                    $bgtr = '';
                                                     $situ = '<span class="badge badge-secondary py-1 px-2">'.$l->status.'</span>';
                                                 } else {
                                                     $temp = new DateTime($l->data_venda);
@@ -139,8 +144,18 @@
                                                     $situ = '<span class="badge badge-success py-1 px-2">'.$l->status.'</span> ('.$l->forma_pagamento.')';
                                                 }
 
+                                                //$receita = 0; // Soma de valores pagos até agora em todas as vendas. [TOTAL REAL]
+                                                //$receita_esperada = 0; // Valor total esperado com todas as vendas. [PROJETADA]
+
+
                                                 // Incrementa valor da receita.
-                                                $receita += (int)$l->valor_total;
+                                                if($l->status == 'Devolvida') { // Contabiliza somente o valor que não foi devolvido.
+                                                    $receita += ( (int)$l->total_pago - (int)$l->valor_devolvido );
+                                                } else { // Contabiliza o valor pago.
+                                                    $receita += (int)$l->total_pago; // VALOR REAL. Valor pago até o momento.
+                                                    $receita_esperada += (int)$l->valor_total; // Receita espera (mas que ainda foi quitado totalmente);
+                                                }
+                                                //$receita += (int)$l->valor_total;
                                             @endphp
                                             <tr class="{{$bgtr}}">
                                                 <td><a href="javascript:void(0)" onclick="getVenda({{$l->id}})">{{$l->id}}</a></td>
@@ -375,10 +390,38 @@
                                     <tbody class="small">
                                         <tr>
                                             <td><strong>Despesas:</strong> R$ {{$sgc->converteCentavoParaReal($despesasTotal)}}</td>
-                                            <td><strong>Receita:</strong> R$ {{$sgc->converteCentavoParaReal($receita)}}</td>
+                                            <td><strong>Lucro real:</strong> R$ {{$sgc->converteCentavoParaReal($lucroTotal)}}</td>
+                                            
                                         </tr>
                                         <tr>
-                                            <td colspan="2"><strong>Lucro real:</strong> R$ {{$sgc->converteCentavoParaReal($lucroTotal)}}</td>
+                                            <td>
+                                                <strong>Receita (REAL):</strong>
+                                                R$ {{$sgc->converteCentavoParaReal($receita)}}
+                                                <span class="badge badge-pill badge-info mx-2" data-toggle="popover" title="Como é calculado?" data-trigger="hover" data-content="A <b>Receita (REAL)</b> corresponde aos valores das vendas 
+                                                que já entrou em caixa. Por exemplo, <br>
+                                                <ul> <li><strong>Reservas e Aguardando pagamento:</strong> valor ainda não foi pago. Não é contado como Receita (REAL) até a dívida do cliente ser quitada.</li>
+                                                <li><strong>Pagando ou Em Pagamento:</strong> Somente o valor pago até o momento é calculado na Receita (REAL). O valor total dessa venda é contabilizado na Receita (PROJETADA).</li> 
+                                                <li><strong>Paga:</strong> O valor total dessa venda é contabilizada.</li>
+                                                <li><strong>Cancelada:</strong> Essa venda não é contabilizada, pois nenhum valor foi pago pelo cliente. </li> 
+                                                <li><strong>Devolvida:</strong> A diferença entre o TOTAL PAGO (pelo cliente) e o VALOR DEVOLVIDO (para o cliente) é calculado na Receita (REAL), visto que se trata de um faturamento.
+                                                Esta venda é desconsiderada na Receita (PROJETADA).</li> </ul>">
+                                                    <i class="fas fa-question-circle"></i>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <strong>Receita (PROJETADA):</strong>
+                                                R$ {{$sgc->converteCentavoParaReal($receita_esperada)}}
+                                                <span class="badge badge-pill badge-info mx-2" data-toggle="popover" title="Como é calculado?" data-trigger="hover" data-content="A <b>Receita (PROJETADA)</b> corresponde aos valores TOTAIS
+                                                das vendas realizadas, mas que ainda não entraram em caixa. Por exemplo, <br>
+                                                <ul> <li><strong>Reservas e Aguardando pagamento:</strong> valor ainda não foi pago, mas o valor já é contabilizado como Receita (PROJETADA), somente aguardando
+                                                a dívida do cliente ser quitada.</li>
+                                                <li><strong>Pagando (ou Em Pagamento) e Paga:</strong> O valor total dessa venda é contabilizado na Receita (PROJETADA), mesmo se a dívida ainda estiver sendo quitada.</li>
+                                                <li><strong>Cancelada:</strong> Essa venda não é contabilizada, pois nenhum valor foi pago pelo cliente. </li> 
+                                                <li><strong>Devolvida:</strong> Esta venda é desconsiderada na Receita (PROJETADA).</li> </ul>
+                                                <br> <b>OBS.: <i>Se o valor da Receita (REAL) superar a Receita (PROJETADA), o motivo são as vendas DEVOLVIDAS/ESTORNADAS, que não foram devolvidas integralmente. </i></b>">
+                                                    <i class="fas fa-question-circle"></i>
+                                                </span>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
