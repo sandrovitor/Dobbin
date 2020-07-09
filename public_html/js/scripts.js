@@ -179,13 +179,27 @@ function gatilhosLoadLanding()
             $(document).ready(function(){
                 setTimeout(function(){
                     getVendasReservas();getVendasAguardandoPagamento();
-                    getVendasPagas();getVendasEstornadas(true);
+                    getVendasPagas();getVendasPagando();
                 }, 1000);
                 geralIntervalo5Min = setInterval(function(){
                     getVendasReservas();
                     getVendasAguardandoPagamento();
                     getVendasPagas();
-                    getVendasEstornadas(true);
+                    getVendasPagando();
+                }, 180000);
+            }); break;
+
+        case /(vendas\/database)/gi.test(local): // Vendas > Database
+            $(document).ready(function(){
+                setTimeout(function(){
+                    getVendasReservas();getVendasAguardandoPagamento();
+                    //getVendasPagas();getVendasEstornadas(true);
+                }, 1000);
+                geralIntervalo5Min = setInterval(function(){
+                    getVendasReservas();
+                    getVendasAguardandoPagamento();
+                    //getVendasPagas();
+                    //getVendasEstornadas(true);
                 }, 180000);
             }); break;
 
@@ -2477,20 +2491,22 @@ function vendaRemovePassageiroLista(c, sender)
  * 
  * @param {int} id ID da venda
  * @param {string} situacao Situação da venda
- * @param {string} outro Informação adicional. Se "paga", informar forma de pagamento; se "devolvida", informar valor em centavos.
+ * @param {object} outro 
  * @param {Element} sender Elemento que disparou a função.
  */
 function vendaAlteraSituacao(id, situacao, outro, sender)
 {
+
     $.post(PREFIX_POST+'vendas/'+id+'/situacao/editar',{
         situacao: situacao,
-        outro: outro
+        outro: JSON.stringify(outro)
     }, function(res){
         if(res.success == true) {
-            // Verifica se é janela dinâmica.
-            if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
-                getVenda(id); // Atualiza janela dinâmica.
-            }
+            // Fecha a segunda janela dinâmica.
+            console.log(sender);
+            $(sender).parents('.modal').modal('hide');
+            getVenda(id); // Atualiza a primeira janela dinâmica.
+            
 
             alerta('Situação da venda alterada.', 'Sucesso!', 'success');
             getVendasReservas();
@@ -2499,6 +2515,35 @@ function vendaAlteraSituacao(id, situacao, outro, sender)
             alerta(res.mensagem, 'Falha...', 'warning');
         }
     }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+    
+}
+
+/**
+ * 
+ * @param {int} id ID da venda
+ * @param {Element} sender Elemento que disparou a função.
+ */
+function vendaGetSituacao(id, sender)
+{
+    $.post('vendas/database/load/venda/'+id+'/situacao', function(res){
+        if(res.success) {
+            console.log(res.venda);
+            let venda = res.venda;
+
+            // AJUSTA TITULO DA JANELA DINÂMICA 2
+            $('#janDinamica2').find('.tituloModal').text('Alterar situação - Venda #'+venda.id);
+            $('#janDinamica2').find('.modal-body').html(res.page);
+            
+            setTimeout(function(){$('#janDinamica2').modal('show');
+            restartTooltip();}, 400);
+            $('#janDinamica2').find('.modal-dialog').removeClass('modal-sm').addClass('modal-lg');
+            $('#janDinamica2').find('ul.nav-pills a.nav-link:not(.disabled)').eq(0).trigger('click');
+            janDinamicaGatilhos(); // Dispara gatilhos na janela dinâmica.
+        } else {
+            alerta(res.mensagem, 'Falha.', 'info');
+        }
+    },'json').
     fail(function(ev){nativePOSTFail(ev);});
 }
 
@@ -2535,7 +2580,7 @@ function getVendasReservas()
 {
     $.post('/vendas/database/get/reservas', function(res){
         if(res.success) {
-            //console.log(res.vendas);
+            console.log(res.vendas);
             //console.log(res.vendas.length);
             if(res.vendas.length == 0) {
                 if($('#reservasDiv > div').length == 0) {
@@ -2553,7 +2598,7 @@ function getVendasReservas()
                     let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
                     $('#reservasDiv tbody').append(
                         '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
-                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status_html+'</td> '+
                         '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
                     );
                 });
@@ -2596,7 +2641,7 @@ function getVendasAguardandoPagamento()
                     let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
                     $('#aguardPagDiv tbody').append(
                         '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
-                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status_html+'</td> '+
                         '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
                     );
                 });
@@ -2609,6 +2654,49 @@ function getVendasAguardandoPagamento()
             
         } else {
             alerta(res.mensagem, 'Falha ao obter lista de vendas Aguardando Pagamento.', 'warning');
+            if(debugEnabled === true) {
+                console.log(res);
+            }
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+function getVendasPagando()
+{
+    $.post('/vendas/database/get/pagando', function(res){
+        if(res.success) {
+            //console.log(res.vendas);
+            //console.log(res.vendas.length);
+            if(res.vendas.length == 0) {
+                if($('#pagandoDiv > div').length == 0) {
+                    $('#pagandoDiv').append('<div class="text-center mx-2"></div>');
+                }
+                $('#pagandoDiv > div').html('<i>Nada encontrado...</i>');
+                $('#pagandoDiv').find('table').remove();
+            } else {
+                $('#pagandoDiv').find('table').remove();
+                $('#pagandoDiv').append('<table class="table table-sm table-bordered table-hover mb-0 table-responsive-sm" style="display:none;">'+
+                    '<thead class="thead-dark"> <tr>'+
+                    '<th>Cód</th> <th>(Cód) Roteiro</th> <th>(Cód) Cliente</th> <th>Status</th> <th>Data</th> <th>Valor Total</th>'+
+                    '</tr> </thead> <tbody> </tbody> </table>');
+                res.vendas.forEach(function(v){
+                    let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
+                    $('#pagandoDiv tbody').append(
+                        '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status_html+'</td> '+
+                        '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
+                    );
+                });
+
+                $('#pagandoDiv > div').fadeOut('fast', function(){
+                    $(this).remove();
+                });
+                $('#pagandoDiv table').slideDown();
+            }
+            
+        } else {
+            alerta(res.mensagem, 'Falha ao obter lista de vendas em pagamento.', 'warning');
             if(debugEnabled === true) {
                 console.log(res);
             }
@@ -2639,7 +2727,7 @@ function getVendasPagas()
                     let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
                     $('#pagasDiv tbody').append(
                         '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
-                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status_html+'</td> '+
                         '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
                     );
                 });
@@ -2688,7 +2776,7 @@ function getVendasEstornadas(temporario = false)
                     let dataReserva = Dobbin.formataDataHora( new Date(v.data_reserva), true);
                     $('#estornadasDiv tbody').append(
                         '<tr class="small cursor-pointer" onclick="getVenda('+v.id+')"> <td>'+v.id+'</td> <td>( '+v.roteiro_id+' ) '+v.roteiro_nome+'</td> '+
-                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status+'</td> '+
+                        '<td>( '+v.cliente_id+' ) '+v.cliente_nome+'</td> <td>'+v.status_html+'</td> '+
                         '<td>'+dataReserva+'</td> <td>R$ '+Dobbin.converteCentavoEmReal(v.valor_total)+'</td></tr>'
                     );
                 });
@@ -3058,7 +3146,7 @@ $(document).ready(function(){
                             '<td>'+res.vendas[i].id+'</td>'+
                             '<td>( '+res.vendas[i].roteiro_id+' ) '+res.vendas[i].roteiro_nome+' ('+Dobbin.formataData(new Date(res.vendas[i].roteiro_data_ini))+' a '+Dobbin.formataData(new Date(res.vendas[i].roteiro_data_fim))+')</td>'+
                             '<td>( '+res.vendas[i].cliente_id+' ) '+res.vendas[i].cliente_nome+'</td>'+
-                            '<td>'+res.vendas[i].status+'</td>'+
+                            '<td>'+res.vendas[i].status_html+'</td>'+
                             '<td>'+Dobbin.formataDataHora(new Date(res.vendas[i].data_reserva))+'</td>'+
                             '<td>R$ '+Dobbin.converteCentavoEmReal(res.vendas[i].valor_total)+'</td>'+
                             '</tr>');

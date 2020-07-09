@@ -109,35 +109,69 @@
                     </div>
                     <div class="row">
                         <div class="col-12 d-flex flex-md-row flex-column justify-content-between align-items-md-end">
-                            <div class="d-flex flex-md-row flex-column flex-grow-1">
-                                <div class="form-group mr-md-3">
-                                    <label class="font-weight-bold">TOTAL</label>
-                                    <div class="input-group input-group-sm">
-                                        <div class="input-group-prepend">
-                                            <div class="input-group-text ">R$</div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex flex-md-row flex-column">
+                                    <div class="form-group mr-md-3">
+                                        <label class="font-weight-bold">TOTAL</label>
+                                        <div class="input-group input-group-sm">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text ">R$</div>
+                                            </div>
+                                            <input type="text" class=" form-control form-control-sm" name="total" dobbin-mask-money disabled>
                                         </div>
-                                        <input type="text" class=" form-control form-control-sm" name="total" dobbin-mask-money disabled>
                                     </div>
-                                </div>
-                                <div class="form-group mr-md-3">
-                                    <label class="font-weight-bold">Forma de pagamento</label>
-                                    <select class="form-control form-control-sm" name="pagamento">
-                                        <option value="Reserva">Somente reserva</option>
-                                        <option disabled class="separator"></option>
-                                        <option value="Crédito">Cartão de crédito</option>
-                                        <option value="Débito">Cartão de débito</option>
-                                        <option value="Boleto">Boleto Bancário</option>
-                                        <option value="Digital">Pagamento Digital</option>
-                                        <option value="Transferência">Transferência Bancária</option>
-                                        <option value="Dinheiro">Dinheiro</option>
-                                        <option value="Outro">Outro</option>
-                                    </select>
-                                </div>
+                                    <div class="form-group mr-md-3">
+                                        <label class="font-weight-bold">Forma de pagamento</label>
+                                        <select class="form-control form-control-sm" name="pagamento" onchange="formaPagamentoChange()">
+                                            <option value="Reserva">Somente reserva</option>
+                                            <option disabled class="separator"></option>
+                                            <option value="Crédito">Cartão de crédito</option>
+                                            <option value="Débito">Cartão de débito</option>
+                                            <option value="Boleto">Boleto Bancário</option>
+                                            <option value="Digital">Pagamento Digital</option>
+                                            <option value="Transferência">Transferência Bancária</option>
+                                            <option value="Dinheiro">Dinheiro</option>
+                                            <option value="Outro">Outro</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mr-md-3" style="display:none">
+                                        <label class="font-weight-bold">Parcelas</label>
+                                        <select class="form-control form-control-sm" name="parcelas" onchange="parcelasChange()">
+                                            <option value="1">1x - À vista</option>
+                                            @for($i = 2; $i <= 12; $i++)
+                                            <option value="{{$i}}">{{$i}}x</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                    <div class="form-group mr-md-3" style="display:none">
+                                        <label class="font-weight-bold">Vencimento</label>
+                                        <select class="form-control form-control-sm" name="vencimento">
+                                            @for($i = 1; $i <= 28; $i++)
+                                            <option value="{{$i}}">{{$i}}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                    <div class="form-group mr-md-3" style="display:none">
+                                        <label class="font-weight-bold">Valor da Parcela</label>
+                                        <div class="input-group input-group-sm">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text ">R$</div>
+                                            </div>
+                                            <input type="text" class=" form-control form-control-sm" name="valor_parcela" dobbin-mask-money disabled>
+                                        </div>
+                                        <div class="text-muted small">[Esse valor é só uma base.]</div>
+                                    </div>
+                                </div> <!-- ./LINHA 1-->
 
-                                <div class="form-group mr-md-3 flex-grow-1">
-                                    <label class="font-weight-bold">Observações</label>
-                                    <textarea class="form-control-sm form-control" name="obs" rows="2" placeholder="Informação adicional..." maxlength="300"></textarea>
-                                </div>
+                                <div class="d-flex flex-md-row flex-column">
+                                    <div class="form-group mr-md-3 flex-grow-1">
+                                        <label class="font-weight-bold">Observações</label>
+                                        <textarea class="form-control-sm form-control" name="obs" rows="2" placeholder="Informação adicional..." maxlength="300"></textarea>
+                                    </div>
+                                </div> <!-- ./LINHA 2-->
+                                
+
+                                
                             </div>
                             <div class="ml-0 ml-md-3 d-flex flex-row flex-md-column justify-content-between justify-content-md-end ">
                                 <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="$('#content').scrollTop(0); loadLanding(location.hash);">Cancelar</button>
@@ -263,6 +297,8 @@ function vendasNovoCalcularTotal()
         $('#vendasNovo [name="total"]').val(total);
     }
     $('#vendasNovo [name="total"]').trigger('change');
+    formaPagamentoChange();
+    parcelasChange();
     
 }
 
@@ -273,6 +309,8 @@ function vendasNovoSalvar()
         clienteID: $('#vendasNovo [name="clienteID"]').val(),
         valorTotal: Dobbin.converteRealEmCentavo($('#vendasNovo [name="total"]').val()),
         formaPagamento: $('#vendasNovo [name="pagamento"]').val(),
+        parcelas: $('#vendasNovo [name="parcelas"]').val(),
+        vencimento: $('#vendasNovo [name="vencimento"]').val(),
         obs: $('#vendasNovo [name="obs"]').val(),
     };
     let tabela = $('#vendasNovo table tbody');
@@ -316,6 +354,47 @@ function vendasNovoSalvar()
             alerta(res.mensagem, 'Não foi possível fechar a venda.', 'warning');
         }
     }, 'json').fail(function(ev){nativePOSTFail(ev);});
+}
+
+function formaPagamentoChange()
+{
+    let pagamento = $('#vendasNovo').find('[name="pagamento"]');
+    if(pagamento.val() == 'Reserva') {
+        $('#vendasNovo').find('[name="parcelas"]').val(1);
+        $('#vendasNovo').find('[name="parcelas"]').parents('.form-group').hide();
+        $('#vendasNovo').find('[name="vencimento"]').val(1);
+        $('#vendasNovo').find('[name="vencimento"]').parents('.form-group').hide();
+        $('#vendasNovo').find('[name="valor_parcela"]').parents('.form-group').hide();
+        $('#vendasNovo').find('[name="valor_parcela"]').val('0,00');
+    } else {
+        $('#vendasNovo').find('[name="parcelas"]').parents('.form-group').show();
+    }
+}
+
+function parcelasChange()
+{
+    let parc = $('#vendasNovo').find('[name="parcelas"]');
+    if(parseInt(parc.find(':selected').val()) > 1) {
+        let hoje = new Date();
+        $('#vendasNovo').find('[name="vencimento"]').val(function(){
+            if(parseInt(hoje.getDate()) + 2 > 28) {
+                return 1;
+            } else {
+                return parseInt(hoje.getDate()) + 2;
+            }
+        });
+        $('#vendasNovo').find('[name="vencimento"]').parents('.form-group').show();
+        $('#vendasNovo').find('[name="valor_parcela"]').val(function(){
+            return Math.ceil(Dobbin.converteRealEmCentavo($('#vendasNovo [name="total"]').val()) / parseInt(parc.val()));
+        });
+        $('#vendasNovo').find('[name="valor_parcela"]').trigger('change');
+        $('#vendasNovo').find('[name="valor_parcela"]').parents('.form-group').show();
+    } else {
+        $('#vendasNovo').find('[name="vencimento"]').val(1);
+        $('#vendasNovo').find('[name="vencimento"]').parents('.form-group').hide();
+        $('#vendasNovo').find('[name="valor_parcela"]').parents('.form-group').hide();
+        $('#vendasNovo').find('[name="valor_parcela"]').val('0,00');
+    }
 }
 
 $(document).ready(function(){

@@ -61,13 +61,16 @@ $router->map('POST', '/vendas/buscar', 'ControllerPrincipal#vendasBuscar');
 $router->map('POST', '/vendas/database', 'ControllerPrincipal#vendasDatabase');
 $router->map('POST', '/vendas/canceladas', 'ControllerPrincipal#vendasCanceladas');
 $router->map('POST', '/vendas/estornadas', 'ControllerPrincipal#vendasEstornadas');
+$router->map('POST', '/vendas/pagando', 'ControllerPrincipal#vendasPagando');
 $router->map('POST', '/vendas/database/get/reservas', 'ControllerPrincipal#vendasDatabaseReservas'); // JSON
 $router->map('POST', '/vendas/database/get/aguardando', 'ControllerPrincipal#vendasDatabaseAguardando'); // JSON
 $router->map('POST', '/vendas/database/get/pagas', 'ControllerPrincipal#vendasDatabasePagas'); // JSON
+$router->map('POST', '/vendas/database/get/pagando', 'ControllerPrincipal#vendasDatabasePagando'); // JSON
 $router->map('POST', '/vendas/database/get/canceladas', 'ControllerPrincipal#vendasDatabaseCanceladas'); // JSON
 $router->map('POST', '/vendas/database/get/devolvidas', 'ControllerPrincipal#vendasDatabaseDevolvidas'); // JSON
 $router->map('POST', '/vendas/database/get/estornadas', 'ControllerPrincipal#vendasDatabaseDevolvidas'); // JSON
 $router->map('POST', '/vendas/database/load/venda/[i:vid]', 'ControllerJan#vendasLoad');
+$router->map('POST', '/vendas/database/load/venda/[i:vid]/situacao', 'ControllerJan#vendasMudarSituacao');
 
 
 $router->map('POST', '/parceiros', 'ControllerPrincipal#parceiros');

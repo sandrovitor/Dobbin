@@ -2,11 +2,11 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                BASE DE DADOS - Vendas Estornadas
+                BASE DE DADOS - Vendas em Pagamento
             </div>
             <div class="card-body">
                 <div class="alert alert-info small mb-2 py-1 px-2">
-                    <strong>Observação:</strong> Somente vendas estornadas <strong>(não inclui vendas canceladas)</strong> são exibidas aqui. Se uma venda ainda não aparece, experimente acessar a página de novo.<br>
+                    <strong>Observação:</strong> Se uma venda ainda não aparece, experimente acessar a página de novo.<br>
                     Quanto mais vendas na lista, mais a página pode ficar lenta para carregar (isso é normal devido ao volume de informação para processar).
                 </div>
                 <table class="table table-sm table-bordered table-hover table-responsive-sm">
@@ -24,7 +24,7 @@
                         
                     @if(empty($vendas))
                         <tr>
-                            <td colspan="6" class="text-center font-italic">Nenhuma venda estornada ainda...</td>
+                            <td colspan="6" class="text-center font-italic">Nenhuma venda pendente de quitação (em pagamento)...</td>
                         </tr>
                     @else
                     @foreach($vendas as $v)

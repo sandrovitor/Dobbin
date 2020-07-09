@@ -109,6 +109,7 @@
                             <li><a class="nav-link" href="#vendas/novo">Novo</a></li>
                             <li><a class="nav-link" href="#vendas/buscar">Buscar</a></li>
                             <li><a class="nav-link" href="#vendas/database">Base de Dados</a></li>
+                            <li><a class="nav-link" href="#vendas/pagando">Em Pagamento</a></li>
                             <li><a class="nav-link" href="#vendas/canceladas">Vendas Canceladas</a></li>
                             <li><a class="nav-link" href="#vendas/estornadas">Vendas Estornadas</a></li>
                         </ul>
@@ -1320,6 +1321,20 @@
             </div>
             <div class="modal-body">
                 TESTE DE JANELA DINÂMICA
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="janDinamica2">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3 font-weight-bold">
+                <span class="tituloModal">Janela suspensa dinâmica - 2</span>
+                <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
+            </div>
+            <div class="modal-body">
+                TESTE DE JANELA DINÂMICA 2
             </div>
         </div>
     </div>

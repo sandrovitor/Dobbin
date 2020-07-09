@@ -5,6 +5,7 @@
  */
 
 // Variáveis
+define('DOBBIN_MAX_PARCELAS', 12);
 
 
 // Definições do sistema.
