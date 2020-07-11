@@ -368,13 +368,7 @@ function formaPagamentoChange()
         $('#vendasNovo').find('[name="valor_parcela"]').val('0,00');
     } else {
         $('#vendasNovo').find('[name="parcelas"]').parents('.form-group').show();
-    }
-}
-
-function parcelasChange()
-{
-    let parc = $('#vendasNovo').find('[name="parcelas"]');
-    if(parseInt(parc.find(':selected').val()) > 1) {
+        $('#vendasNovo').find('[name="vencimento"]').parents('.form-group').show();
         let hoje = new Date();
         $('#vendasNovo').find('[name="vencimento"]').val(function(){
             if(parseInt(hoje.getDate()) + 2 > 28) {
@@ -383,6 +377,13 @@ function parcelasChange()
                 return parseInt(hoje.getDate()) + 2;
             }
         });
+    }
+}
+
+function parcelasChange()
+{
+    let parc = $('#vendasNovo').find('[name="parcelas"]');
+    if(parseInt(parc.find(':selected').val()) > 1) {
         $('#vendasNovo').find('[name="vencimento"]').parents('.form-group').show();
         $('#vendasNovo').find('[name="valor_parcela"]').val(function(){
             return Math.ceil(Dobbin.converteRealEmCentavo($('#vendasNovo [name="total"]').val()) / parseInt(parc.val()));
@@ -390,8 +391,6 @@ function parcelasChange()
         $('#vendasNovo').find('[name="valor_parcela"]').trigger('change');
         $('#vendasNovo').find('[name="valor_parcela"]').parents('.form-group').show();
     } else {
-        $('#vendasNovo').find('[name="vencimento"]').val(1);
-        $('#vendasNovo').find('[name="vencimento"]').parents('.form-group').hide();
         $('#vendasNovo').find('[name="valor_parcela"]').parents('.form-group').hide();
         $('#vendasNovo').find('[name="valor_parcela"]').val('0,00');
     }

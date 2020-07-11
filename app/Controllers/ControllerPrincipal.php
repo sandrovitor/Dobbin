@@ -213,6 +213,179 @@ class ControllerPrincipal
         exit();
     }
 
+    static function esqueceuSenha()
+    {
+        if(
+            isset($_SESSION['auth']) &&
+            isset($_SESSION['auth']['status']) &&
+            $_SESSION['auth']['status'] == true
+        ) {
+            header('Location: /');
+            exit();
+        } else {
+            unset($_SESSION['auth']);
+        }
+
+
+        $sgc = new SGCTUR();
+        $csrf = $sgc->geraChave(32);
+
+        $_SESSION['csrf'] = $csrf;
+
+        $blade = self::bladeStart();
+        return $blade->run("esqueci", array(
+            'csrf' => $csrf,
+            'sistema' => $sgc->system,
+        ));
+    }
+
+    static function enviarLinkRedefinicao()
+    {
+        if (isset($_SESSION['auth']['status']) && $_SESSION['auth']['status'] == true) {
+            header('Location: /');
+            exit();
+        }
+        $sgc = new SGCTUR();
+
+        // Valida CSRF;
+        if(!isset($_POST['csrf']) || $_POST['csrf'] == '' || !isset($_SESSION['csrf'])) {
+            //exit(Erro::getMessage(1));
+            $_SESSION['mensagem'] = Erro::getMessage(1);
+            header('Location: /esqueci-senha');
+            exit();
+        } else {
+            if($_POST['csrf'] != $_SESSION['csrf']) {
+                $_SESSION['csrf'] = $sgc->geraChave(32);
+                //exit(Erro::getMessage(2));
+                
+                $_SESSION['mensagem'] = Erro::getMessage(2);
+                header('Location: /esqueci-senha');
+                exit();
+            }
+        }
+
+        // Verifica se o endereço de e-mail ou usuário é válido
+        if(!isset($_POST['usuario']) || $_POST['usuario'] == '') {
+            //exit(Erro::getMessage(3));
+            $_SESSION['mensagem'] = 'Informe seu usuário ou endereço de e-mail corretamente. Campos em branco não são permitidos.';
+            header('Location: /esqueci-senha');
+            exit();
+        }
+
+        // Invalida CSRF
+        unset($_SESSION['csrf']);
+
+        // Redefine a senha
+        $ret = $sgc->solicitarRedefinicaoSenha($_POST['usuario']);
+        if($ret['mensagem'] !== '') {
+            $_SESSION['mensagem'] = $ret['mensagem'];
+        }
+
+        header('Location: /esqueci-senha');
+        exit();
+
+
+    }
+
+    static function redefSenhaPage()
+    {
+        if(!isset($_GET['t']) || !isset($_GET['v']) || $_GET['t'] == '' || $_GET['t'] == '') {
+            $_SESSION['mensagem'] = 'Link de redefinição inválido.';
+            header('Location: /login');
+            exit();
+        }
+
+        // Verifica se o hash do token está certo.
+        if(hex2bin($_GET['v']) != hash('sha256', $_GET['t'], TRUE)) {
+            // Hash não confere.
+            $_SESSION['mensagem'] = 'Houve problemas na validação do link de redefinição.';
+            header('Location: /login');
+            exit();
+        }
+
+        // Busca o token no banco de dados.
+        $sgc = new SGCTUR();
+        $ret = $sgc->buscaRedefSenha($_GET['t']);
+
+        if($ret === false) {
+            // Token não encontrado.
+            $_SESSION['mensagem'] = 'Link de redefinição inválido (2).';
+            header('Location: /login');
+            exit();
+        } else {
+            // Verifica a data de validade.
+            $val = new \DateTime($ret->validade_rec);
+            $hoje = new \DateTime();
+
+            if($hoje <= $val) {
+                // Link válido, autoriza redefinição.
+                $sgc = new SGCTUR();
+                $csrf = $sgc->geraChave(32);
+
+                $_SESSION['csrf'] = $csrf;
+
+                $blade = self::bladeStart();
+                return $blade->run("redefinirSenha", array(
+                    'csrf' => $csrf,
+                    'sistema' => $sgc->system,
+                ));
+            } else {
+                // Link expirou!
+                $_SESSION['mensagem'] = 'Esse link de redefinição expirou.';
+                header('Location: /esqueci-senha');
+                exit();
+            }
+        }
+    }
+
+    static function redefinirSenha()
+    {
+        if(!isset($_POST['t']) || !isset($_POST['v']) || $_POST['t'] == '' || $_POST['t'] == '') {
+            $_SESSION['mensagem'] = 'Link de redefinição inválido.';
+            header('Location: /login');
+            exit();
+        }
+
+        // Verifica se o hash do token está certo.
+        if(hex2bin($_POST['v']) != hash('sha256', $_POST['t'], TRUE)) {
+            // Hash não confere.
+            $_SESSION['mensagem'] = 'Houve problemas na validação do link de redefinição.';
+            header('Location: /login');
+            exit();
+        }
+
+        if(!isset($_POST['senha1']) || !isset($_POST['senha2']) ||
+        $_POST['senha1'] == '' || $_POST['senha2'] == '' ||
+        strlen($_POST['senha1']) < 8) {
+            // Senhas inválidas
+            $_SESSION['mensagem'] = 'Informe uma nova senha com no mínimo 8 caracteres e repita a senha para confirmar.';
+            header('Location: /redefinir-senha?t='.$_POST['t'].'&v='.$_POST['v']);
+            exit();
+        }
+
+        // Compara as senhas.
+        if($_POST['senha1'] !== $_POST['senha2']) {
+            // Senhas não são iguais
+            $_SESSION['mensagem'] = 'Houve problemas na validação do link de redefinição.';
+            header('Location: /redefinir-senha?t='.$_POST['t'].'&v='.$_POST['v']);
+            exit();
+        }
+
+        // Libera alteração da senha e remove link de redefinição.
+        $sgc = new SGCTUR();
+        $ret = $sgc->setRedefSenha($_POST['t'],$_POST['senha1']);
+
+        if($ret === false) {
+            $_SESSION['mensagem'] = 'Não foi possível redefinir sua senha. Tente novamente mais tarde.';
+            header('Location: /redefinir-senha?t='.$_POST['t'].'&v='.$_POST['v']);
+            exit();
+        } else {
+            $_SESSION['mensagem'] = 'Sua senha foi redefinida. Use-a para fazer login.';
+            header('Location: /login');
+            exit();
+        }
+    }
+
     /**
      * ./LOGIN
      */
