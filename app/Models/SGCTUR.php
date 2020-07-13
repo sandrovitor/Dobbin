@@ -92,6 +92,185 @@ class SGCTUR extends Master
     }
 
     /**
+     * Solicita redefinição de senha.
+     * 
+     * @param string $usuario Pode ser o nome de usuário ou e-mail.
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => STRING]
+     */
+    public function solicitarRedefinicaoSenha(string $usuario)
+    {
+        $retorno = array(
+            'success' => false,
+            'mensagem' => ''
+        );
+
+        $sql = 'SELECT * FROM login WHERE ';
+
+        if(\strpos($usuario, '@') !== false) {
+            $sql .= 'email = :u';
+        } else {
+            $sql .= 'usuario = :u';
+        }
+        
+        $abc = $this->pdo->prepare($sql);
+        $abc->bindValue(':u', $usuario, \PDO::PARAM_STR);
+        
+        try{
+            $abc->execute();
+        }catch(\PDOException $e) {
+            $retorno['mensagem'] = Erro::getMessage(70);
+            \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+            \error_log($e->getMessage(), 0);
+            return $retorno;
+        }
+
+        if($abc->rowCount() == 0) {
+            $retorno['mensagem'] = Erro::getMessage(4);
+            return $retorno;
+        } else {
+            // Captura usuário.
+            $reg = $abc->fetch(\PDO::FETCH_OBJ);
+
+            // Verifica se já existe um link de redefinição.
+            if($reg->tk_rec != NULL) {
+                $retorno['mensagem'] = 'Você já solicitou uma redefinição de senha. O link tem validade de 24h.';
+                return $retorno;
+            } else {
+                // Sem link de redefinição: cria um novo e envia por e-mail.
+                $tk_rec = $this->geraChave(64);
+                $hoje = new \DateTime();
+                $amanha = new \DateTime();
+                $amanha->add(new \DateInterval('P1D'));
+                $link = 't='.$tk_rec.'&v='.bin2hex(hash('sha256', $tk_rec, TRUE));
+
+                // Persiste dados no banco
+                $abc = $this->pdo->query("UPDATE login SET tentativas = 0, tk_rec = '$tk_rec', data_rec = '".$hoje->format('Y-m-d H:i:s')."', validade_rec = '".$amanha->format('Y-m-d H:i:s')."' WHERE id = $reg->id");
+
+                // Envia e-mail.
+                $from = 'nao-responda@'.$_SERVER['HTTP_HOST'];
+                $to = $reg->email;
+                $subject = 'Redefinir senha';
+                $headers[] = 'MIME-Version: 1.0';
+                $headers[] = 'Content-type: text/html; charset=utf-8';
+                $headers[] = 'To: '.$to;
+                $headers[] = 'From: '.$from;
+                $headers[] = 'Reply-To: '.$to;
+
+
+                $html = <<<DADOS
+            <html>
+                <head>
+                    <title>Redefinir senha</title>
+                </head>
+                <body style="background-color: #0444e2; padding-top: 3rem; padding-bottom: 5rem; font-size: 16px; font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif">
+                    <div style="margin:auto; width:90%; max-width: 900px; border-radius: 5px; background-color: #ffffff;">
+                        <div style="background: rgba(0,0,0,.03); padding: 1em 1.5em;">
+                            <h3 style="text-align:center"><img src="https://{$_SERVER['HTTP_HOST']}/media/images/logo64.png" class="mx-3 my-2" alt="Dobbin logo"></h3>
+                        </div>
+                        <div style="padding: 1em 1.5em; text-align:center;">
+                            <h2 style="color:#008ae6; text-align:center;">Esqueceu a senha? Clique no botão abaixo para redefiní-la.<br>
+                            <small>O link de redefinição tem duração de 24h.</small></h2>
+                            <br>
+                            <a href="https://{$_SERVER['HTTP_HOST']}/redefinir-senha?{$link}" target="_blank" style="background-color: #0444e2; font-size: 16px; border-radius: .25em; border: 1px solid #1a5efb; padding: .75rem 1.5rem; text-decoration: none; color: #ffffff; margin-bottom: 1rem; display:block;" rel="noopener noreferrer">Redefinir senha</a>
+                        </div>
+                        <div style="background: rgba(0,0,0,.33); padding: .25em 1.5em; color: #ffffff; text-align:center;">
+                            <p>
+                            Caso você não tenha solicitado a redefinição de senha, ignore o e-mail. Seu login está seguro.
+                            </p>
+                        </div>
+                    </div>
+                    <div style="text-align:center; margin-top: 1rem;">
+                        <a href="https://dssmart.com.br" rel="noopener noreferrer" target="_blank" style="text-decoration:none;"><small style="color:#f8f9fa;">Copyright © 2020 Sandro Mendonça</small></a>
+                    </div>
+                </body>
+            </html>
+            
+DADOS;
+
+                $send = mail($to, $subject, $html, implode("\r\n", $headers));
+                $retorno['mensagem'] = 'Um e-mail de redefinição foi enviado para <b>'.
+                substr($reg->email, 0,1).'*****'.substr($reg->email, \strpos($reg->email, '@'), 2).
+                '***'. substr($reg->email, \strrpos($reg->email,'.'))
+                .'</b>. Verifique sua caixa de entrada de e-mail.';
+                $retorno['success'] = true;
+
+                /**
+                 * LOG
+                 */
+                $log = new LOG();
+                $log->novo('Enviei um link de redefinição (<i>Esqueci a senha</i>) para o usuário <a href="javascript:void(0)" onclick="loadUsuario('.$reg->id.')"><i>@'.$reg->usuario.'</i></a>.', 0, 4);
+                /**
+                 * ./LOG
+                */
+
+                return $retorno;
+            }
+        }
+    }
+
+    /**
+     * Busca o usuário que possui o link de redefinição.
+     * 
+     * @param string $tk Token de redefinição.
+     * 
+     * @return mixed Em caso de sucesso, retorna objeto stdClass com alguns dados do usuário; em caso de falha, retorna FALSE.
+     */
+    public function buscaRedefSenha(string $tk)
+    {
+        $abc = $this->pdo->prepare('SELECT id, tk_rec, data_rec, validade_rec FROM login WHERE tk_rec = :t');
+        $abc->bindValue(':t', $tk, \PDO::PARAM_STR);
+        $abc->execute();
+
+        if($abc->rowCount() == 1) {
+            return $abc->fetch(\PDO::FETCH_OBJ);
+        } else {
+            return false;
+        }
+    }
+
+    public function setRedefSenha(string $tk, string $senha)
+    {
+        $abc = $this->pdo->prepare('SELECT * FROM login WHERE tk_rec = :t');
+        $abc->bindValue(':t', $tk, \PDO::PARAM_STR);
+        $abc->execute();
+
+        if($abc->rowCount() == 1) {
+            // Captura o usuário
+            $reg = $abc->fetch(\PDO::FETCH_OBJ);
+
+            $senhaOptions = array(
+                "cost" => $this->system->senha_cost
+            );
+
+            try{
+                $abc = $this->pdo->prepare('UPDATE login SET senha = :s, atualizado_em = NOW(), tk_rec = NULL, data_rec = NULL, validade_rec = NULL WHERE id = :id');
+                $abc->bindValue(':s', password_hash($senha, PASSWORD_DEFAULT, $senhaOptions), \PDO::PARAM_STR);
+                $abc->bindValue(':id', $reg->id, \PDO::PARAM_INT);
+
+                $abc->execute();
+
+                /**
+                 * LOG
+                 */
+                $log = new LOG();
+                $log->novo('Redefiniu a senha através do link de redefinição.', $reg->id, 4);
+                /**
+                 * ./LOG
+                */
+                return true;
+            } catch(PDOException $e) {
+                \error_log($e->getMessage(), 1, $this->system->desenvolvedor[0]);
+                \error_log($e->getMessage(), 0);
+
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Atualiza os dados da sessão
      * 
      * @return bool Em caso de falha, recomendado direcionar para tela de login.
@@ -1066,8 +1245,9 @@ class SGCTUR extends Master
         }
 
         // Lança usuário no Banco de Dados.
-        $sql = "INSERT INTO login (id, nome, sobrenome, email, usuario, senha, nivel, criado_em, atualizado_em) ".
-        "VALUES (null, :nome, :sobrenome, :email, :usuario, :senha, :nivel, NOW(), NOW())";
+        $sql = "INSERT INTO login (id, nome, sobrenome, email, usuario, senha, nivel, criado_em, atualizado_em, ".
+        "tentativas, tk_rec, data_rec, validade_rec) ".
+        "VALUES (null, :nome, :sobrenome, :email, :usuario, :senha, :nivel, NOW(), NOW(), 0, NULL, NULL, NULL)";
         $abc = $this->pdo->prepare($sql);
 
         $senhaOptions = array(

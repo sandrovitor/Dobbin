@@ -5,7 +5,20 @@
  |------------------------------
  */
 $router->map('GET', '/', 'ControllerPrincipal#start', 'start');
-$router->map('GET', '/[a:page]', function($p){
+$router->map('GET', '/[:page]', function($p){
+    switch($p['page']) {
+        case 'login': return ControllerPrincipal::login(); break;
+        case 'logout': case 'sair': return ControllerPrincipal::logout(); break;
+        case 'esqueci-senha': return ControllerPrincipal::esqueceuSenha(); break;
+        case 'redefinir-senha': return ControllerPrincipal::redefSenhaPage(); break;
+
+        case 'offlineclient': return ControllerPrincipal::offlineDownloadFile($p); break;
+        case 'lQ37zclzOy4dCR8Gxn1JpzLkiRQSBZIowpcrondiario': include(__DIR__.'/../app/cronjob/wpcrondiario.php'); break;
+
+        default: header('Location: /'); break;
+            
+    }
+    /*
     if($p['page'] == 'login') {
         return ControllerPrincipal::login();
     } else if($p['page'] == 'logout' || $p['page'] == 'sair') {
@@ -17,6 +30,7 @@ $router->map('GET', '/[a:page]', function($p){
     }else {
         header('Location: /');
     }
+    */
 });
 
 // CHECA ATUALIZAÇÃO DO SISTEMA
@@ -25,6 +39,8 @@ $router->map('POST', '/checkversion', 'ControllerPrincipal#checkversion');
 
 // LANDING PAGES via POST
 $router->map('POST', '/login', 'ControllerPrincipal#loga');
+$router->map('POST', '/esqueci-senha', 'ControllerPrincipal#enviarLinkRedefinicao');
+$router->map('POST', '/redefinir-senha', 'ControllerPrincipal#redefinirSenha');
 $router->map('POST', '/inicio', 'ControllerPrincipal#inicio');
 $router->map('POST', '/clientes', 'ControllerPrincipal#clientes');
 $router->map('POST', '/clientes/novo', 'ControllerPrincipal#clientesNovo');

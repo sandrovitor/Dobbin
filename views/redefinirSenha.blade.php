@@ -6,7 +6,7 @@
 	<meta name="author" content="Sandro Mendonça">
     <meta name="robots" content="noindex,nofollow,noarchive">
 	<meta name="description" content="{{$sistema->description}}">
-	<title>Login do {{$sistema->name}} </title>
+	<title>{{$sistema->name}} - Esqueci a senha </title>
     <!--<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" type="text/css">-->
     <link href="/css/bootstrap-4.3.1.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
@@ -32,26 +32,29 @@
                     <div class="card-header py-4">
                         <h2 class="text-center font-weight-bold"><img src="/media/images/logo64.png" class="mx-3 my-2" alt="{{$sistema->name}} logo">
                         </h2>
-                        <h4 class="text-center text-dark">Login</h4>
+                        <h4 class="text-center text-dark">
+                            Redefinir a senha
+                            
+                        </h4>
                     </div>
                     <div class="card-body">
-                        <form action="/login" method="post">
+                        <div class="alert alert-info px-2 py-1 small">Insira sua nova senha para concluir o processo de redefinição.</div>
+                        <form action="/redefinir-senha?t={{$_GET['t']}}&v={{$_GET['v']}}" method="post">
                             <div class="form-group">
-                                <label>E-mail ou usuário</label>
-                                <input type="text" class="form-control" name="usuario">
+                                <label>Nova senha</label>
+                                <input type="password" class="form-control" name="senha1">
                             </div>
                             <div class="form-group">
-                                <label>Senha</label>
-                                <input type="password" class="form-control " name="senha">
+                                <label>Repita nova senha</label>
+                                <input type="password" class="form-control" name="senha2">
                             </div>
                             <div class="form-group text-right">
                                 <input type="hidden" name="csrf" value="{{$csrf}}">
-                                <button type="submit" class="btn btn-primary">Login</button>
+                                <input type="hidden" name="t" value="{{$_GET['t']}}">
+                                <input type="hidden" name="v" value="{{$_GET['v']}}">
+                                <button type="submit" class="btn btn-primary">Redefinir senha</button>
                             </div>
                         </form>
-                    </div>
-                    <div class="card-footer text-center">
-                        <small><a href="/esqueci-senha">Esqueceu a senha?</a></small>
                     </div>
                 </div>
                 <div class="text-center">
