@@ -504,7 +504,7 @@
 </div>
 
 <div class="modal fade" id="modalMinhaConta">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 px-3 font-weight-bold">
                 Minha conta
@@ -531,14 +531,47 @@
                 </div>
                 <hr>
                 <div class="row">
+                    <div class="col-12 col-lg-7">
+                        <h5 class="font-weight-bold">DADOS PESSOAIS</h5>
+                        <div class="d-flex flex-wrap">
+                            <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2"> <!-- EMAIL -->
+                                <strong class="mr-1">Email:</strong> <br><span data-minhaconta-email></span>
+                            </div>
+                            <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2"> <!-- USUÁRIO -->
+                                <strong class="mr-1">Usuário:</strong> <br><span data-minhaconta-usuario></span>
+                            </div>
+                            <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2"> <!-- NÍVEL ACESSO -->
+                                <strong class="mr-1">Nível de acesso:</strong> <br><span data-minhaconta-nivel></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-5">
+                        <h5 class="font-weight-bold">RECURSOS</h5>
+                        <div class="d-flex flex-column flex-wrap">
+                            <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2"> <!-- AUTOLOGIN -->
+                                <strong class="mr-1">Autologin:</strong> <br><span data-autologin></span>
+                            </div>
+                            <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2"> <!-- LINK REDEFINIÇÃO -->
+                                <strong class="mr-1">Link Redefinição:</strong> <br><span data-link-redef></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
                     <div class="col-12">
-                        <strong class="mr-1">Email:</strong> <span data-minhaconta-email></span><br>
-                        <strong class="mr-1">Usuário:</strong> <span data-minhaconta-usuario></span><br>
-                        <strong class="mr-1">Nível de acesso:</strong> <span data-minhaconta-nivel></span>
-                        <br><br>
-                        <strong class="mr-1">Criado em:</strong> <span data-minhaconta-criado></span><br>
-                        <strong class="mr-1">Atualizado em:</strong> <span data-minhaconta-atualizado></span><br>
-                        <strong class="mr-1">Último login:</strong> <span data-minhaconta-logadoem></span>
+                        <h5 class="font-weight-bold">INFORMAÇÕES DA PLATAFORMA</h5>
+                        <div class="d-flex flex-wrap">
+                            <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2"> <!-- CRIADO EM -->
+                                <strong class="mr-1">Criado em:</strong> <br><span data-minhaconta-criado></span>
+                            </div>
+                            <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2"> <!-- ATUALIZADO EM -->
+                                <strong class="mr-1">Atualizado em:</strong> <br><span data-minhaconta-atualizado></span>
+                            </div>
+                            <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2"> <!-- ÚLTIMO LOGIN -->
+                                <strong class="mr-1">Último login:</strong> <br><span data-minhaconta-logadoem></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <hr>

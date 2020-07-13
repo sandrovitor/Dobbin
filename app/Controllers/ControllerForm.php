@@ -1036,6 +1036,24 @@ class ControllerForm
         return json_encode($retorno);
     }
 
+    static function delLinkRedefinirSenha()
+    {
+        self::validaConexao();
+
+        $u = new Usuario($_SESSION['auth']['id']);
+        $ret = $u->delLinkRedefinicao();
+        return json_encode($ret);
+    }
+
+    static function delAutoLogin()
+    {
+        self::validaConexao();
+
+        $u = new Usuario($_SESSION['auth']['id']);
+        $ret = $u->delAutoLogin();
+        return json_encode($ret);
+    }
+
     /**
      * 
      * 

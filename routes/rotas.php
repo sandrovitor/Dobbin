@@ -158,6 +158,8 @@ $router->addRoutes(array(
     array('POST', $prefix.'minhaconta/alterarsenha', 'ControllerForm#minhaContaAlterarSenha'),
     array('POST', $prefix.'minhaconta/avatar', 'ControllerForm#minhaContaFotoNovo'),
     array('POST', $prefix.'minhaconta/avatar/apagar', 'ControllerForm#minhaContaFotoApagar'),
+    array('POST', $prefix.'minhaconta/dellinkredefinicao', 'ControllerForm#delLinkRedefinirSenha'),
+    array('POST', $prefix.'minhaconta/delautologin', 'ControllerForm#delAutoLogin'),
 
 
     array('POST', $prefix.'roteiros/novo', 'ControllerForm#roteirosNovo'),

@@ -204,6 +204,34 @@ class Usuario extends Master
     }
 
     /**
+     * Apaga o link de redefinição de senha do usuário.
+     * @return bool
+     */
+    public function delLinkRedefinicao()
+    {
+        if($this->dados == null) {
+            return false;
+        }
+
+        $abc = $this->pdo->query("UPDATE login SET tk_rec = NULL, data_rec = NULL, validade_rec = NULL WHERE id = $this->id");
+        return true;
+    }
+
+    /**
+     * Remove o token de autologin.
+     * @return bool
+     */
+    public function delAutoLogin()
+    {
+        if($this->dados == null) {
+            return false;
+        }
+
+        $abc = $this->pdo->query("UPDATE login SET tk_autologin = NULL WHERE id = $this->id");
+        return true;
+    }
+
+    /**
      * Define novos dados do usuário.
      * 
      * @param array $dados Array associativo de parametros atualizados.

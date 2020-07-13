@@ -137,9 +137,25 @@ class ControllerPrincipal
             unset($_SESSION['auth']);
         }
 
-
         $sgc = new SGCTUR();
         $csrf = $sgc->geraChave(32);
+
+        // Verifica cookie de autologin. Se não for válido, encaminha para a tela de login.
+        if(isset($_COOKIE['ct823']) && isset($_COOKIE['tah3791']) && $_COOKIE['ct823'] != '' && $_COOKIE['tah3791'] != '') {
+            // Chama o autologin.
+            $ret = $sgc->autoLoginAuth();
+            if($ret === true) { // Autenticação bem-sucedida.
+                header('Location: /');
+                exit();
+            }
+
+            // Não conseguiu autenticação.
+            // Redireciona para a tela de login.
+        }
+
+    
+
+        
 
         $_SESSION['csrf'] = $csrf;
 
@@ -185,10 +201,20 @@ class ControllerPrincipal
             exit();
         }
 
+        // Verifica se foi marcada a opção de autoLOGIN.
+        if(isset($_POST['autologin']) && $_POST['autologin'] == 'yes') {
+            // ativa
+            $autologin = TRUE;
+        } else {
+            // desativa
+            $autologin = FALSE;
+        }
+
+
         // Invalida CSRF
         unset($_SESSION['csrf']);
 
-        $ret = $sgc->loginAuth($_POST['usuario'], $_POST['senha']);
+        $ret = $sgc->loginAuth($_POST['usuario'], $_POST['senha'], $autologin);
         if($ret['success'] == false) {
             //exit($ret['mensagem']);
             $_SESSION['mensagem'] = $ret['mensagem'];

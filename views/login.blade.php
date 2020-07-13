@@ -6,7 +6,7 @@
 	<meta name="author" content="Sandro Mendonça">
     <meta name="robots" content="noindex,nofollow,noarchive">
 	<meta name="description" content="{{$sistema->description}}">
-	<title>Login do {{$sistema->name}} </title>
+	<title>{{$sistema->name}} - Login</title>
     <!--<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" type="text/css">-->
     <link href="/css/bootstrap-4.3.1.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
@@ -44,6 +44,16 @@
                                 <label>Senha</label>
                                 <input type="password" class="form-control " name="senha">
                             </div>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" class="form-check-input" name="autologin" value="yes"> Ativar autologin neste dispositivo.
+                                        <span class="badge badge-pill badge-info cursor-pointer"
+                                        data-content="Use essa opção para facilitar o login no Dobbin em <b>dispositivos confiáveis</b>."
+                                        title="O que é autologin?" data-toggle="popover" data-trigger="hover"><i class="fas fa-question-circle"></i></span>
+                                    </label>
+                                </div>
+                            </div>
                             <div class="form-group text-right">
                                 <input type="hidden" name="csrf" value="{{$csrf}}">
                                 <button type="submit" class="btn btn-primary">Login</button>
@@ -75,6 +85,7 @@
     <script src="/js/alert.min.js"></script>
     <script>
     $(document).ready(function(){
+        $('[data-toggle="popover"]').popover({'html':true});
         $(document).on('submit', 'form', function(){
             setTimeout(function(){location.reload();}, 10000);
         });

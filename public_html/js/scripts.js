@@ -1236,6 +1236,49 @@ function loadMinhaConta(trig)
         $('#modalMinhaConta').find('[data-minhaconta-atualizado]').text(Dobbin.formataDataHora(new Date(res.atualizado_em)));
         $('#modalMinhaConta').find('[data-minhaconta-logadoem]').text(Dobbin.formataDataHora(new Date(res.logado_em)));
 
+        $('#modalMinhaConta').find('[data-autologin]').html(function(){
+            let html = '';
+            if(res.tk_autologin != null) {
+                html = '<span class="badge badge-success cursor-pointer" title="Clique 2x para DESATIVAR." data-toggle="tooltip" ondblclick="delAutologin()">ATIVO</span> ';
+            } else {
+                html = '<span class="badge badge-secondary">DESATIVADO</span> ';
+            }
+
+            html += '<span class="badge badge-pill badge-info cursor-pointer" '+
+            'title="O que é?" '+
+            'data-content="O <b>autologin</b> possibilita o login automático, sem a necessidade de sempre fornecer as '+
+            'credenciais (usuário e senha). Com ela ativada em <b>dispositivos confiáveis</b>, você poderá acessar a plataforma '+
+            'a qualquer momento. Se você ficar mais de 7 dias sem acessar o Dobbin, ele irá te pedir a senha de acesso.'+
+            '<br><strong>ATIVO:</strong> Você permitiu que dispositivos acessem a plataforma com o autologin. Se você desejar, '+
+            'poderá remover todos os dispositivos que fazem autologin na sua conta.'+
+            '<br><strong>DESATIVADO:</strong> Todo acesso à plataforma precisa de login e senha. Você pode mudar isso no próximo login.'+
+            '<br><br>[Clique no ícone novamente para fechar.]"'+
+            ' data-toggle="popover" data-placement="right" data-trigger="hover"><i class="fas fa-question-circle"></i></span>';
+
+            return html;
+        });
+        $('#modalMinhaConta').find('[data-link-redef]').html(function(){
+            let html = '';
+            if(res.tk_rec != null) {
+                html = '<span class="badge badge-success cursor-pointer" title="Clique 2x para DESATIVAR." data-toggle="tooltip" ondblclick="delLinkRedefinirSenha(this);">ATIVO</span> ';
+            } else {
+                html = '<span class="badge badge-secondary">DESATIVADO</span> ';
+            }
+
+            html+= '<span class="badge badge-pill badge-info cursor-pointer" '+
+            'title="O que é?" '+
+            'data-content="O <b>link de redefinição</b> é usado para redefinir sua senha via e-mail '+
+            'quando você clica em <i>Esqueci a senha</i>. O link tem duração de 24h, mas você pode excluí-lo '+
+            'se suspeitar que há uma tentativa de invasão. Seu acesso continua seguro. '+
+            '<br><strong>ATIVO:</strong> Há um link ativo na plataforma. Em até 24h o link pode ser usado para '+
+            'alterar sua senha. Se você não solicitou, pode excluir o link.'+
+            '<br><strong>DESATIVADO:</strong> Tudo ok. Não é hada para se preocupar.'+
+            '<br><br>[Clique no ícone novamente para fechar.]" '+
+            ' data-toggle="popover" data-placement="right" data-trigger="hover"><i class="fas fa-question-circle"></i></span>';
+
+            return html;
+        });
+
         $('#modalMinhaContaEditar').find('[data-minhaconta-nome]').val(res.nome);
         $('#modalMinhaContaEditar').find('[data-minhaconta-sobrenome]').val(res.sobrenome);
         $('#modalMinhaContaEditar').find('[data-minhaconta-usuario]').val(res.usuario);
@@ -1333,6 +1376,30 @@ function delMinhaContaFoto()
             alerta(res.mensagem, 'Falha.', 'warning');
         }
     }, 'json');
+}
+
+function delLinkRedefinirSenha(sender)
+{
+    $('[data-toggle="tooltip"]').tooltip('hide');
+    $.post(PREFIX_POST+'minhaconta/dellinkredefinicao', function(res){
+        if(res == true) {
+            loadMinhaConta(null);
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+    $('[data-toggle="tooltip"]').tooltip();
+}
+
+function delAutologin(sender)
+{
+    $('[data-toggle="tooltip"]').tooltip('hide');
+    $.post(PREFIX_POST+'minhaconta/delautologin', function(res){
+        if(res == true) {
+            loadMinhaConta(null);
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail(ev);});
+    $('[data-toggle="tooltip"]').tooltip();
 }
 
 function searchClienteNome(busca)

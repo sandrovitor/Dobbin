@@ -26,10 +26,11 @@ class SGCTUR extends Master
      * 
      * @param string $usuario Pode ser o nome de usuário ou e-mail.
      * @param string $senha Senha para login.
+     * @param bool $autologin Ativa ou desativa auto-login para este dispositivo.
      * 
      * @return array [success => TRUE|FALSE, mensagem => STRING]
      */
-    public function loginAuth(string $usuario, string $senha)
+    public function loginAuth(string $usuario, string $senha, bool $autologin)
     {
         $retorno = array(
             'success' => false,
@@ -79,6 +80,29 @@ class SGCTUR extends Master
                 // Reseta as tentativas e o último LOGIN.
                 $this->pdo->query('UPDATE login SET tentativas = 0, logado_em = NOW() WHERE id = '.$reg->id);
 
+                if($autologin === true) {
+                    // Ativa o AUTOLOGIN no dispositivo.
+                    if($reg->tk_autologin == NULL) {
+                        // Cria um novo token.
+                        $reg->tk_autologin = $this->geraChave(32);
+                        $this->pdo->query('UPDATE login SET tk_autologin = "'.$reg->tk_autologin.'" WHERE id = '.$reg->id);
+                    }
+
+                    /**
+                     * COOKIE DE AUTOLOGIN:
+                     * ct823: ID do usuário.
+                     * tah3791: Valor hexadecimal do Hash (sha256) bruto do token de auto-login [ bin2hex( hash('sha256', TOKEN_AUTOLOGIN, TRUE) ) ]
+                     */
+                    $expiraEm = time()+(60 * 60 * 24 * 7); // Expira em 7 dias.
+                    setcookie('ct823', $reg->id, $expiraEm, '/', $_SERVER['HTTP_HOST'], true, true);
+                    setcookie('tah3791', bin2hex( hash('sha256', $reg->tk_autologin, TRUE) ), $expiraEm, '/', $_SERVER['HTTP_HOST'], true, true);
+                } else {
+                    // Desativa o AUTOLOGIN no dispositivo.
+                    $expiraEm = time() - 3600;
+                    setcookie('ct823', '', $expiraEm, '/', $_SERVER['HTTP_HOST'], true, true);
+                    setcookie('tah3791', '', $expiraEm, '/', $_SERVER['HTTP_HOST'], true, true);
+                }
+
                 $retorno['success'] = TRUE;
                 return $retorno;
             } else {
@@ -89,6 +113,74 @@ class SGCTUR extends Master
         }
 
 
+    }
+
+    /**
+     * Faz a autenticação via auto-login. Deve ser chamado se os cookies de auto-login foram
+     * encontrados no dispositivo.
+     * 
+     * @return bool TRUE caso o auto-login tenha sido bem sucedido ou FALSE. Em caso de falha, deve ser
+     * redirecionado para tela de login.
+     */
+    public function autoLoginAuth()
+    {
+        // Captura os valores dos cookies:
+        // ct823: ID do usuário;
+        // tah3791: Valor hexadecimal do Hash (sha256) bruto do token de auto-login [ bin2hex( hash('sha256', TOKEN_AUTOLOGIN, TRUE) ) ]
+
+        $ct823 = (int)$_COOKIE['ct823'];
+        $tah3791 = $_COOKIE['tah3791'];
+
+        // Busca usuário no banco de dados.
+        $abc = $this->pdo->query("SELECT * FROM login WHERE id = $ct823");
+        if($abc->rowCount() == 0) {
+            // Usuário não encontrado.
+            return false;
+        } else {
+            // Usuário encontrado.
+            $reg = $abc->fetch(\PDO::FETCH_OBJ);
+
+            // Verifica se o auto-login está ativo no usuário.
+            if($reg->tk_autologin == NULL) {
+                // Auto login não está ativo! interrompe.
+                return false;
+            }
+
+            // Compara os hashs de autologin.
+            if( bin2hex(hash('sha256', $reg->tk_autologin, TRUE)) === $tah3791) {
+                // Hashs iguais. Autoriza o acesso.
+
+                $_SESSION['auth']['status'] = TRUE;
+                $_SESSION['auth']['datetime'] = new \DateTime();
+                $_SESSION['auth']['id'] = $reg->id;
+
+                $this->atualizaSession();
+
+                // Reseta as tentativas e o último LOGIN.
+                $this->pdo->query('UPDATE login SET tentativas = 0, logado_em = NOW() WHERE id = '.$reg->id);
+
+                /**
+                 * Atualiza o COOKIE DE AUTOLOGIN:
+                 * ct823: ID do usuário.
+                 * tah3791: Valor hexadecimal do Hash (sha256) bruto do token de auto-login [ bin2hex( hash('sha256', TOKEN_AUTOLOGIN, TRUE) ) ]
+                 */
+                $expiraEm = time()+(60 * 60 * 24 * 7); // Expira em 7 dias.
+                setcookie('ct823', $reg->id, $expiraEm, '/', $_SERVER['HTTP_HOST'], true, true);
+                setcookie('tah3791', bin2hex( hash('sha256', $reg->tk_autologin, TRUE) ), $expiraEm, '/', $_SERVER['HTTP_HOST'], true, true);
+                /**
+                 * LOG
+                 */
+                $log = new LOG();
+                $log->novo('Autenticado no Dobbin via auto-login.',$reg->id,1);
+                /**
+                 * ./LOG
+                 */
+                return true;
+            } else {
+                // Hash inválido.
+                return false;
+            }
+        }
     }
 
     /**
