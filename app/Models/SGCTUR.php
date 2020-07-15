@@ -2322,4 +2322,61 @@ DADOS;
         
 
     }
+
+    public function getVencimentosLista()
+    {
+        $query = "SELECT vendas.*, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim, ".
+        "clientes.nome as cliente_nome ".
+        "FROM vendas ".
+        "LEFT JOIN roteiros ON vendas.roteiro_id = roteiros.id ".
+        "LEFT JOIN clientes ON vendas.cliente_id = clientes.id ".
+        "WHERE ";
+
+        $abc = $this->pdo->query($query. "vencimento = ".date('j')." AND (status = 'Aguardando' OR status = 'Pagando')");
+
+        $retorno = [
+            'hoje' => [],
+            'proximos' => []
+        ];
+        if($abc->rowCount() == 0) {
+            $retorno['hoje'] = [];
+        } else {
+            $retorno['hoje'] = $abc->fetchAll(\PDO::FETCH_OBJ);
+            foreach($retorno['hoje'] as $key => $val) {
+                switch($val->status) {
+                    case 'Reserva': $retorno['hoje'][$key]->status_html = '<span class="badge badge-info py-1 px-2">Reserva</span>'; break;
+                    case 'Aguardando': $retorno['hoje'][$key]->status_html = '<span class="badge badge-primary py-1 px-2">Aguardando Pagamento</span>'; break;
+                    case 'Pagando': $retorno['hoje'][$key]->status_html = '<span class="badge badge-success py-1 px-2">Em Pagamento</span>'; break;
+                    case 'Paga': $retorno['hoje'][$key]->status_html = '<span class="badge badge-success py-1 px-2">Paga</span>'; break;
+                    case 'Cancelada': $retorno['hoje'][$key]->status_html = '<span class="badge badge-secondary py-1 px-2">Cancelada</span>'; break;
+                    case 'Devolvida': $retorno['hoje'][$key]->status_html = '<span class="badge badge-dark py-1 px-2">Devolvida</span>'; break;
+                }
+            }
+        }
+
+        // PROXIMOS 7 DIAS
+        $semana = new \DateTime();
+
+        for($count = 0; $count < 7; $count++) {
+            $semana->add(new \DateInterval('P1D'));
+            $abc = $this->pdo->query($query. "vencimento = ".$semana->format('j')." AND (status = 'Aguardando' OR status = 'Pagando') ORDER BY vencimento ASC");
+            if($abc->rowCount() > 0) {
+                $resultado = $abc->fetchAll(\PDO::FETCH_OBJ);
+                foreach($resultado as $val) {
+                    switch($val->status) {
+                        case 'Reserva': $val->status_html = '<span class="badge badge-info py-1 px-2">Reserva</span>'; break;
+                        case 'Aguardando': $val->status_html = '<span class="badge badge-primary py-1 px-2">Aguardando Pagamento</span>'; break;
+                        case 'Pagando': $val->status_html = '<span class="badge badge-success py-1 px-2">Em Pagamento</span>'; break;
+                        case 'Paga': $val->status_html = '<span class="badge badge-success py-1 px-2">Paga</span>'; break;
+                        case 'Cancelada': $val->status_html = '<span class="badge badge-secondary py-1 px-2">Cancelada</span>'; break;
+                        case 'Devolvida': $val->status_html = '<span class="badge badge-dark py-1 px-2">Devolvida</span>'; break;
+                    }
+
+                    array_push($retorno['proximos'], $val);
+                }
+            }
+        }
+
+        return $retorno;
+    }
 }

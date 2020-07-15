@@ -131,7 +131,7 @@ class Roteiro extends Master
         }
 
         //$abc = $this->pdo->query("SELECT vendas.*, clientes.nome as cliente_nome FROM vendas LEFT JOIN clientes ON vendas.cliente_id = clientes.id WHERE vendas.roteiro_id = $this->id AND vendas.status <> 'Devolvida' AND vendas.status <> 'Cancelada' ORDER BY vendas.id ASC");
-        $abc = $this->pdo->query("SELECT vendas.*, clientes.nome as cliente_nome FROM vendas LEFT JOIN clientes ON vendas.cliente_id = clientes.id WHERE vendas.roteiro_id = $this->id AND vendas.status <> 'Cancelada' ORDER BY vendas.id ASC");
+        $abc = $this->pdo->query("SELECT vendas.*, clientes.nome as cliente_nome FROM vendas LEFT JOIN clientes ON vendas.cliente_id = clientes.id WHERE vendas.roteiro_id = $this->id AND vendas.status <> 'Cancelada' ORDER BY vendas.id DESC");
         if($abc->rowCount() == 0) {
             $reg = array();
         } else {

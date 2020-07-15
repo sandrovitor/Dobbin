@@ -4,8 +4,19 @@
  * Este arquivo deve ser carregado antes de qualquer outra saída.
  */
 
-// Variáveis
+// CONSTANTES
+/**
+ * Máximo de parcelas das compras.
+ */
 define('DOBBIN_MAX_PARCELAS', 12);
+/**
+ * Domínio ou endereço para clientes externos acessarem comprovantes.
+ */
+define('DOBBIN_LINK_EXTERNO', 'tonaestradaviagens.com.br');
+/**
+ * Frase fixa usada em alguns cálculos de hash para links externos.
+ */
+define('DOBBIN_FRASE_FIXA', 'DOBBIN');
 
 
 // Definições do sistema.

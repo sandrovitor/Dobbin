@@ -19,8 +19,23 @@ NOTE: So far it's apparently the only one project that it's updated with the lat
 
 Примечание: до сих пор это, видимо, только один проект, который обновляется с последней версией ** Blade 7 (2020 Марта) **. Он пропускает некоторые команды [отсутствует](#missing), но ничего больше.
 
+## Comparison with Twig
 
-## NOTE about questions, reports, doubts or suggestings:
+> (spoiler) Twig is slower. 😊         
+
+|          | First Time Time | First Time Memory | Overload First Time | Second Time | Second Time Memory |
+|----------|-----------------|-------------------|---------------------|-------------|--------------------|
+| BladeOne | 1962ms          | 2024kb            | 263                 | 1917ms      | 2024kb             |
+| Twig     | 3734ms          | 2564kb            | 123                 | 3604ms      | 2327kb             |
+
+What it was tested?.  It was tested two features (that are the most used):   It was tested with an array with 
+1000 elements and tested many times.
+
+[Comparison with Twig](https://github.com/EFTEC/BladeOne/wiki/Comparison-with-Twig)
+
+
+
+## NOTE about questions, reports, doubts or suggesting:
 
 ✔ If you want to open an inquiry, do you have a doubt, or you find a bug, then you could open an [ISSUE](https://github.com/EFTEC/BladeOne/issues).   
 Please, don't email me (or send me PM) directly for question or reports.    
@@ -28,9 +43,9 @@ Also, if you want to reopen a report, then you are open to do that.
 I will try to answer all and every one of the question (in my limited time).    
 
 ## Some example
-| [ExampleTicketPHP](https://github.com/jorgecc/ExampleTicketPHP) | [Example cupcakes](https://github.com/EFTEC/example.cupcakes) | [Example Search](https://github.com/EFTEC/example-search)    |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| <img src="https://camo.githubusercontent.com/3c938f71f46a90eb85bb104f0f396fcba62b8f4a/68747470733a2f2f74686570726163746963616c6465762e73332e616d617a6f6e6177732e636f6d2f692f3436696b7061376661717677726533797537706a2e6a7067" alt="example php bladeone" width="200"/> | <img src="https://github.com/EFTEC/example.cupcakes/raw/master/docs/result.jpg" alt="example php bladeone cupcakes" width="200"/> | <img src="https://github.com/EFTEC/example-search/raw/master/img/search_bootstrap.jpg" alt="example php bladeone search" width="200"/> |
+| [ExampleTicketPHP](https://github.com/jorgecc/ExampleTicketPHP) | [Example cupcakes](https://github.com/EFTEC/example.cupcakes) | [Example Search](https://github.com/EFTEC/example-search)    | [Example Editable Grid](https://github.com/EFTEC/example-php-editablegrid) |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| <img src="https://camo.githubusercontent.com/3c938f71f46a90eb85bb104f0f396fcba62b8f4a/68747470733a2f2f74686570726163746963616c6465762e73332e616d617a6f6e6177732e636f6d2f692f3436696b7061376661717677726533797537706a2e6a7067" alt="example php bladeone" width="200"/> | <img src="https://github.com/EFTEC/example.cupcakes/raw/master/docs/result.jpg" alt="example php bladeone cupcakes" width="200"/> | <img src="https://github.com/EFTEC/example-search/raw/master/img/search_bootstrap.jpg" alt="example php bladeone search" width="200"/> | <img src="https://github.com/EFTEC/example-php-editablegrid/raw/master/docs/final.jpg" alt="example php bladeone search" width="200"/> |
 
 
 
@@ -45,12 +60,17 @@ I will try to answer all and every one of the question (in my limited time).
     * [Template calling methods](https://github.com/EFTEC/BladeOne/wiki/Template-calling-methods) 
     * [Template logic](https://github.com/EFTEC/BladeOne/wiki/Template-logic)    
     * [Template loop](https://github.com/EFTEC/BladeOne/wiki/Template-loop)    
+    * [Template Pipes (Filter)](https://github.com/EFTEC/BladeOne/wiki/Template-Pipes-(Filter))    
 * [Methods of the class](https://github.com/EFTEC/BladeOne/wiki/Methods-of-the-class)   
+* [Injecting logic before the view (composer)](https://github.com/EFTEC/BladeOne/wiki/Injecting-logic-before-the-view-(composer))
 * [Extending the class](https://github.com/EFTEC/BladeOne/wiki/Extending-the-class)   
+* [Using BladeOne with YAF Yet Another Framework](https://github.com/EFTEC/BladeOne/wiki/Using--BladeOne-with-YAF)
 * [Differences between Blade and BladeOne](https://github.com/EFTEC/BladeOne/wiki/Differences-between-Blade-and-BladeOne)   
+* [Comparision with Twig (May-2020)](https://github.com/EFTEC/BladeOne/wiki/Comparison-with-Twig)
 * [Changelog](https://github.com/EFTEC/BladeOne/wiki/Changelog)   
 * [Changes between 2.x and 3.0 and TODO](https://github.com/EFTEC/BladeOne/wiki/Changes-between-2.x-and-3.0-and-TODO)   
 * [Code Protection (Sourceguardian and similars)](https://github.com/EFTEC/BladeOne/wiki/Code-Protection-(Sourceguardian-and-similars))   
+
 
 
 
@@ -61,12 +81,12 @@ You can find some tutorials and example on the folder [Examples](examples).
 You could also check the wiki [Wiki](https://github.com/EFTEC/BladeOne/wiki)
 
 ## About this version
-By standard, The original Blade library is part of Laravel (Illuminate components) and to use this template library, you require to install Laravel and Illuminate-view components.
+By standard, The original Blade library is part of Laravel (Illuminate components) and to use this template library, you require install Laravel and Illuminate-view components.
 The syntax of Blade is pretty nice and bright. It's based in C# Razor (another template library for C#). It's starting to be considered a de-facto standard template system for many PHP (Smarty has been riding off the sunset since years ago) so, if we can use it without Laravel then its a big plus for many projects. 
 In fact, in theory, it is even possible to use with Laravel.
-Exists different version of Blade Template that runs without Laravel but most requires 50 or more files and those templates add a new level of complexity, so they are not removing Laravel but hiding:
+Exists different versions of Blade Template that runs without Laravel, but most requires 50 or more files, and those templates add a new level of complexity, so they are not removing Laravel but hiding:
 
-- More files to manages.
+- More files to manage.
 - Changes to the current project (if you want to integrate the template into an existent one)
 - Incompatibilities amongst other projects.
 - Slowness (if your server is not using op-cache)
@@ -155,8 +175,8 @@ And if we use thehtml extension we could even reduce to
 
 This library works in two stages.   
 
-The first is when the template is called the first time. In this case, the template is compiled and stored in a folder.   
-The second time the template is called then, it uses the compiled file.   The compiled file consist mainly in native PHP, so **the performance is equals than native code.** since the compiled version IS PHP.
+The first is when the template calls the first time. In this case, the template compiles and store in a folder.   
+The second time the template calls then, it uses the compiled file.   The compiled file consist mainly in native PHP, so **the performance is equals than native code.** since the compiled version IS PHP.
 
 ### Scalable
 
@@ -186,48 +206,22 @@ Alternatively, BladeOne allows to run arbitrary code from any class or method if
 
 ## Usage
 
-### Without composer's autoload.php
-example.php:
-```php
-include "lib/BladeOne.php"; // you should change it and indicates the correct route.
-Use eftec\bladeone;
-
-$views = __DIR__ . '/views'; // it uses the folder /views to read the templates
-$cache = __DIR__ . '/cache'; // it uses the folder /cache to compile the result. 
-$blade = new bladeone\BladeOne($views,$cache,BladeOne::MODE_AUTO);
-echo $blade->run("hello",array("variable1"=>"value1")); // /views/hello.blade.php must exist
-```
-
-### Without namespace nor composer
-
-```php
-include "../lib/BladeOne.php";
-
-// The nulls indicates the default folders. By drfault it's /views and /compiles
-// \eftec\bladeone\BladeOne::MODE_DEBUG is useful because it indicates the correct file if the template fails to load.  
-//  You must disable it in production. 
-$blade = new \eftec\bladeone\BladeOne(null,null,\eftec\bladeone\BladeOne::MODE_DEBUG);
-
-echo $blade->run("Test.hello", []); // the template must be in /views/Test/hello.blade.php
-```
-
-### With composer's autoload.php
-
-```php
-require "vendor/autoload.php";
-
-Use eftec\bladeone\BladeOne;
-
-$views = __DIR__ . '/views';
-$cache = __DIR__ . '/cache';
-$blade = new BladeOne($views,$cache,BladeOne::MODE_AUTO);
-echo $blade->run("hello",array("variable1"=>"value1"));
-```
-
-Run the next composer command:  
+If you use **composer**, then you could add the library using the next command (command line)  
 
 > composer require eftec/bladeone
 
+If you don't use it, then you could download the library and include it manually.
+
+### Implicit definition
+
+```php
+use eftec\bladeone\BladeOne;
+
+$views = __DIR__ . '/views';
+$cache = __DIR__ . '/cache';
+$blade = new BladeOne($views,$cache,BladeOne::MODE_DEBUG); // MODE_DEBUG allows to pinpoint troubles.
+echo $blade->run("hello",array("variable1"=>"value1")); // it calls /views/hello.blade.php
+```
 
 Where `$views` is the folder where the views (templates not compiled) will be stored. 
 `$cache` is the folder where the compiled files will be stored.
@@ -239,6 +233,64 @@ views/hello.blade.php:
 <h1>Title</h1>
 {{$variable1}}
 ```
+
+### Explicit
+
+In this mode, it uses the folders ```__DIR__/views``` and ```__DIR__/compiles```, also it uses the mode as MODE_AUTO.
+
+```php
+use eftec\bladeone\BladeOne;
+
+$blade = new BladeOne(); // MODE_DEBUG allows to pinpoint troubles.
+echo $blade->run("hello",array("variable1"=>"value1")); // it calls /views/hello.blade.php
+```
+
+### Fluent
+
+```php
+use eftec\bladeone\BladeOne;
+
+$blade = new BladeOne(); // MODE_DEBUG allows to pinpoint troubles.
+echo $blade->setView('hello')    // it sets the view to render
+           ->share(array("variable1"=>"value1")) // it sets the variables to sends to the view            
+           ->run(); // it calls /views/hello.blade.php
+```
+
+## Filter (Pipes)
+
+It is possible to modify the result by adding filters to the result.
+
+Let's say we have the next value $name='Jack Sparrow'
+
+```php
+$blade=new BladeOne();
+$blade->pipeEnable=true; // pipes are disable by default so it must be enable.
+echo $blade->run('template',['name'=>'Jack Sparrow']);
+```
+
+Our view could look like:
+
+```php
+ {{$name}}  or {!! $name !!} // Jack Sparrow
+```
+
+What if we want to show the name in uppercase?.
+
+We could do in our code $name=strtoupper('Jack Sparrow'). With Pipes, we could do the same as follow:
+
+```php
+ {{$name | strtoupper}} // JACK SPARROW 
+```
+
+We could also add arguments and chain methods.
+
+```php
+ {{$name | strtoupper | substr:0,5}} // JACK
+```
+
+You can find more information on https://github.com/EFTEC/BladeOne/wiki/Template-Pipes-(Filter)
+
+
 
 ## Security (optional)
 
@@ -399,8 +451,6 @@ Example to create a select:
 You could download it or add it via Composer
 
 > composer require eftec/bladeonehtml
-
-
 
 
 ## Collaboration

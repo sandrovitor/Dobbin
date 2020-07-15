@@ -32,6 +32,16 @@ $router->map('GET', '/[:page]', function($p){
     }
     */
 });
+$router->map('GET', '/gera/[a:tipo]/[:codigo]/[a:opt]?', function($p){
+
+    switch($p['tipo']) {
+        case 'pdf':
+            return ConGerador::pdf($p);
+        break;
+
+        default: die; break;
+    }
+});
 
 // CHECA ATUALIZAÇÃO DO SISTEMA
 $router->map('POST', '/checkversion', 'ControllerPrincipal#checkversion');

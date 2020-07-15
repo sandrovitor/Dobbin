@@ -27,14 +27,20 @@ class ComposerStaticInitd607276b5b9e708e65051e717d1c40d9
         'S' => 
         array (
             'Symfony\\Polyfill\\Ctype\\' => 23,
+            'Svg\\' => 4,
             'SGCTUR\\' => 7,
         ),
         'P' => 
         array (
             'Prophecy\\' => 9,
         ),
+        'F' => 
+        array (
+            'FontLib\\' => 8,
+        ),
         'D' => 
         array (
+            'Dompdf\\' => 7,
             'Doctrine\\Instantiator\\' => 22,
             'DeepCopy\\' => 9,
         ),
@@ -63,6 +69,10 @@ class ComposerStaticInitd607276b5b9e708e65051e717d1c40d9
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
         ),
+        'Svg\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phenx/php-svg-lib/src/Svg',
+        ),
         'SGCTUR\\' => 
         array (
             0 => __DIR__ . '/../..' . '/app/Models',
@@ -70,6 +80,14 @@ class ComposerStaticInitd607276b5b9e708e65051e717d1c40d9
         'Prophecy\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpspec/prophecy/src/Prophecy',
+        ),
+        'FontLib\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phenx/php-font-lib/src/FontLib',
+        ),
+        'Dompdf\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/dompdf/dompdf/src',
         ),
         'Doctrine\\Instantiator\\' => 
         array (
@@ -89,8 +107,24 @@ class ComposerStaticInitd607276b5b9e708e65051e717d1c40d9
         0 => __DIR__ . '/../..' . '/app/Models',
     );
 
+    public static $prefixesPsr0 = array (
+        'S' => 
+        array (
+            'Sabberworm\\CSS' => 
+            array (
+                0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/lib',
+            ),
+        ),
+    );
+
     public static $classMap = array (
         'AltoRouter' => __DIR__ . '/..' . '/altorouter/altorouter/AltoRouter.php',
+        'Dompdf\\Cpdf' => __DIR__ . '/..' . '/dompdf/dompdf/lib/Cpdf.php',
+        'HTML5_Data' => __DIR__ . '/..' . '/dompdf/dompdf/lib/html5lib/Data.php',
+        'HTML5_InputStream' => __DIR__ . '/..' . '/dompdf/dompdf/lib/html5lib/InputStream.php',
+        'HTML5_Parser' => __DIR__ . '/..' . '/dompdf/dompdf/lib/html5lib/Parser.php',
+        'HTML5_Tokenizer' => __DIR__ . '/..' . '/dompdf/dompdf/lib/html5lib/Tokenizer.php',
+        'HTML5_TreeBuilder' => __DIR__ . '/..' . '/dompdf/dompdf/lib/html5lib/TreeBuilder.php',
         'PHPUnit\\Exception' => __DIR__ . '/..' . '/phpunit/phpunit/src/Exception.php',
         'PHPUnit\\Framework\\Assert' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert.php',
         'PHPUnit\\Framework\\AssertionFailedError' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/AssertionFailedError.php',
@@ -647,6 +681,7 @@ class ComposerStaticInitd607276b5b9e708e65051e717d1c40d9
             $loader->prefixLengthsPsr4 = ComposerStaticInitd607276b5b9e708e65051e717d1c40d9::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInitd607276b5b9e708e65051e717d1c40d9::$prefixDirsPsr4;
             $loader->fallbackDirsPsr4 = ComposerStaticInitd607276b5b9e708e65051e717d1c40d9::$fallbackDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInitd607276b5b9e708e65051e717d1c40d9::$prefixesPsr0;
             $loader->classMap = ComposerStaticInitd607276b5b9e708e65051e717d1c40d9::$classMap;
 
         }, null, ClassLoader::class);

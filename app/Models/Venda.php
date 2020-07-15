@@ -286,7 +286,7 @@ class Venda extends Master
                         array_push($detalhes, [
                             'valor' => (int)$outro['valor_parcela'],
                             'parcela' => (int)$this->dados->parcelas_pagas+1,
-                            'data' => date('Y-m-d')
+                            'data' => date('Y-m-d H:i:s')
                         ]);
 
                         // Persiste
@@ -340,7 +340,7 @@ class Venda extends Master
                             array_push($detalhes, [
                                 'valor' => (int)$outro['valor_parcela'],
                                 'parcela' => (int)$this->dados->parcelas_pagas+1,
-                                'data' => date('Y-m-d')
+                                'data' => date('Y-m-d H:i:s')
                             ]);
 
                             // Adiciona informação zerada nas parcelas seguintes.
@@ -348,7 +348,7 @@ class Venda extends Master
                                 array_push($detalhes, [
                                     'valor' => 0,
                                     'parcela' => $i,
-                                    'data' => date('Y-m-d')
+                                    'data' => date('Y-m-d H:i:s')
                                 ]);
                             }
 
@@ -363,7 +363,7 @@ class Venda extends Master
                             array_push($detalhes, [
                                 'valor' => (int)$outro['valor_parcela'],
                                 'parcela' => (int)$this->dados->parcelas_pagas+1,
-                                'data' => date('Y-m-d')
+                                'data' => date('Y-m-d H:i:s')
                             ]);
 
                             $parcPagas = (int)$this->dados->parcelas_pagas+1; // PARCELAS_PAGAS

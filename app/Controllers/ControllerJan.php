@@ -331,6 +331,17 @@ class ControllerJan
                 
                 unset($tipo_cl);
 
+                /**
+                 * LINK COMPROVANTE
+                 * HASH = [bin2hex(hash(sha256, DOBBIN_FRASE_FIXA . DATA_RESERVA(Y-m-d H:i:s), true))]
+                 * 
+                 * [ID DA VENDA] - [HASH (0, 29)] - [ID DO CLIENTE] - [HASH (30, )]
+                 * 
+                 */
+                
+                $hashCompleto = bin2hex( hash('sha256', DOBBIN_FRASE_FIXA . $data_reserva->format('Y-m-d H:i:s'), true) );
+                $linkComp = str_pad(bin2hex($ret->id), 8, '0', STR_PAD_LEFT) . '-' . substr($hashCompleto, 0, 30). '-' . str_pad(bin2hex($ret->cliente_id), 8, '0', STR_PAD_LEFT) . '-' .substr($hashCompleto, 30);
+
                 // Constrói página com HEREDOC
                 $page = <<<PAGINA
             <div class="row">
@@ -346,7 +357,18 @@ class ControllerJan
                                 dobbin-campo-edita dobbin-campo-tipo="textarea" dobbin-campo-nome="obs" dobbin-url-form="vendas/{$ret->id}/obs/editar">{$ret->obs}</div>
 
                             <br>
-                            <strong>Situação:</strong> <span class="text-uppercase">{$ret->status_html}</span> <a href="javascript:void(0)" class="ml-2" onclick="vendaGetSituacao({$ret->id})">Alterar situação</a>
+                            <strong>Situação:</strong> <span class="text-uppercase">{$ret->status_html}</span>
+                            <a href="javascript:void(0)" class="px-2 ml-2" onclick="vendaGetSituacao({$ret->id})">Alterar situação</a><br>
+                            <div class="btn-group mt-2">
+                                <a href="/gera/pdf/{$linkComp}" class="btn btn-info btn-sm px-2" target="_blank">Comprovante da situação atual</a>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown"></button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="/gera/pdf/{$linkComp}/download">Download</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             {$info_pagamento}
                         </div>
                     </div>

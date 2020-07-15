@@ -8,7 +8,7 @@
 </div>
 
 <div class="row">
-    <div class="col-12 col-md-11 col-lg-10 col-xl-7 mx-auto">
+    <div class="col-12 col-md-9 col-lg-5 col-xl-6 mx-auto">
         <div class="card">
             <div class="card-header">
                 INFORMAÇÕES DO SISTEMA
@@ -85,7 +85,8 @@
         </div>
     </div>
     
-    <div class="col-12 col-md-11 col-lg-7 col-xl-5 mx-auto">
+    
+    <div class="col-12 col-md-11 col-lg-7 col-xl-6 mx-auto">
         <div class="card">
             <div class="card-header">
                 Aniversariantes
@@ -143,6 +144,87 @@
                     Houve um erro ao retornar os aniversariantes: {{$retorno['mensagem']}}
                 </div>
             @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-12 col-lg-12 col-xl-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                Vencimentos
+            </div>
+            <div class="card-body">
+                <h5 class="font-weight-bold">VENCIMENTOS DE HOJE</h5>
+                <table class="table table-hover table-sm mb-4">
+                    <thead>
+                        <tr>
+                            <th>Venda</th>
+                            <th>Situação</th>
+                            <th><abbr title="Esta é a parcela esperada para receber o pagamento hoje." data-toggle="tooltip">Parcela</abbr></th>
+                            <th><abbr title="Data do vencimento da venda." data-toggle="tooltip">Data</abbr></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if(empty($vencimentos['hoje']))
+                    <tr>
+                        <td colspan="4" class="text-center"> Nenhum vencimento hoje </td>
+                    </tr>
+                    @else
+                    @foreach($vencimentos['hoje'] as $h)
+                    @php
+                        $data_ini = new \DateTime($h->roteiro_data_ini);
+                        $data_fim = new \DateTime($h->roteiro_data_fim);
+                        $data_reserva = new \DateTime($h->data_reserva);
+                    @endphp
+                    <tr class="cursor-pointer" onclick="getVenda({{$h->id}})" data-toggle="popover" data-placement="top" data-trigger="hover"
+                    data-content="<strong>Roteiro: </strong> {{$h->roteiro_nome}} ({{$data_ini->format('d/m/Y')}} a {{$data_fim->format('d/m/Y')}})<br>
+                    <strong>Cliente: </strong> {{$h->cliente_nome}}<br> <strong>Data da reserva: </strong> {{$data_reserva->format('d/m/Y')}}<br><br>
+                    <strong>Valor Total: </strong> R$ {{$sgc->converteCentavoParaReal($h->valor_total)}}<br> <strong>Parcelas Pagas:</strong> {{$h->parcelas_pagas}}<br>
+                    <strong>Total Pago: </strong> R$ {{$sgc->converteCentavoParaReal($h->total_pago)}}"
+                    title="<strong class='text-info'>Resumo da venda</strong>">
+                        <td><small>{{$h->id}}</small></td>
+                        <td>{!!$h->status_html!!} ({{$h->forma_pagamento}})</td>
+                        <td><b>{{$h->parcelas_pagas + 1}}</b>/{{$h->parcelas}}</td>
+                        <td>{{$h->vencimento}}</td>
+                    </tr>
+                    @endforeach
+                    @endif
+                    </tbody>
+                </table><br>
+
+                <h5 class="font-weight-bold">PRÓXIMOS VENCIMENTOS</h5>
+                <table class="table table-hover table-sm mb-4">
+                    <thead>
+                        <tr>
+                            <th>Venda</th>
+                            <th>Situação</th>
+                            <th><abbr title="Esta é a parcela esperada para receber o pagamento nos respectivos vencimentos." data-toggle="tooltip">Parcela</abbr></th>
+                            <th><abbr title="Data do vencimento da venda." data-toggle="tooltip">Data</abbr></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if(empty($vencimentos['proximos']))
+                    <tr>
+                        <td colspan="4" class="text-center"> Nenhum vencimento para os próximos 7 dias </td>
+                    </tr>
+                    @else
+                    @foreach($vencimentos['proximos'] as $h)
+                    <tr class="cursor-pointer" onclick="getVenda({{$h->id}})" data-toggle="popover" data-placement="top" data-trigger="hover"
+                    data-content="<strong>Roteiro: </strong> {{$h->roteiro_nome}} ({{$data_ini->format('d/m/Y')}} a {{$data_fim->format('d/m/Y')}})<br>
+                    <strong>Cliente: </strong> {{$h->cliente_nome}}<br> <strong>Data da reserva: </strong> {{$data_reserva->format('d/m/Y')}}<br><br>
+                    <strong>Valor Total: </strong> R$ {{$sgc->converteCentavoParaReal($h->valor_total)}}<br> <strong>Parcelas Pagas:</strong> {{$h->parcelas_pagas}}<br>
+                    <strong>Total Pago: </strong> R$ {{$sgc->converteCentavoParaReal($h->total_pago)}}"
+                    title="<strong class='text-info'>Resumo da venda</strong>">
+                        <td><small>{{$h->id}}</small></td>
+                        <td>{!!$h->status_html!!} ({{$h->forma_pagamento}})</td>
+                        <td><b>{{$h->parcelas_pagas + 1}}</b>/{{$h->parcelas}}</td>
+                        <td>{{$h->vencimento}}</td>
+                    </tr>
+                    @endforeach
+                    @endif
+                    </tbody>
+                </table>
+                
             </div>
         </div>
     </div>

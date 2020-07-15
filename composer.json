@@ -21,7 +21,8 @@
         
         "eftec/bladeone": "^3.31-stable",
         "altorouter/altorouter": "^1.2-stable",
-        "cocur/slugify": "^3.2-stable"
+        "cocur/slugify": "^3.2-stable",
+        "dompdf/dompdf": "0.8.*"
     },
     "require-dev": {
         "phpunit/phpunit" : "~7.5-stable"

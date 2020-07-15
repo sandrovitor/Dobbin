@@ -112,6 +112,14 @@ abstract class Master
                             }
                             break;
 
+                        case 'EMPRESA_NOME':
+                            $this->system->empresa_nome = trim($a[1]);
+                            break;
+
+                        case 'EMPRESA_CNPJ':
+                            $this->system->empresa_cnpj = trim($a[1]);
+                            break;
+
                         
                     }
                 }
