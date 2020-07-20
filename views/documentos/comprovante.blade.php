@@ -11,7 +11,7 @@
                 font-family: 'Metrophobic', sans-serif;
             }
 
-            .table-bordered.border-dark td {
+            .table-bordered.border-dark td, .table-bordered.border-dark th {
                 border-color: #343a40!important;
             }
 
@@ -62,18 +62,23 @@
         $data_estorno = new DateTime($v->data_estorno);
         $data_estorno = $data_estorno->format('d/m/Y H:i:s');
     }
+
+    $items = json_decode($v->items);
+    if($items == NULL) {
+        $items = [];
+    }
     
     @endphp
     <body>
         <table class="table table-bordered border-dark table-sm mb-1">
             <tr>
-                <td><img src="https://tonaestradaviagens.com.br/media/images/logo-wide64.png" height="50"></td>
+                <td><img src="https://tonaestradaviagens.com.br/media/images/logo-wide64.png" height="40"></td>
                 <td class="text-center" style="vertical-align:middle"><strong>COMPROVANTE DE RESERVA E PAGAMENTO</strong></td>
                 <td class="text-center" style="vertical-align:middle"><small class="font-weight-bold">RESERVA</small> <br><small class="text-muted">{{$v->id}}</small></td>
             </tr>
         </table>
 
-        <table class="table table-bordered border-dark table-sm mt-0 mb-3">
+        <table class="table table-bordered border-dark table-sm mt-0 mb-4">
             <tr>
                 <td><strong>EMPRESA:</strong></td>
                 <td>{{$system->empresa_nome}}</td>
@@ -84,7 +89,15 @@
             </tr>
         </table>
 
-        <table class="table table-bordered border-dark table-sm mt-0">
+        <table class="table table-bordered border-dark table-sm my-0">
+            <tr>
+                <td><strong>Roteiro:</strong></td>
+                <td colspan="3">{{$v->roteiro_nome}} ({{$periodo}}) <small class="text-muted">[Cód. {{$v->roteiro_id}}]</small></td>
+            </tr>
+            <tr>
+                <td><strong>Cliente:</strong></td>
+                <td colspan="3">{{$v->cliente_nome}} <small class="text-muted">[Cód. {{$v->cliente_id}}]</small></td>
+            </tr>
             <tr>
                 <td style="width:160px;"><strong>Qtd. Passagens:</strong></td>
                 <td>{{$v->clientes_total}}</td>
@@ -92,15 +105,38 @@
                 <td>{{$data_reserva->format('d/m/Y H:i:s')}}</td>
             </tr>
             <tr>
-                <td><strong>Cliente:</strong></td>
-                <td colspan="3">{{$v->cliente_nome}} <small class="text-muted">[Cód. {{$v->cliente_id}}]</small></td>
-            </tr>
-            <tr>
-                <td><strong>Roteiro:</strong></td>
-                <td colspan="3">{{$v->roteiro_nome}} ({{$periodo}}) <small class="text-muted">[Cód. {{$v->roteiro_id}}]</small></td>
+                <td class="text-center">ADULTOS: <strong>{{$v->adultos}}</strong></td>
+                <td class="text-center">CRIANÇAS: <strong>{{$v->criancas}}</strong></td>
+                <td colspan="2">-</td>
             </tr>
             
         </table>
+        
+        <table class="table table-bordered border-dark table-sm mt-1 mb-4 small">
+            <tr>
+                <th>#</th>
+                <th>Tarifa</th>
+                <th>Qtd</th>
+                <th>Subtotal</th>
+            </tr>
+            @if(empty($items))
+
+            @else
+            @foreach($items as $chave => $i)
+            <tr>
+                <td>{{$chave+1}}</td>
+                <td>{{$i->tarifa}}</td>
+                <td>{{$i->qtd}}</td>
+                <td>R$ {{$venda->converteCentavoParaReal($i->subtotal)}}</td>
+            </tr>
+            @endforeach
+            <tr>
+                <td colspan="3"><strong>TOTAL</strong></td>
+                <td class="text-primary font-weight-bold">R$ {{$venda->converteCentavoParaReal($v->valor_total)}}</td>
+            </tr>
+            @endif
+        </table>
+
         @if($v->status == 'Reserva')
         <table class="table table-bordered border-dark table-sm mt-0">
             <tr>
@@ -122,7 +158,7 @@
             </tr>
             <tr>
                 <td colspan="4">
-                    <table class="table table-borderless my-0">
+                    <table class="table table-sm table-borderless my-0">
                         <tr>
                             <td class="text-center">
                                 <strong>Forma de Pagamento</strong><br>
@@ -248,7 +284,7 @@
             </tr>
             <tr>
                 <td colspan="4">
-                    <table class="table table-borderless my-0">
+                    <table class="table table-sm table-borderless my-0 small">
                         <tr>
                             <td class="text-center">
                                 <strong>Forma de Pagamento</strong><br>

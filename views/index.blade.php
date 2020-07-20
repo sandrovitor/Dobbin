@@ -209,6 +209,11 @@
                     </tr>
                     @else
                     @foreach($vencimentos['proximos'] as $h)
+                    @php
+                        $data_ini = new \DateTime($h->roteiro_data_ini);
+                        $data_fim = new \DateTime($h->roteiro_data_fim);
+                        $data_reserva = new \DateTime($h->data_reserva);
+                    @endphp
                     <tr class="cursor-pointer" onclick="getVenda({{$h->id}})" data-toggle="popover" data-placement="top" data-trigger="hover"
                     data-content="<strong>Roteiro: </strong> {{$h->roteiro_nome}} ({{$data_ini->format('d/m/Y')}} a {{$data_fim->format('d/m/Y')}})<br>
                     <strong>Cliente: </strong> {{$h->cliente_nome}}<br> <strong>Data da reserva: </strong> {{$data_reserva->format('d/m/Y')}}<br><br>

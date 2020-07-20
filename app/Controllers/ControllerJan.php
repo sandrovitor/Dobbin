@@ -342,6 +342,26 @@ class ControllerJan
                 $hashCompleto = bin2hex( hash('sha256', DOBBIN_FRASE_FIXA . $data_reserva->format('Y-m-d H:i:s'), true) );
                 $linkComp = str_pad(bin2hex($ret->id), 8, '0', STR_PAD_LEFT) . '-' . substr($hashCompleto, 0, 30). '-' . str_pad(bin2hex($ret->cliente_id), 8, '0', STR_PAD_LEFT) . '-' .substr($hashCompleto, 30);
 
+                /**
+                 * TERMOS/CONTRATO
+                 */
+                
+                $termosLink = 'https://'.DOBBIN_LINK_EXTERNO.'/externo/contrato/'.$linkComp;
+                if($ret->termos_ac == NULL) {
+                    $termosAc = '<span class="badge badge-secondary py-1 px-2">PENDENTE</span>';
+                    $termosData = '';
+                } else if((bool)$ret->termos_ac == true) {
+                    $termosAc = '<span class="badge badge-success py-1 px-2">CONCORDA</span>';
+                    $x = new \DateTime($ret->termos_data);
+                    $termosData = '<span class="badge badge-light py-1 px-2 ml-2">'.$x->format('d/m/Y H:i:s').'</span>';
+                    unset($x);
+                } else {
+                    $termosAc = '<span class="badge badge-warning py-1 px-2">DISCORDA</span>';
+                    $x = new \DateTime($ret->termos_data);
+                    $termosData = '<span class="badge badge-light py-1 px-2 ml-2">'.$x->format('d/m/Y H:i:s').'</span>';
+                    unset($x);
+                }
+
                 // Constrói página com HEREDOC
                 $page = <<<PAGINA
             <div class="row">
@@ -357,17 +377,45 @@ class ControllerJan
                                 dobbin-campo-edita dobbin-campo-tipo="textarea" dobbin-campo-nome="obs" dobbin-url-form="vendas/{$ret->id}/obs/editar">{$ret->obs}</div>
 
                             <br>
-                            <strong>Situação:</strong> <span class="text-uppercase">{$ret->status_html}</span>
-                            <a href="javascript:void(0)" class="px-2 ml-2" onclick="vendaGetSituacao({$ret->id})">Alterar situação</a><br>
-                            <div class="btn-group mt-2">
-                                <a href="/gera/pdf/{$linkComp}" class="btn btn-info btn-sm px-2" target="_blank">Comprovante da situação atual</a>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown"></button>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="/gera/pdf/{$linkComp}/download">Download</a>
+                            <div class="row">
+                                <div class="col-12 col-lg-6 mb-1">
+                                    <div class="border border-dark p-2">
+                                        <strong>Contrato:</strong> {$termosAc} {$termosData}<br>
+                                        <div class="btn-group mt-2">
+                                            <a href="{$termosLink}" class="btn btn-info btn-sm px-2" target="_blank">Página externa do contrato</a>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown"></button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item small" href="{$termosLink}/download">Download</a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item small" href="javascript:void(0)" onclick="vendaMudaAceiteContrato({$ret->id}, 1)">Marcar como CONCORDA</a>
+                                                    <a class="dropdown-item small" href="javascript:void(0)" onclick="vendaMudaAceiteContrato({$ret->id}, 0)">Marcar como DISCORDA</a>
+                                                    <a class="dropdown-item small" href="javascript:void(0)" onclick="vendaMudaAceiteContrato({$ret->id}, 2)">Redefinir</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
                                     </div>
+                                    
+                                </div>
+                                <div class="col-12 col-lg-6 mb-1">
+                                    <div class="border border-dark p-2">
+                                        <strong>Situação:</strong> <span class="text-uppercase">{$ret->status_html}</span>
+                                        <a href="javascript:void(0)" class="px-2 ml-2" onclick="vendaGetSituacao({$ret->id})">Alterar situação</a><br>
+                                        <div class="btn-group mt-2">
+                                            <a href="/gera/pdf/{$linkComp}" class="btn btn-info btn-sm px-2" target="_blank">Comprovante da situação atual</a>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-toggle="dropdown"></button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="/gera/pdf/{$linkComp}/download">Download</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                 </div>
                             </div>
+                            
                             
                             {$info_pagamento}
                         </div>

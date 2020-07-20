@@ -2091,7 +2091,6 @@ DADOS;
             foreach($venda->items as $items) {
                 if($items->roteiroID === $r) {
                     unset($items->roteiroID);
-                    array_push($v->items, $items);
                     
                     // Busca a tarifa correspondente.
                     foreach($roteiro->tarifa as $key => $y) {
@@ -2104,9 +2103,16 @@ DADOS;
                     $v->criancas += ( (int)$roteiro->tarifa[$x]->distr->criancas * (int)$items->qtd );
                     $v->adultos += ( (int)$roteiro->tarifa[$x]->distr->adultos * (int)$items->qtd );
 
+                    // Adiciona número de clientes (ADULTO e CRIANÇA) ao item.
+                    $items->criancas = ( (int)$roteiro->tarifa[$x]->distr->criancas * (int)$items->qtd );
+                    $items->adultos = ( (int)$roteiro->tarifa[$x]->distr->adultos * (int)$items->qtd );
+
                     // Valor total e desconto total.
                     $v->valor_total += (int)$items->subtotal;
                     $v->desconto_total += (int)$items->desconto;
+
+                    // Insere o item no ARRAY de itens da venda.
+                    array_push($v->items, $items);
 
                 }
             }
@@ -2323,6 +2329,11 @@ DADOS;
 
     }
 
+    /**
+     * Lista vendas com vencimento hoje e nos próximos 7 dias.
+     * 
+     * @return array [hoje => ARRAY, proximos => ARRAY]
+     */
     public function getVencimentosLista()
     {
         $query = "SELECT vendas.*, roteiros.nome as roteiro_nome, roteiros.data_ini as roteiro_data_ini, roteiros.data_fim as roteiro_data_fim, ".

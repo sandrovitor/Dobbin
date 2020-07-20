@@ -1234,4 +1234,35 @@ class ControllerForm
         return json_encode($retorno);
     }
 
+    static function vendasDefineTermos($p)
+    {
+        self::validaConexao(3);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        switch((int)$p['opt']) {
+            case 0: $opt = false; break;
+            case 1: $opt = true; break;
+            case 2: $opt = null; break;
+            default: $retorno['mensagem'] = 'Opção inválida.'; return json_encode($retorno); break;
+        }
+
+        $venda = new Venda($p['id']);
+        if($venda->getDados() == false) {
+            $retorno['mensagem'] = Erro::getMessage(302);
+            return json_encode($retorno);
+        }
+
+        
+
+        if($venda->setContratoAceite($opt)) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = 'Não foi possível redefinir o aceite do contrato.';
+        }
+
+        return json_encode($retorno);
+    }
 }

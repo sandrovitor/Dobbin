@@ -499,7 +499,7 @@ class Venda extends Master
                     }
                     $valor = (int)$outro['valor_estorno'];
                     try{
-                        $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', parcelas_pagas = $this->parcelas, data_estorno = NOW(), valor_devolvido = $valor WHERE id = $this->id");
+                        $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', parcelas_pagas = ".$this->dados->parcelas.", data_estorno = NOW(), valor_devolvido = $valor WHERE id = $this->id");
                         /**
                          * LOG
                          */
@@ -540,5 +540,32 @@ class Venda extends Master
             error_log($e->getMessage(), 0);
             return false;
         }
+    }
+
+    /**
+     * Define o aceite do contrato.
+     * 
+     * @param bool $aceito
+     * @return bool|null Para resetar, envie NULL; para concordar, envie TRUE; para discordar, envie FALSE.
+     */
+    public function setContratoAceite($aceito)
+    {
+        if($this->dados == null) {
+            return false;
+        }
+
+        if(!is_null($aceito) && !is_bool($aceito)) {
+            return false;
+        }
+
+        if($aceito === null) {
+            $abc = $this->pdo->query("UPDATE vendas SET termos_ac = NULL, termos_data = NULL WHERE id = $this->id");
+        } else if($aceito === true) {
+            $abc = $this->pdo->query("UPDATE vendas SET termos_ac = 1, termos_data = NOW() WHERE id = $this->id");
+        } else {
+            $abc = $this->pdo->query("UPDATE vendas SET termos_ac = 0, termos_data = NOW() WHERE id = $this->id");
+        }
+
+        return true;
     }
 }

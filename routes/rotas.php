@@ -192,6 +192,7 @@ $router->addRoutes(array(
     array('POST', $prefix.'vendas/[i:id]/clientes/del/[i:cid]', 'ControllerForm#vendasDelCliente'),
     array('POST', $prefix.'vendas/[i:id]/situacao/editar', 'ControllerForm#vendasAlterarSituacao'),
     array('POST', $prefix.'vendas/[i:id]/obs/editar', 'ControllerForm#vendasAlterarObservacao'),
+    array('POST', $prefix.'vendas/[i:id]/definetermos/[i:opt]', 'ControllerForm#vendasDefineTermos'),
 
     
 

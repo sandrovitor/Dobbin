@@ -77,7 +77,7 @@ function loadLanding(href)
         // Remove a interrogação e faz um explode.
         querystring = location.search.substring(1, location.search.length);
         querystring = querystring.split('&');
-        console.log(querystring);
+        //console.log(querystring);
         querystring.forEach(function(a, chave){
             let tmp = a.split('=');
             querystring[chave] = {
@@ -94,7 +94,7 @@ function loadLanding(href)
     }
     
     if(querystring.length > 0) {
-        console.log(querystring);
+        //console.log(querystring);
     }
     
 
@@ -144,7 +144,9 @@ function loadLanding(href)
         if(st == 'parsererror') {
             $('#bodyContent').html('<h3 class="my-4 p-3 rounded-sm bg-white">Erro <small>(informe ao desenvolvedor)</small>:</h3>'+ev.responseText);
             $('#content').fadeIn('fast');
-            console.log(ev.responseText);
+            if(debugEnabled === true) {
+                console.log(ev.responseText);
+            }
         }
         
 
@@ -175,7 +177,7 @@ function gatilhosLoadLanding()
                 geralIntervalo5Min = setInterval(function(){getClientesRoteiro(); getEstoqueRoteiro();}, 180000);
             }); break;
 
-        case /(vendas)/gi.test(local): // Vendas
+        case /^(vendas)$/gi.test(local): // Vendas
             $(document).ready(function(){
                 setTimeout(function(){
                     getVendasReservas();getVendasAguardandoPagamento();
@@ -220,6 +222,9 @@ function checkSystemUpdate()
     timeoutUpdate = setTimeout(checkSystemUpdate, 300000); // Verifica a cada 5min (300000ms).
 }
 
+/**
+ * OBSOLETO 
+ */
 function converteCentavoEmReal(centavos = 0) {
     centavos = parseInt(centavos);
     let real, cents, invert = false;
@@ -253,6 +258,9 @@ function converteCentavoEmReal(centavos = 0) {
     }
 }
 
+/**
+ * OBSOLETO 
+ */
 function converteRealEmCentavo(valor = '0,00') {
     if(Dobbin.isMoney(valor) == false) {
         return false;
@@ -521,7 +529,9 @@ function loadCoordenador(id)
 {
     $.post('/coordenadores/ver/'+id, function(res){
         if(res.success == true) {
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             let c = res.coordenador;
             $('#modalCoordenadorDetalhes [data-detalhes-nome]').text(c.nome);
             $('#modalCoordenadorDetalhes [data-detalhes-id]').text(c.id);
@@ -581,7 +591,9 @@ function loadCliente(id)
 
     $.post('/clientes/ver/'+id, function(res){
         if(res.success == true) {
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             let c = res.cliente;
             $('#modalClienteDetalhes [data-detalhes-nome]').text(c.nome);
             $('#modalClienteDetalhes [data-detalhes-id]:not(button)').text(c.id);
@@ -728,7 +740,9 @@ function loadCliente(id)
                     });
                     
                 }
-                console.log(vendas);
+                if(debugEnabled === true) {
+                    console.log(vendas);
+                }
 
             });
 
@@ -755,7 +769,9 @@ function editaCoordenador(id)
 {
     $.post('/coordenadores/ver/'+id, function(res){
         if(res.success == true) {
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             let c = res.coordenador;
             $('#modalCoordenadorEditar strong[data-detalhes-nome]').text(c.nome);
             $('#modalCoordenadorEditar input[data-detalhes-nome]').val(c.nome);
@@ -807,7 +823,9 @@ function editaCliente(id)
 
     $.post('/clientes/ver/'+id, function(res){
         if(res.success == true) {
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             let c = res.cliente;
             $('strong[data-detalhes-nome]').text(c.nome);
             $('input[data-detalhes-nome]').val(c.nome);
@@ -857,7 +875,9 @@ function loadUsuario(id)
 {
     $.post('/usuarios/ver/'+id, function(res){
         if(res.success == true) {
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             $('#modalUsuarioDetalhes').find('[data-usuario-nome]').val(res.usuario.nome);
             $('#modalUsuarioDetalhes').find('[data-usuario-avatar]').attr('src', 'media/images/av/'+res.usuario.avatar);
             $('#modalUsuarioDetalhes').find('[data-usuario-nome]').text(res.usuario.nome + ' ' + res.usuario.sobrenome);
@@ -892,7 +912,9 @@ function editaUsuario(id)
 {
     $.post('/usuarios/ver/'+id, function(res){
         if(res.success == true) {
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             $('#modalUsuarioEditar').find('[data-usuario-nome]').val(res.usuario.nome);
             $('#modalUsuarioEditar').find('[data-usuario-sobrenome]').val(res.usuario.sobrenome);
             $('#modalUsuarioEditar').find('[data-usuario-email]').val(res.usuario.email);
@@ -923,7 +945,9 @@ function editaUsuario(id)
 function vendaEstornarModal(id)
 {
     getVendaDados(id, function(v){
-        console.log(v);
+        if(debugEnabled === true) {
+            console.log(v);
+        }
         if(v === false) {return false;}
         let modal = $('#modalEstornarVenda');
         modal.find('h6').html('<strong>Venda:</strong> #'+v.id+'<br>'+
@@ -993,7 +1017,7 @@ function getCoordenadorDados(id, callback)
     id = parseInt(id);
 
     $.post('/coordenadores/ver/'+id, function(res){
-        console.log(res);
+        //console.log(res);
         if(res.success == true) {
             callback(res.coordenador);
         } else {
@@ -1011,7 +1035,7 @@ function getRoteiroDados(id, callback)
     id = parseInt(id);
 
     $.post('/roteiros/load/'+id, function(res){
-        console.log(res);
+        //console.log(res);
         if(res.success == true) {
             callback(res.roteiro);
         } else {
@@ -1029,6 +1053,9 @@ function getVenda(id)
     $.post('/vendas/database/load/venda/'+id, function(res){
         //$('.modal:not(#janDinamica)').modal('hide');
         if(res.success) {
+            if(debugEnabled == true) {
+                console.log(res.venda);
+            }
             let venda = res.venda;
             // AJUSTA TITULO DA JANELA DINÂMICA
             $('#janDinamica').find('.tituloModal').text('Venda #'+venda.id);
@@ -1038,7 +1065,7 @@ function getVenda(id)
             restartTooltip();}, 400);
             $('#janDinamica').find('.modal-dialog').removeClass('modal-sm').addClass('modal-xl');
             janDinamicaGatilhos(); // Dispara gatilhos na janela dinâmica.
-            console.log(res);
+            //console.log(res);
         } else {
             $('#janDinamica').find('.modal-body').html('<h6>Não conseguimos recuperar esta venda.</h6><br>'+res.mensagem);
             alerta(res.mensagem, 'Não conseguimos recuperar esta venda.', 'warning');
@@ -1224,7 +1251,9 @@ function deleteUsuario(id)
 function loadMinhaConta(trig)
 {
     $.post(PREFIX_POST+'minhaconta', function(res){
-        console.log(res);
+        if(debugEnabled === true) {
+            console.log(res);
+        }
 
         $('#modalMinhaConta').find('[data-minhaconta-avatar]').attr('src', 'media/images/av/'+res.avatar);
         $('#modalMinhaConta').find('[data-minhaconta-nome]').text(res.nome + ' ' + res.sobrenome);
@@ -1350,7 +1379,7 @@ function setMinhaContaFoto(target)
         },
         success: function(res){
             if(res.success) {
-                console.log('Sucesso');
+                //console.log('Sucesso');
                 alerta('Foto atualizada. Vamos atualizar tudo, espera um pouco...', 'Sucesso!', 'success');
                 setTimeout(function(){location.reload();}, 3000);
             } else {
@@ -1358,7 +1387,9 @@ function setMinhaContaFoto(target)
             }
         },
         error: function(jqXHR){
-            console.log(jqXHR.responseText);
+            if(debugEnabled === true) {
+                console.log(jqXHR.responseText);
+            }
         }
     });
 
@@ -1445,7 +1476,9 @@ function searchParceiroNome(busca)
 {
     let resultado;
     $.post(PREFIX_POST+'parceiros/buscar', {busca: busca}, function(res){
-        console.log(res);
+        if(debugEnabled === true) {
+            console.log(res);
+        }
         
         if(res.success == true) {
             let r = res.parceiros;
@@ -1562,7 +1595,9 @@ function searchRoteiroNome(busca)
             let r = res.roteiros;
             let jan = $('#janRoteirosSelect');
 
-            console.log(r);
+            if(debugEnabled === true) {
+                console.log(r);
+            }
             if(jan.find('hr').siblings('table').length == 0) {
                 jan.find('hr').after('<table class="table table-selectable table-sm table-hover table-bordered small"><thead class="thead-dark"><tr><th>Cód.</th><th>Roteiro</th></tr></thead><tbody></tbody></table>');
                 jan.find('table tbody').slideUp(300);
@@ -1601,7 +1636,9 @@ function searchRoteiroNome(busca)
 function novoParceiro(sender)
 {
     $.post(PREFIX_POST+$(sender).attr('action'), $(sender).serialize(), function(res){
-        console.log(res);
+        if(debugEnabled === true) {
+            console.log(res);
+        }
         if(res.success == true) {
             alerta('A parceria foi cadastrada. Aguarde alguns instantes, que vamos continuar...','Cadastrado!', 'success');
             setTimeout(function(){
@@ -1808,7 +1845,9 @@ function parcServicoEdita(id, parceiro)
         if(res.success == true) {
             let modal = $('#modalParceiroServicoEdita');
             let servico = res.servico;
-            console.log(res.servico);
+            if(debugEnabled === true) {
+                console.log(res.servico);
+            }
             // Reseta os campos do modal.
 
             // Exibe o modal.
@@ -2069,7 +2108,9 @@ function parcFinanceiroNovo() {
 function parcFinanceiroEdita(id, parceiro) {
     $.post('parceiros/ver/'+parceiro+'/financeiro/'+id, function(res){
         if(res.success == true) {
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             let modal = $('#modalParceiroFinanceiroEdita');
             let fin = res.financeiro;
 
@@ -2230,7 +2271,9 @@ function parcHistoricoDelete(sender) {
 
     $.post(PREFIX_POST+'parceiros/'+pid+'/apagarhistorico/'+hid,
         function(res){
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             if(res.success == true) {
                 $(sender).parents('tr').eq(0).next().remove();
                 $(sender).parents('tr').eq(0).remove();
@@ -2398,7 +2441,9 @@ function roteiroCriarCopia(sender)
     $.post(PREFIX_POST+'roteiros/'+rot.id+'/copiar', {
         roteiro: JSON.stringify(rot)
     }, function(res){
-        console.log(res);
+        if(debugEnabled === true) {
+            console.log(res);
+        }
         if(res.success == true) {
             alerta('Cópia do roteiro criada com sucesso...', 'Criado!', 'success');
             if(res.roteiro.id == '') {
@@ -2438,7 +2483,8 @@ function roteiroAddCoordenador(sender)
         if(res.success) {
             // Verifica se esse coordenador já consta.
             if($('#listaCoord').find('[data-id="'+coord+'"]').length == 0) {
-                $('#listaCoord').find('ul.list-group').append('<li class="list-group-item d-flex justify-content-between align-items-center py-2 pl-3 pr-2">'+linha.children('td:eq(1)').text() +
+                $('#listaCoord').find('ul.list-group').append('<li class="list-group-item d-flex justify-content-between align-items-center py-2 pl-3 pr-2">'+
+                '<a href="javascript:void(0)" onclick="loadCoordenador('+linha.data('id')+')">'+linha.children('td:eq(1)').text() +'</a>'+
                 ' <button type="button" class="btn btn-sm btn-light" data-id="'+coord+'" data-rid="'+rid+'" onclick="roteiroRemoveCoordenador(this)"><i class="fas fa-times fa-fw"></i></button> </li>');
             }
             $(sender).siblings('[data-dismiss="modal"]').click();
@@ -2498,9 +2544,11 @@ function vendaAddPassageiroLista(c, sender)
     } else {
         faixa = faixa.split(' ');
     }
-    console.log(c);
-    console.log(sender);
-    console.log(faixa);
+    if(debugEnabled === true) {
+        console.log(c);
+        console.log(sender);
+        console.log(faixa);
+    }
 
     // Verifica se está dentro da faixa etária permitida.
     if(
@@ -2570,14 +2618,14 @@ function vendaAlteraSituacao(id, situacao, outro, sender)
     }, function(res){
         if(res.success == true) {
             // Fecha a segunda janela dinâmica.
-            console.log(sender);
+            
             $(sender).parents('.modal').modal('hide');
             getVenda(id); // Atualiza a primeira janela dinâmica.
             
 
             alerta('Situação da venda alterada.', 'Sucesso!', 'success');
             getVendasReservas();
-            getAguardandoPagamento();
+            getVendasAguardandoPagamento();
         } else {
             alerta(res.mensagem, 'Falha...', 'warning');
         }
@@ -2595,7 +2643,9 @@ function vendaGetSituacao(id, sender)
 {
     $.post('vendas/database/load/venda/'+id+'/situacao', function(res){
         if(res.success) {
-            console.log(res.venda);
+            if(debugEnabled === true) {
+                console.log(res.venda);
+            }
             let venda = res.venda;
 
             // AJUSTA TITULO DA JANELA DINÂMICA 2
@@ -2635,7 +2685,7 @@ function vendaConfirmarEstorno(sender)
 
             alerta('Situação da venda alterada.', 'Sucesso!', 'success');
             getVendasReservas();
-            getAguardandoPagamento();
+            getVendasAguardandoPagamento();
         } else {
             alerta(res.mensagem, 'Falha...', 'warning');
         }
@@ -2643,11 +2693,29 @@ function vendaConfirmarEstorno(sender)
     fail(function(ev){nativePOSTFail(ev);});
 }
 
+function vendaMudaAceiteContrato(id, opt)
+{
+    if(opt < 0 || opt > 2) {
+        return false;
+    }
+    
+    $.post(PREFIX_POST+'vendas/'+id+'/definetermos/'+opt, function(res){
+        if(res.success) {
+            getVenda(id);
+        } else {
+            alerta(res.mensagem, 'Não consegui fazer isso.', 'warning');
+        }
+    }, 'json').
+    fail(function(ev){nativePOSTFail();});
+}
+
 function getVendasReservas()
 {
     $.post('/vendas/database/get/reservas', function(res){
         if(res.success) {
-            console.log(res.vendas);
+            if(debugEnabled === true) {
+                console.log(res.vendas);
+            }
             //console.log(res.vendas.length);
             if(res.vendas.length == 0) {
                 if($('#reservasDiv > div').length == 0) {
@@ -2989,7 +3057,9 @@ $(document).ready(function(){
                         '#modalAlterarMinhaSenha, #modalCoordenadorEditar').modal('hide');
                     } else {
                         alerta(res.mensagem, 'Erro: ', 'warning');
-                        console.log(res);
+                        if(debugEnabled === true) {
+                            console.log(res);
+                        }
                     }
                 }, 'json')
                 .fail(function(ev){
@@ -3223,7 +3293,9 @@ $(document).ready(function(){
                         $('#retornoBusca').append('<div class="alert alert-info">'+res.mensagem+'</div>')
                     }
                 }
-               console.log(res);
+                if(debugEnabled === true) {
+                    console.log(res);
+                }
             }
         }, 'json').
         fail(function(ev){
@@ -3502,9 +3574,11 @@ $(document).ready(function(){
 
     $(document).on('click', '#controlesLog [data-controle-prev], #controlesLog [data-controle-next]', function(ev){
         let op = $('#controlesLog select[name="pagina"] > option:selected');
-        console.log(op);
+        if(debugEnabled === true) {
+            console.log(op);
+        }
         if($(ev.currentTarget).data('controle-prev') != undefined) {
-            console.log('PREV');
+            //console.log('PREV');
 
             // Prev
             if(op.prev().length > 0) {
@@ -3513,7 +3587,7 @@ $(document).ready(function(){
                 $('#controlesLog select[name="pagina"]').trigger('change');
             }
         } else {
-            console.log('NEXT');
+            //console.log('NEXT');
             
             // Next
             if(op.next().length > 0) {
@@ -3541,11 +3615,15 @@ $(document).ready(function(){
     $(document).on('click', '#historico_negoc .loadMore', function(ev){
         let btn = $(ev.currentTarget);
         $.post(PREFIX_POST+'parceiros/'+btn.data('pid')+'/listahistorico/'+btn.data('qtd')+'/'+btn.data('start'), function(res){
-            console.log(res);
+            if(debugEnabled === true) {
+                console.log(res);
+            }
             if(res.historico.length > 0) {
                 let temp1, temp2, temp3;
                 res.historico.forEach(function(h){
-                    console.log(h);
+                    if(debugEnabled === true) {
+                        console.log(h);
+                    }
                     let table = btn.parent().siblings('table');
                     
                     if(h.usuario_nome == null) {

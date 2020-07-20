@@ -102,7 +102,8 @@ class ConGerador
             'isHtml5ParserEnabled' => true
         ]);
         $dom = new Dompdf($options);
-        $dom->setPaper('A5', 'landscape');
+        //$dom->setPaper('A5', 'landscape');
+        $dom->setPaper('A4', 'portrait');
         
         $dom->loadHtml( $blade->run("documentos.comprovante", array('v' => $v, 'venda' => $venda, 'system' => $venda->system)) );
         $dom->render();

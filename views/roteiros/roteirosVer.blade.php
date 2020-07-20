@@ -85,16 +85,41 @@
                                     </div>
                                 </div>
                                 <hr>
+                                @php
+                                $estoque = $roteiro->estoque;
+                                $estoque['vendidos_perc'] = round( ($estoque['vendidos']  * 100) / $estoque['total'], 2);
+                                $estoque['reservados_perc'] = round( ($estoque['reservados'] * 100) / $estoque['total'], 2);
+                                $estoque['livre_perc'] = round( ($estoque['livre'] * 100) / $estoque['total'], 2);
+                                
+                                //var_dump($estoque);
+                                @endphp
                                 <div class="row">
+                                    <div class="col-12">
+                                        <div class="d-flex flex-wrap mb-3">
+                                            <div class="border bg-light shadow-sm p-2 mr-2">
+                                                <strong>LEGENDA</strong>
+                                                <ul class="list-group list-group-horizontal-lg">
+                                                    <li class="list-group-item">
+                                                        <i class="fas fa-circle text-primary"></i>
+                                                        Poltronas vendidas
+                                                        <span class="badge badge-primary badge-pill ml-2 py-1">{{$estoque['vendidos']}}</span>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <i class="fas fa-circle text-secondary"></i>
+                                                        Poltronas reservadas
+                                                        <span class="badge badge-secondary badge-pill ml-2 py-1">{{$estoque['reservados']}}</span>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <i class="fas fa-circle text-success"></i>
+                                                        Poltronas vagas
+                                                        <span class="badge badge-success badge-pill ml-2 py-1">{{$estoque['livre']}}</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="col-12 d-flex" id="graficoVendas">
-                                    @php
-                                    $estoque = $roteiro->estoque;
-                                    $estoque['vendidos_perc'] = round( ($estoque['vendidos']  * 100) / $estoque['total'], 2);
-                                    $estoque['reservados_perc'] = round( ($estoque['reservados'] * 100) / $estoque['total'], 2);
-                                    $estoque['livre_perc'] = round( ($estoque['livre'] * 100) / $estoque['total'], 2);
                                     
-                                    //var_dump($estoque);
-                                    @endphp
                                         <!-- Poltronas vendidas -->
                                         <div class="progress mr-1 rounded rounded-lg" title="Poltronas vendidas: {{$estoque['vendidos']}}" data-toggle="tooltip" style="height:10px; width:{{$estoque['vendidos_perc']}}%;">
                                             <div class="progress-bar" style="height:10px; width:100%;"></div>
@@ -109,7 +134,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mt-3">
+                                <hr>
+                                <div class="mt-3" style="overflow-x:auto;">
                                     <table class="table table-sm table-bordered small table-hover" id="tabelaVendas">
                                         <thead class="thead-dark">
                                             <tr>
@@ -157,6 +183,8 @@
                                                 }
                                                 //$receita += (int)$l->valor_total;
                                             @endphp
+
+                                            @if($l->status != 'Devolvida' && $l->status != 'Cancelada')
                                             <tr class="{{$bgtr}}">
                                                 <td><a href="javascript:void(0)" onclick="getVenda({{$l->id}})">{{$l->id}}</a></td>
                                                 <td><a href="javascript:void(0)" onclick="loadCliente({{$l->cliente_id}})">{{$l->cliente_nome == NULL ? 'Cliente desconhecido' : $l->cliente_nome}}</a></td>
@@ -165,6 +193,8 @@
                                                 <td>{!!$situ!!}</td>
                                                 <td>{{$temp->format('d/m/Y H:i:s')}}</td>
                                             </tr>
+                                            @endif
+
                                             @endforeach
                                             @php
                                                 unset($temp, $bgtr);
@@ -173,15 +203,62 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="mt-3" style="overflow-x:auto;">
+                                    <div class="border bloco-acord">
+                                        <div class="acord-header bg-light p-2 d-flex justify-content-between cursor-pointer">
+                                            <h6 class="font-weight-bold text-uppercase my-1">Canceladas/Estornadas</h6>
+                                        </div>
+                                        <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none">
+                                            <table class="table table-sm table-bordered small table-hover" id="tabelaVendasCanceladas">
+                                                <thead class="thead-dark">
+                                                    <tr>
+                                                        <th>Venda</th>
+                                                        <th>Cliente</th>
+                                                        <th>Pessoas</th>
+                                                        <th>Crianças</th>
+                                                        <th>Situação</th>
+                                                        <th>Data Reserva/Venda</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                @if(empty($lista_vendas))
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-2 font-italic">Sem vendas</td>
+                                                </tr>
+                                                @else
+                                                @foreach($lista_vendas as $l)
+                                                @if($l->status == 'Devolvida' || $l->status == 'Cancelada')
+                                                    @php
+                                                    $temp = new DateTime($l->data_reserva);
+                                                    @endphp
+                                                <tr>
+                                                    <td><a href="javascript:void(0)" onclick="getVenda({{$l->id}})">{{$l->id}}</a></td>
+                                                    <td><a href="javascript:void(0)" onclick="loadCliente({{$l->cliente_id}})">{{$l->cliente_nome == NULL ? 'Cliente desconhecido' : $l->cliente_nome}}</a></td>
+                                                    <td>{{$l->clientes_total}}</td>
+                                                    <td>{{$l->criancas}}</td>
+                                                    <td><span class="badge badge-secondary py-1 px-2">{{$l->status}}</span></td>
+                                                    <td>{{$temp->format('d/m/Y H:i:s')}}</td>
+                                                </tr>
+                                                    @php
+                                                    unset($temp);
+                                                    @endphp
+                                                @endif
+                                                @endforeach
+                                                @endif
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-6">
+                            <div class="col-12 col-lg-6">
                                 <div class="card rounded-0">
                                     <div class="card-header card-collapse text-dark px-2 py-1">
                                         CLIENTES/PASSAGEIROS
                                     </div>
-                                    <div class="card-body pt-3 pb-2 px-2">
+                                    <div class="card-body pt-3 pb-2 px-2" style="overflow-x:auto;">
                                         <div class="row">
                                             <div class="col-12" id="passagDiv">
                                                 
@@ -196,12 +273,12 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-12 col-lg-6">
                                 <div class="card rounded-0">
                                     <div class="card-header card-collapse text-dark px-2 py-1">
                                         COORDENADORES
                                     </div>
-                                    <div class="card-body pt-3 pb-2 px-2">
+                                    <div class="card-body pt-3 pb-2 px-2" style="overflow-x:auto;">
                                         <div class="row">
                                             <div class="col-12">
                                                 <button type="button" class="btn btn-sm btn-primary mr-2" onclick="janCoordenadorSelect(this)" data-id="{{$roteiro->id}}">Adicionar coordenador</button>
@@ -209,7 +286,7 @@
                                                     <ul class="list-group">
                                                     @foreach($roteiro->coordenador as $coord)
                                                         <li class="list-group-item d-flex justify-content-between align-items-center py-2 pl-3 pr-2">
-                                                        {{$coord['nome']}}
+                                                        <a href="javascript:void(0)" onclick="loadCoordenador({{$coord['id']}})">{{$coord['nome']}}</a>
                                                         <button type="button" class="btn btn-sm btn-light" data-id="{{$coord['id']}}" data-rid="{{$roteiro->id}}" onclick="roteiroRemoveCoordenador(this)"><i class="fas fa-times fa-fw"></i></button>
                                                         </li>
                                                     @endforeach
@@ -229,7 +306,7 @@
                             <div class="card-header card-collapse text-dark px-2 py-1">
                                 DESPESAS
                             </div>
-                            <div class="card-body pt-3 pb-2 px-2">
+                            <div class="card-body pt-3 pb-2 px-2" style="overflow-x:auto;">
                                 <table class="table table-bordered table-sm">
                                     <thead class="thead-dark small">
                                         <tr>
@@ -347,7 +424,7 @@
                             <div class="card-header card-collapse text-dark px-2 py-1">
                                 FATURAMENTO
                             </div>
-                            <div class="card-body pt-3 pb-2 px-2">
+                            <div class="card-body pt-3 pb-2 px-2" style="overflow-x:auto;">
                                 @php
                                     $coberturaDespesa = round(($receita *100)/$despesasTotal, 2);
                                     $coberturaDiff = $receita - $despesasTotal;
@@ -821,7 +898,9 @@
                                                 <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
                                             </div>
                                         </td>
-                                        <td></td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteTarifaRoteiro(this)"><i class="fas fa-trash"></i></button>
+                                        </td>
                                     </tr>
                                     @endforeach
                                     @endif
@@ -946,6 +1025,12 @@
         $('.modal').modal('hide');
         setTimeout(function(){$('#modalRoteiroTarifas').modal('show');}, 200);
         $('#modalRoteiroTarifas').find('[name="valor"]').trigger('change');
+        if($('#modalRoteiroTarifas').find('tr[data-example]').length > 1) {
+            for(let i = 1; i < $('#modalRoteiroTarifas').find('tr[data-example]').length; i++) {
+                $('#modalRoteiroTarifas').find('tr[data-example]').eq(i).show();
+                $('#modalRoteiroTarifas').find('tr[data-example]').eq(i).removeAttr('data-example');
+            }
+        }
     }
 
     function addTarifaRoteiro(sender)
@@ -961,7 +1046,7 @@
             return false;
         }
 
-        $(sender).siblings('table').find('tr[data-example]').clone().appendTo($(sender).siblings('table'));
+        $(sender).siblings('table').find('tr[data-example]').eq(0).clone().appendTo($(sender).siblings('table'));
         $(sender).siblings('table').find('tr').last().removeAttr('data-example').show();
         $(sender).siblings('table').find('tr').last().find(':input').prop('required', true);
         $(sender).siblings('table').find('tr').last().find('[data-valor-dias] :input').prop('required', false);
@@ -1082,6 +1167,16 @@
             }
         }, 'json').
         fail(function(ev){nativePOSTFail(ev);});
+    }
+
+    function deleteTarifaRoteiro(sender)
+    {
+        if($(sender).parents('tbody').find('tr:not([data-example])').length > 1) {
+            $(sender).parents('tr').attr('data-example', true);
+            $(sender).parents('tr').hide();
+        } else {
+            alerta('Não tem como remover essa tarifa. Você precisa de pelo menos uma tarifa definida.');
+        }
     }
 
     $(document).ready(function(){
