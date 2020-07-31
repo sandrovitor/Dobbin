@@ -9,6 +9,7 @@
 	<title>{{$sistema->name}}</title>
     <!--<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" type="text/css">-->
     <link href="/css/bootstrap-4.3.1.min.css" rel="stylesheet" type="text/css">
+    <link href="/css/jquery-ui.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
     <link rel="stylesheet" href="/css/geral.css?v{{$sistema->version}}">
     <link rel="stylesheet" href="/css/alert.css?v{{$sistema->version}}">
@@ -83,7 +84,7 @@
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" href="#parceiros"><i class="far fa-handshake fa-fw"></i> Parceiros</a>
+                        <a class="nav-link link-dropdown" href="#parceiros"><i class="far fa-handshake fa-fw"></i> Parceiros</a>
                         <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#parceiros/novo">Novo</a></li>
@@ -91,7 +92,7 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#roteiros"><i class="fas fa-luggage-cart fa-fw"></i> Roteiros</a>
+                        <a class="nav-link link-dropdown" href="#roteiros"><i class="fas fa-luggage-cart fa-fw"></i> Roteiros</a>
                         <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#roteiros/novo">Novo</a></li>
@@ -103,7 +104,7 @@
                     
 
                     <li class="nav-item">
-                        <a class="nav-link" href="#vendas"><i class="fas fa-shopping-cart fa-fw"></i> Vendas</a>
+                        <a class="nav-link link-dropdown" href="#vendas"><i class="fas fa-shopping-cart fa-fw"></i> Vendas</a>
                         <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#vendas/novo">Novo</a></li>
@@ -132,6 +133,13 @@
                             <li><a class="nav-link" href="#usuarios/novo">Novo</a></li>
                             <li><a class="nav-link" href="#usuarios/buscar">Buscar</a></li>
                             <li><a class="nav-link" href="#usuarios/database">Base de Dados</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link link-dropdown" href="#financeiro"><i class="fas fa-balance-scale"></i> Financeiro</a>
+                        <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
+                        <ul style="display:none;">
+                            <li><a class="nav-link" href="#financeiro/novo">Novo Balanço</a></li>
                         </ul>
                     </li>
                     <li class="nav-item"><a class="nav-link" href="#log"><i class="fas fa-info-circle fa-fw"></i> LOG</a></li>
@@ -266,7 +274,7 @@
                 <h5 class="mt-3 mb-2 font-weight-bold">OUTRAS INFORMAÇÕES</h5>
                 <div class="d-flex flex-wrap">
                     <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2">
-                        <strong>Taxa Extra Casal:</strong><br><span data-detalhes-taxaextracasal></span>
+                        <strong>Crédito:</strong><br><span data-detalhes-credito></span>
                     </div>
                     <div class="py-2 px-3 hover border shadow-sm mr-2 mb-2">
                         <strong>Criado em:</strong><br><span data-detalhes-criadoem></span>
@@ -430,17 +438,6 @@
                         <div class="col-12 col-xl-6">
                             <label>Telefone para contato de emergência:</label>
                             <input type="text" class="form-control form-control-solid" name="emergencia_tel" placeholder="Telefone para contato"  maxlength="30" data-detalhes-emergenciatel>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <div class="col-12 col-xl-6 mb-3">
-                            <label>Taxa extra casal (R$):</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <div class="input-group-text form-control-solid">R$</div>
-                                </div>
-                                <input type="text" class="form-control form-control-solid" name="taxa_extra_casal" placeholder="" data-detalhes-taxaextracasal dobbin-validate-valor pattern="[0-9,]{0,10}">
-                            </div>
                         </div>
                     </div>
                     <div class="form-group row">
@@ -1377,7 +1374,7 @@
 
     <!-- SPLASH SCREEN -->
 <div id="splash-screen" style="display:none;">
-    <div class="text-center">
+    <div class="text-center font-weight-bold" style="font-size: 1.5rem;">
         <img class="mx-5 my-2" src="/media/images/logo128ib.png"><br>
         Conversando com o servidor...
     </div>
@@ -1393,6 +1390,7 @@
 
     <!-- SCRIPT OFFLINE -->
     <script src="/js/jquery-3.3.1.min.js"></script>
+    <script src="/js/jquery-ui.min.js"></script>
     <script src="/js/popper.min.js"></script>
     <script src="/js/bootstrap-4.3.1.min.js"></script>
     <script src="/js/alert.min.js?v{{$sistema->version}}"></script>

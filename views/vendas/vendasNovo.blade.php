@@ -28,6 +28,7 @@
                                 <input type="hidden" name="roteiroID" value="" onchange="vendasLoadRoteiroInfo($(this).val())">
                                 <div class="input-group-append">
                                     <button type="button" class="btn-secondary btn btn-sm px-2" onclick="janRoteiroSelect($('form [name=\'roteiroID\']')[0])"><i class="fas fa-search fa-fw"></i></button>
+                                    <button type="button" class="btn-secondary btn btn-sm px-2" onclick="$(this).parent().prev().trigger('change')"><i class="fas fa-sync"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -197,23 +198,33 @@ function vendasLoadRoteiroInfo(id)
 
         if(r !== false){
             $('#vendasNovo [name="roteiro"]').val(r.id+' - '+r.nome + ' ('+Dobbin.formataData(new Date(r.data_ini), true)+' a '+Dobbin.formataData(new Date(r.data_fim), true)+')');
-            $('#vendasNovo [name="estoqueDisp"]').val( (r.estoque.total - r.estoque.vendidos) );
+            $('#vendasNovo [name="estoqueDisp"]').val( r.estoque.livre );
             r.tarifa.forEach(function(t){
-                $('#vendasNovo [name="tarifa"]').append('<option value="'+t.nome+'" data-valor="'+t.valor+'" data-adultos="'+t.distr.adultos+'" data-criancas="'+t.distr.criancas+'">'+
-                'R$ '+ Dobbin.converteCentavoEmReal(t.valor) + ' - ' +t.nome + '</option>')
+                // Verifica se o estoque é maior que a quantidade de passageiros da tarifa.
+                if(t.qtd <= r.estoque.livre ) { //PERMITIDO
+                    $('#vendasNovo [name="tarifa"]').append('<option value="'+t.nome+'" data-valor="'+t.valor+'" data-adultos="'+t.distr.adultos+'" data-criancas="'+t.distr.criancas+'">'+
+                    'R$ '+ Dobbin.converteCentavoEmReal(t.valor) + ' - ' +t.nome + '</option>');
+                } else { // OPÇÃO DESATIVADA
+                    $('#vendasNovo [name="tarifa"]').append('<option value="'+t.nome+'" data-valor="'+t.valor+'" data-adultos="'+t.distr.adultos+'" data-criancas="'+t.distr.criancas+'" '+
+                    'disabled>R$ '+ Dobbin.converteCentavoEmReal(t.valor) + ' - ' +t.nome + ' [SEM ESTOQUE]</option>');
+                }
+
             });
+
+            if($('#vendasNovo [name="roteiro"]').parent().next().hasClass('alert')) {
+                $('#vendasNovo [name="roteiro"]').parent().next().remove();
+            }
 
             if(r.situacao == "ANDAMENTO") {
                 $('#vendasNovo [name="roteiro"]').parent().after('<div class="alert alert-info small py-1 px-2">'+
                 '<strong>Atenção!</strong> Esse roteiro já está <strong>ANDAMENTO (viagem)</strong>.</div>');
             } else if(r.situacao == "CONCLUIDO") {
                 $('#vendasNovo [name="roteiro"]').parent().after('<div class="alert alert-warning small py-1 px-2">'+
-                '<strong>Atenção!</strong> Esse roteiro já se encerrou. <strong>É recomendado que não faça vendas deste roteiro</strong>.</div><br>'+
-                'Ainda é possível lançar vendas antigas no sistema, mas as datas serão de hoje.');
+                '<strong>Atenção!</strong> Esse roteiro já se encerrou. <strong>É recomendado que não faça vendas deste roteiro</strong>.<br>'+
+                'Ainda é possível lançar vendas antigas no sistema, mas as datas serão de hoje.</div>');
                 
-            } else {
-                $('#vendasNovo [name="roteiro"]').parent().next().remove();
             }
+
             console.log(r);
 
         }
@@ -226,22 +237,33 @@ function vendasLoadRoteiroInfo(id)
 
 function vendasChangeTarifa(sender)
 {
-    let valor = parseInt($(sender).find(':selected').data('valor'));
-    let qtd = parseInt($(sender).parents('form').find('[name="qtd"]').val());
-    $(sender).parents('form').find('[name="valor_unitario"]').val( Dobbin.converteCentavoEmReal(valor) );
     
-    // Limita quantidade máxima.
-    let pessoas = parseInt($(sender).find(':selected').data('adultos')) + parseInt($(sender).find(':selected').data('criancas'));
-    let qtdMax = Math.floor(parseInt($('#vendasNovo [name="estoqueDisp"]').val()) / pessoas);
-    $('#vendasNovo [name="qtd"]').attr('max', qtdMax);
-    if(qtdMax == 0) {
-        $('#vendasNovo [name="qtd"]').attr('min', qtdMax);
+    if($(sender).find(':selected').length == 0) {
+        // Nada selecionado. Roteiro sem tarifa, ou sem poltrona disponível.
+        $('#vendasNovo [name="qtd"]').attr('min', 0);
+        $('#vendasNovo [name="qtd"]').attr('max', 0);
+        $('#vendasNovo [name="qtd"]').val(0);
+        $('#vendasNovo [name="valor_unitario"]').val('0,00');
+        vendasNovoBtnAdicionarEnabled();
     } else {
-        $('#vendasNovo [name="qtd"]').attr('min', 1);
+        let valor = parseInt($(sender).find(':selected').data('valor'));
+        let qtd = parseInt($(sender).parents('form').find('[name="qtd"]').val());
+        $(sender).parents('form').find('[name="valor_unitario"]').val( Dobbin.converteCentavoEmReal(valor) );
+        
+        // Limita quantidade máxima.
+        let pessoas = parseInt($(sender).find(':selected').data('adultos')) + parseInt($(sender).find(':selected').data('criancas'));
+        let qtdMax = Math.floor(parseInt($('#vendasNovo [name="estoqueDisp"]').val()) / pessoas);
+        $('#vendasNovo [name="qtd"]').attr('max', qtdMax);
+        if(qtdMax == 0) {
+            $('#vendasNovo [name="qtd"]').attr('min', qtdMax);
+        } else {
+            $('#vendasNovo [name="qtd"]').attr('min', 1);
+        }
+        if($('#vendasNovo [name="qtd"]').val() > $('#vendasNovo [name="qtd"]').attr('max')) {
+            $('#vendasNovo [name="qtd"]').val($('#vendasNovo [name="qtd"]').attr('max'));
+        }
     }
-    if($('#vendasNovo [name="qtd"]').val() > $('#vendasNovo [name="qtd"]').attr('max')) {
-        $('#vendasNovo [name="qtd"]').val($('#vendasNovo [name="qtd"]').attr('max'));
-    }
+    
 
     vendasReloadSubtotal();
 }
@@ -295,6 +317,7 @@ function vendasNovoCalcularTotal()
             total = total+sub;
         }
         $('#vendasNovo [name="total"]').val(total);
+        console.log(total);
     }
     $('#vendasNovo [name="total"]').trigger('change');
     formaPagamentoChange();

@@ -6,7 +6,7 @@ var timerKEY1;
 var debugEnabled = false;
 var sidebarAlwaysShow = true;
 
-var geralIntervalo5Min, geralIntervalo10Min, geralIntervalo15Min; // Intervalos
+var geralIntervalo1Min, geralIntervalo5Min, geralIntervalo10Min, geralIntervalo15Min; // Intervalos
 
 var teste;
 
@@ -70,6 +70,9 @@ function loadLanding(href)
         href = href.substring(1, href.length);
     }
 
+    // Remove o splash screen!
+    $('#splash-screen').fadeOut();
+
     let querystring = '';
 
     if(location.search.length > 0) {
@@ -110,8 +113,8 @@ function loadLanding(href)
             $('#content').fadeIn('fast');
             sidebarAutoHide();
 
-            $('[data-toggle="tooltip"]').tooltip();
-            $('[data-toggle="popover"]').popover({"html":true});
+            // Reinicia Tooltip e Popover.
+            restartTooltip();
 
             // Varredura de querystring para comandos.
             if(querystring.length > 0) {
@@ -166,6 +169,7 @@ function gatilhosLoadLanding()
     if(local.charAt(0) == '#') {
         local = local.substring(1, local.length);
     }
+    clearInterval(geralIntervalo1Min);
     clearInterval(geralIntervalo5Min);
     clearInterval(geralIntervalo10Min);
     clearInterval(geralIntervalo15Min);
@@ -173,8 +177,8 @@ function gatilhosLoadLanding()
     switch(true) { // procura o regex que for verdadeiro
         case /(roteiros\/ver\/)([0-9])/gi.test(local): // Roteiros > Ver
             $(document).ready(function(){
-                setTimeout(function(){getClientesRoteiro();}, 1000);
-                geralIntervalo5Min = setInterval(function(){getClientesRoteiro(); getEstoqueRoteiro();}, 180000);
+                setTimeout(function(){getClientesRoteiro();getListas();}, 1000);
+                geralIntervalo5Min = setInterval(function(){getClientesRoteiro(); getEstoqueRoteiro();getListas();}, 180000);
             }); break;
 
         case /^(vendas)$/gi.test(local): // Vendas
@@ -205,6 +209,16 @@ function gatilhosLoadLanding()
                 }, 180000);
             }); break;
 
+        case /(vendas\/novo)/gi.test(local): // Vendas > Novo
+            $(document).ready(function(){
+                setTimeout(function(){
+                    $('#vendasNovo [name="roteiroID"]').trigger('change');
+                }, 1000);
+                geralIntervalo1Min = setInterval(function(){
+                    $('#vendasNovo [name="roteiroID"]').trigger('change');
+                }, 60000);
+            }); break;
+
     }
 }
 
@@ -214,53 +228,16 @@ function checkSystemUpdate()
         if(systemVersion != res.version) {
             alert('A plataforma tem uma nova versão disponível ['+systemVersion+' >> '+res.version+']! A página será atualizada imediatamente...');
             location.reload();
+            timeoutUpdate = undefined;
         } else {
             //console.log('Verificando atualização: versão mais recente já instalada.');
+            timeoutUpdate = setTimeout(checkSystemUpdate, 300000); // Verifica a cada 5min (300000ms).
         }
     }, 'json');
 
-    timeoutUpdate = setTimeout(checkSystemUpdate, 300000); // Verifica a cada 5min (300000ms).
+    
 }
 
-/**
- * OBSOLETO 
- */
-function converteCentavoEmReal(centavos = 0) {
-    centavos = parseInt(centavos);
-    let real, cents, invert = false;
-
-    // Trato sinal (se negativo)
-    if(centavos < 0) {
-        invert = true;
-        centavos = centavos*(-1);
-    }
-
-    // Trato REAL
-    if(centavos >= 100) {
-        // Mais de 1 real.
-        real = Math.floor(centavos/100);
-        cents = centavos%100;
-    } else {
-        // Menos de 1 real.
-        real = 0;
-        cents = centavos;
-    }
-
-    // Trato CENTAVOS
-    if(cents < 10) {
-        cents = '0'+cents;
-    }
-
-    if(invert === false) {
-        return real+','+cents;
-    } else {
-        return '-'+real+','+cents;
-    }
-}
-
-/**
- * OBSOLETO 
- */
 function converteRealEmCentavo(valor = '0,00') {
     if(Dobbin.isMoney(valor) == false) {
         return false;
@@ -309,7 +286,10 @@ function highlight(texto, destaque)
 
 function restartTooltip()
 {
-    $('[data-toggle="popover"]').popover({'html':true});
+    $('[data-toggle="popover"]').popover({
+        html:true,
+        container: 'body',
+    });
     $('[data-toggle="tooltip"]').tooltip();
 }
 
@@ -626,7 +606,7 @@ function loadCliente(id)
             $('#modalClienteDetalhes [data-detalhes-alergia]').text(c.alergia);
             $('#modalClienteDetalhes [data-detalhes-emergencianome]').text(c.emergencia_nome);
             $('#modalClienteDetalhes [data-detalhes-emergenciatel]').text(c.emergencia_telefone);
-            $('#modalClienteDetalhes [data-detalhes-taxaextracasal]').text(converteCentavoEmReal(c.taxa_extra_casal));
+            $('#modalClienteDetalhes [data-detalhes-credito]').text('R$ '+Dobbin.converteCentavoEmReal(c.credito));
             $('#modalClienteDetalhes [data-detalhes-criadoem]').text(Dobbin.formataDataHora(new Date(c.criado_em)));
             $('#modalClienteDetalhes [data-detalhes-atualizadoem]').text(Dobbin.formataDataHora(new Date(c.atualizado_em)));
 
@@ -794,7 +774,6 @@ function editaCoordenador(id)
             $('#modalCoordenadorEditar [data-detalhes-alergia]').val(c.alergia);
             $('#modalCoordenadorEditar [data-detalhes-emergencianome]').val(c.emergencia_nome);
             $('#modalCoordenadorEditar [data-detalhes-emergenciatel]').val(c.emergencia_telefone);
-            $('#modalCoordenadorEditar [data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
             $('#modalCoordenadorEditar [data-detalhes-titular]').val(function(){
                 if(c.titular != 0) {return c.titular;} else {return ''};
             });
@@ -848,7 +827,6 @@ function editaCliente(id)
             $('[data-detalhes-alergia]').val(c.alergia);
             $('[data-detalhes-emergencianome]').val(c.emergencia_nome);
             $('[data-detalhes-emergenciatel]').val(c.emergencia_telefone);
-            $('[data-detalhes-taxaextracasal]').val(converteCentavoEmReal(c.taxa_extra_casal));
             $('[data-detalhes-titular]').val(function(){
                 if(c.titular != 0) {return c.titular;} else {return ''};
             });
@@ -1032,6 +1010,7 @@ function getCoordenadorDados(id, callback)
 
 function getRoteiroDados(id, callback)
 {
+    if(id == '') { return false; }
     id = parseInt(id);
 
     $.post('/roteiros/load/'+id, function(res){
@@ -1885,7 +1864,7 @@ function parcServicoEdita(id, parceiro)
             // Preenche o valor das tarifas.
             for(let i = 0; i < tarifas.length; i++) {
                 modal.find('[data-servico-tarifa]').eq(i).find('select').val(tarifas[i].idade);
-                modal.find('[data-servico-tarifa]').eq(i).find('[name="valor"]').val(converteCentavoEmReal(tarifas[i].valor)).trigger('change');
+                modal.find('[data-servico-tarifa]').eq(i).find('[name="valor"]').val(Dobbin.converteCentavoEmReal(tarifas[i].valor)).trigger('change');
             }
 
             // Benefícios GRATUITOS
@@ -1945,7 +1924,7 @@ function parcServicoEdita(id, parceiro)
             for(let i = 0; i < benefPago.length; i++) {
                 modal.find('.beneficiosPagos .beneficio').eq(i).find('[data-beneficio-nome]').val(benefPago[i].nome);
                 modal.find('.beneficiosPagos .beneficio').eq(i).find('[data-beneficio-valor]').val(
-                    converteCentavoEmReal(benefPago[i].valor)
+                    Dobbin.converteCentavoEmReal(benefPago[i].valor)
                 ).trigger('change');
             }
 
@@ -2532,8 +2511,9 @@ function roteiroRemoveCoordenador(sender)
  * 
  * @param {Array} c Dados do cliente.
  * @param {Element} sender Elemento que disparou a função
+ * @param {boolean} colo Criança de colo ou não
  */
-function vendaAddPassageiroLista(c, sender)
+function vendaAddPassageiroLista(c, sender, colo)
 {
     let faixa = $(sender).data('faixa-etaria');
     let venda = $(sender).data('venda');
@@ -2557,7 +2537,7 @@ function vendaAddPassageiroLista(c, sender)
         ( faixa.find(function(f){return f == 'ADULTO'}) ) // Todos como adultos
     ) {
         // Envia informação do cliente para a plataforma.
-        $.post(PREFIX_POST+'vendas/'+venda+'/clientes/add/'+c.id, function(res){
+        $.post(PREFIX_POST+'vendas/'+venda+'/clientes/add/'+c.id, {colo: colo}, function(res){
             if(res.success == true) {
                 // Verifica se é janela dinâmica.
                 if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
@@ -2600,6 +2580,40 @@ function vendaRemovePassageiroLista(c, sender)
     },'json').
     fail(function(ev){nativePOSTFail(ev);});
     
+}
+
+/**
+ * 
+ * @param {int} c ID do cliente a ser definido como criança de colo ou não.
+ */
+function vendaSetPassageiroColo(c, sender)
+{
+    let venda = $(sender).data('venda');
+    let alvo = $(sender);
+    
+
+    
+    $.post(PREFIX_POST+'vendas/'+venda+'/clientes/colo/'+c, function(res){
+        if(res.success == true) {
+            // Verifica se é janela dinâmica.
+            if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
+                getVenda(venda); // Atualiza janela dinâmica.
+            }
+
+            if(typeof getClientesRoteiro == 'function') {
+                getClientesRoteiro();
+            }
+            //alerta('Sucesso!', '', 'success');
+        } else {
+            alerta(res.mensagem, 'Falha...', 'warning');
+            if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
+                getVenda(venda); // Atualiza janela dinâmica.
+            }
+        }
+    },'json').
+    fail(function(ev){nativePOSTFail(ev);});
+
+    return true;
 }
 
 /**
@@ -2943,8 +2957,7 @@ $(document).ready(function(){
     console.log('%cPare agora!', 'font-size:50px; font-weight:bold; color:red; text-shadow: 1px 1px 0px black, 1px -1px 0px black, -1px 1px 0px black, -1px -1px 0px black');
     console.log('%cEssa ferramenta do navegador pode expor os dados sensíveis da plataforma. Não utilize-a sem permissão, nem cole códigos não autorizados!', 'font-size: 20px;')
     sidebarAutoHide();
-    $('[data-toggle="popover"]').popover({'html':true});
-    $('[data-toggle="tooltip"]').tooltip();
+    restartTooltip();
     $('#splash-screen').fadeOut('fast');
     systemVersion = $('[data-systemversion]:eq(0)').text();
     console.log('%cDobbin v'+systemVersion, 'font-size: 30px; font-weight:bold;');
@@ -2974,6 +2987,17 @@ $(document).ready(function(){
             $('nav.ds-navbar .nav-dropdown').fadeOut(200);
         }
         
+    });
+
+    // SIDEBAR: Link principal exibe links secundários.
+    $(document).on('click', '.sidebar-content .link-dropdown', function(ev){    
+        let link = $(ev.currentTarget);
+        if(link.siblings('ul').is(':visible') == false) {
+            // Oculta todos os menus exibidos.
+            $('.sidebar-content .link-dropdown ~ ul:visible').siblings('.btn-dropdown').trigger('click');
+            // Mostra menu escondido.
+            link.siblings('.btn-dropdown').trigger('click');
+        }
     });
 
     // Alterna entre sempre exibir menu lateral e sempre ocultar menu lateral.
@@ -3032,6 +3056,7 @@ $(document).ready(function(){
     });
 
     $(document).on('submit', 'form', function(ev){
+        let sender = $(ev.currentTarget);
         if($(this).data('manual') == undefined) { // Envio automático
             ev.stopPropagation();
             ev.preventDefault();
@@ -3041,8 +3066,10 @@ $(document).ready(function(){
 
             if(href == undefined) {
                 // Do nothing..
+                $('#splash-screen').fadeOut();
             } else if(href == '#' || href == '') {
                 alerta('Dados não foram enviados...', '', 'warning');
+                $('#splash-screen').fadeOut();
             } else {
                 $.post(PREFIX_POST+href, $(this).serialize(), function(res){
                     $('#splash-screen').fadeOut();
@@ -3055,6 +3082,36 @@ $(document).ready(function(){
                         alerta('Dados salvos.', '', 'success');
                         $('#modalClienteEditar, #modalUsuarioEditar, #modalMinhaContaEditar, '+
                         '#modalAlterarMinhaSenha, #modalCoordenadorEditar').modal('hide');
+
+                        if(sender.data('aftersubmit') != undefined) {
+                            switch(sender.data('aftersubmit')) {
+                                case 'ListaHospedesEditar':
+                                    sender.parents('.modal').modal('hide');
+                                    //console.log(res);
+                                    janListaHospede(res.lista);
+                                    getListas();
+                                break;
+
+                                case 'ListaHospedesEditarRefresh':
+                                    sender.parents('.modal').modal('hide');
+                                    setTimeout(function(){janListaHospede(sender.find('[name="id"]').val());}, 300);
+                                break;
+
+                                case 'ListaTransporteEditar':
+                                    sender.parents('.modal').modal('hide');
+                                    janListaTransporte(res.lista);
+                                    getListas();
+                                break;
+
+                                case 'ListaTransporteEditarRefresh':
+                                    sender.parents('.modal').modal('hide');
+                                    setTimeout(function(){janListaTransporte(sender.find('[name="id"]').val());}, 300);
+                                break;
+
+                                default: break;
+                            }
+                        }
+                        
                     } else {
                         alerta(res.mensagem, 'Erro: ', 'warning');
                         if(debugEnabled === true) {
@@ -3063,6 +3120,7 @@ $(document).ready(function(){
                     }
                 }, 'json')
                 .fail(function(ev){
+                    $('#splash-screen').fadeOut();
                     nativePOSTFail(ev);
                 });
             }

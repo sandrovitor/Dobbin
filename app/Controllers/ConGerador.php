@@ -31,6 +31,18 @@ class ConGerador
     }
 
     /**
+     * Valida conexão.
+     * 
+     * @param int $nivel Nível mínimo de acesso do método. Se não definido, o controle de acesso não será feito.
+     */
+    static function validaConexao(int $nivel = 0)
+    {
+        // Valida SESSION.
+        // Escrever código
+        return ControllerPrincipal::validaConexao($nivel);
+    }
+
+    /**
      * Inicia o BladeOne.
      */
     static function bladeStart()
@@ -125,4 +137,170 @@ class ConGerador
 
     }
 
+    static function roteiros($p)
+    {
+        self::validaConexao(2);
+
+        switch($p['subpagina']) {
+            case 'listapassageiros':
+                $rot = new Roteiro($p['id']);
+                $lista_cliente = $rot->getClientesLista();
+                $lista_coord = $rot->getCoordenadoresLista();
+                
+                $blade = self::bladeStart();
+                $documento = $blade->run('documentos.listaPassageiros2', array('clientes' => $lista_cliente['clientes'], 'coord' => $lista_coord['coordenadores'], 'roteiro' => $rot->getDados()));
+
+                $documentoNome = 'Lista de Passag. - Roteiro '.$p['id'];
+            break;
+
+            case 'lista' :
+                //var_dump($p);
+                $rot = new Roteiro($p['id']);
+                $lista = $rot->getLista($p['opt']);
+
+                $clientes = $rot->getClientesLista()['clientes'];
+                $coords = $rot->getCoordenadoresLista()['coordenadores'];
+
+                //var_dump($lista);
+                $blade = self::bladeStart();
+                if($lista === false) {
+                    header('HTTP/1.1 404');
+                    die;
+                } else {
+                    // ARQUIVO PDF GERADO E ARMAZENADO NO BANCO
+                    if($lista->bin_pdf != null && $lista->bin_pdf_data > $lista->atualizado_em) {
+                        if((isset($p['opt3']) && $p['opt3'] == 'download') || (isset($p['opt2']) && $p['opt2'] == 'download')) {
+                            // FAZ DOWNLOAD
+                            header("Content-Type: application/pdf");
+                            header('Content-Disposition: attachment; filename="'.$lista->nome.'.pdf"');
+                            header("Content-Length: $lista->tamanho");
+                            print($lista->bin_pdf);
+                            die;
+                        } else {
+                            // MOSTRA NO NAVEGADOR
+                            header("Content-type: application/pdf");
+                            print($lista->bin_pdf);
+                            die;
+                        }
+
+                    } else if($lista->tipo == 'hospedagem') { // GERA LISTA DE HOSPEDAGEM
+                        $documento = $blade->run('documentos.listaHospedagem', array('clientes' => $clientes, 'coord' => $coords, 'roteiro' => $rot->getDados(), 'lista' => $lista));
+                        $documentoNome = $lista->nome;
+
+                        // Salvar arquivo PDF no BD.
+                        $pdf = self::outputPDF($documento, $documentoNome);
+                        $rot->setListaBinPDF($lista->id, $pdf);
+                    } else { // GERA LISTA DE TRANSPORTE
+                        $documento = $blade->run('documentos.listaTransporte', array('clientes' => $clientes, 'coord' => $coords, 'roteiro' => $rot->getDados(), 'lista' => $lista));
+                        $documentoNome = $lista->nome;
+
+                        // Salvar arquivo PDF no BD.
+                        $pdf = self::outputPDF($documento, $documentoNome);
+                        $rot->setListaBinPDF($lista->id, $pdf);
+                    }
+
+                    // Saída diferenciada. PDF já gerado, faz download ou exibe inline.
+                    if((isset($p['opt3']) && $p['opt3'] == 'download') || (isset($p['opt2']) && $p['opt2'] == 'download')) {
+                        header("Content-Type: application/pdf");
+                        header('Content-Disposition: attachment; filename="'.$lista->nome.'.pdf"');
+                        print($pdf);
+                    } else {
+                        header("Content-type: application/pdf");
+                        print($pdf);
+                    }
+
+                    die;
+                }
+                /**
+                 * 
+                 * 
+                 * ATIVAR LINKS DOS PDF DAS LISTAS
+                 * 
+                 * 
+                 */
+            break;
+
+            default:die;break;
+        }
+
+        
+        // Define a saída.
+        if((isset($p['opt3']) && $p['opt3'] == 'download') || (isset($p['opt2']) && $p['opt2'] == 'download')) {
+            return self::downloadPDF($documento, $documentoNome);
+        } else {
+            return self::mostraPDF($documento);
+        }
+    }
+
+    static function listas($p)
+    {
+
+    }
+
+    static function mostraPDF(string $conteudo = '', string $titulo = 'Documento')
+    {
+        // CONFIGURAÇÕES DO PDF
+        $options = new Options();
+        $options->set([
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true
+        ]);
+        $dom = new Dompdf($options);
+        //$dom->setPaper('A5', 'landscape');
+        $dom->setPaper('A4', 'portrait');
+        $dom->loadHtml( $conteudo );
+        $dom->render();
+
+        
+        // Não faz download. Exibe na tela.
+        $streamOpt = ["Attachment" => false];
+
+        //var_dump($dom->output());
+
+        $dom->stream($titulo.'.pdf', $streamOpt);
+    }
+
+    static function downloadPDF(string $conteudo = '', string $titulo = 'Documento')
+    {
+        // CONFIGURAÇÕES DO PDF
+        $options = new Options();
+        $options->set([
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true
+        ]);
+        $dom = new Dompdf($options);
+        //$dom->setPaper('A5', 'landscape');
+        $dom->setPaper('A4', 'portrait');
+        $dom->loadHtml( $conteudo );
+        $dom->render();
+
+
+        // Faz download do arquivo.
+        $streamOpt = ["Attachment" => true];
+
+        //var_dump($dom->output());
+
+        $dom->stream($titulo.'.pdf', $streamOpt);
+    }
+
+    static function outputPDF(string $conteudo = '', string $titulo = 'Documento')
+    {
+        // CONFIGURAÇÕES DO PDF
+        $options = new Options();
+        $options->set([
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true
+        ]);
+        $dom = new Dompdf($options);
+        //$dom->setPaper('A5', 'landscape');
+        $dom->setPaper('A4', 'portrait');
+        $dom->loadHtml( $conteudo );
+        $dom->render();
+
+
+        // Não faz download. Exibe na tela.
+        $streamOpt = ["Attachment" => false];
+
+        return $dom->output();
+    }
 }

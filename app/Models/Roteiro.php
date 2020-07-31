@@ -1,6 +1,6 @@
 <?php
 namespace SGCTUR;
-use SGCTUR\LOG, SGCTUR\Erro, SGCTUR\Cliente;
+use SGCTUR\LOG, SGCTUR\Erro, SGCTUR\Cliente, SGCTUR\Coordenador;
 
 class Roteiro extends Master 
 {
@@ -83,17 +83,23 @@ class Roteiro extends Master
                     $this->dados->estoque = array();
                 }
         
-                $abc = $this->pdo->query("SELECT SUM(clientes_total) as vendidos FROM vendas WHERE roteiro_id = $this->id AND status <> 'Cancelada' AND status <> 'Devolvida' AND status <> 'Reserva'");
+                $abc = $this->pdo->query("SELECT SUM(clientes_total) as vendidos, SUM(criancas_colo) criancas_colo FROM vendas WHERE roteiro_id = $this->id AND status <> 'Cancelada' AND status <> 'Devolvida' AND status <> 'Reserva'");
                 $reg = $abc->fetch(\PDO::FETCH_OBJ);
                 if($reg->vendidos === NULL) { $reg->vendidos = 0;}
+                if($reg->criancas_colo === NULL) { $reg->criancas_colo = 0;}
+                if((int)$reg->criancas_colo > 0) {$reg->vendidos -= $reg->criancas_colo;}
         
                 $this->dados->estoque['total'] = (int)$this->dados->passagens;
                 $this->dados->estoque['vendidos'] = (int)$reg->vendidos;
+                $this->dados->estoque['vendidos_colo'] = (int)$reg->criancas_colo;
         
-                $abc = $this->pdo->query("SELECT SUM(clientes_total) reservados FROM vendas WHERE roteiro_id = $this->id AND status = 'Reserva'");
+                $abc = $this->pdo->query("SELECT SUM(clientes_total) reservados, SUM(criancas_colo) criancas_colo FROM vendas WHERE roteiro_id = $this->id AND status = 'Reserva'");
                 $reg = $abc->fetch(\PDO::FETCH_OBJ);
                 if($reg->reservados === NULL) { $reg->reservados = 0;}
+                if($reg->criancas_colo === NULL) { $reg->criancas_colo = 0;}
+
                 $this->dados->estoque['reservados'] = (int)$reg->reservados;
+                $this->dados->estoque['reservados_colo'] = (int)$reg->criancas_colo;
                 $this->dados->estoque['livre'] = $this->dados->estoque['total'] - ($this->dados->estoque['vendidos'] + $this->dados->estoque['reservados']);
                 $this->dados->estoque['vendidos_perc'] = round( ($this->dados->estoque['vendidos']  * 100) / $this->dados->estoque['total'], 2);
                 $this->dados->estoque['reservados_perc'] = round( ($this->dados->estoque['reservados'] * 100) / $this->dados->estoque['total'], 2);
@@ -142,6 +148,30 @@ class Roteiro extends Master
     }
 
     /**
+     * Retorna lista de cortesias no roteiro.
+     * 
+     * @return array
+     */
+    public function getCortesiasLista()
+    {
+        $lista_vendas = $this->getVendidosLista();
+
+        $lista_cortesias = [];
+
+        foreach($lista_vendas as $l) {
+            if($l->status != 'Cancelada' && $l->status != 'Devolvida') { 
+                if((int)$l->valor_total == 0) { // 1) Valor total igual a 0;
+                    $lista_cortesias[] = $l;
+                } else if(strpos($l->items, '"subtotal":0') !== false) { // 2) Item da venda com subtotal igual a 0;
+                    $lista_cortesias[] = $l;
+                }
+            }
+        }
+
+        return $lista_cortesias;
+    }
+
+    /**
      * Retorna lista de clientes/passageiros do roteiro.
      * 
      * @return array [success => TRUE|FALSE, mensagem => string, clientes => array]
@@ -171,6 +201,9 @@ class Roteiro extends Master
             // Provisória
             $lista_vendas = $this->getVendidosLista();
             $temp1 = array(); // Array temporário com todos os clientes desordenados.
+            $temp4 = array(); // Array temporário de crianças de colo.
+            $esperado = ['total' => 0, 'criancas_colo' => 0, 'criancas' => 0, 'adultos' => 0]; // Passagens vendidas.
+            $preenchido = ['total' => 0, 'criancas_colo' => 0, 'criancas' => 0, 'adultos' => 0]; // Passagens preenchidas.
             foreach($lista_vendas as $l) {
                 if($l->lista_clientes == '') {
                     $temp2 = array();
@@ -178,42 +211,215 @@ class Roteiro extends Master
                     $temp2 = json_decode($l->lista_clientes);
                 }
 
+                if($l->status == 'Devolvida' || $l->status == 'Cancelada') {
+                    continue;
+                    // Pula o resto da iteração para as vendas que foram canceladas/devolvidas.
+                }
+
+                // Preenche com valores.
+                $esperado['total'] += (int)$l->clientes_total;
+                $esperado['criancas'] += (int)$l->criancas;
+                $esperado['criancas_colo'] += (int)$l->criancas_colo;
+                $esperado['adultos'] += ((int)$l->clientes_total - ( (int)$l->criancas + (int)$l->criancas_colo ));
+
+                $vendaAtual = ['criancas' => (int)$l->criancas, 'adultos' => ((int)$l->clientes_total - ( (int)$l->criancas + (int)$l->criancas_colo ))];
+
                 if(!empty($temp2)) {
                     foreach($temp2 as $temp3) {
+                        // verifica se o tipo é object ou int.
+                        if(is_int($temp3)) {
+                            // INT
+                            $clienteID = $temp3;
+                            $colo = FALSE;
+                        } else {
+                            // OBJECT >> {'id': 123, 'colo': false}
+                            $clienteID = $temp3->id;
+                            $colo = $temp3->colo;
+                        }
+
                         // Busca cliente no Banco de dados.
-                        $cliente = new Cliente($temp3);
+                        $cliente = new Cliente($clienteID);
                         $c = $cliente->getDados();
                         if($c->cpf == ''){$cpf = '-';} else {$cpf = $c->cpf;}
-                        array_push($temp1, [
-                            'id' => $c->id,
-                            'nome' => $c->nome,
-                            'faixa_etaria' => $c->faixa_etaria,
-                            'cpf' => $cpf,
-                            'cidade' => $c->cidade,
-                            'estado' => $c->estado,
-                            'titular' => $c->titular, // Código do titular (caso seja dependente)
-                            'venda' => $l->id // ID da venda
-                        ]);
+                        if($c->rg == ''){$rg = '-';} else {$rg = $c->rg;}
+
+                        if($colo == true) { // Criança de colo
+                            array_push($temp4, [
+                                'id' => $c->id,
+                                'nome' => $c->nome,
+                                'faixa_etaria' => $c->faixa_etaria,
+                                'idade' => $c->idade,
+                                'cpf' => $cpf,
+                                'rg' => $rg,
+                                'cidade' => $c->cidade,
+                                'estado' => $c->estado,
+                                'titular' => $c->titular, // Código do titular (caso seja dependente)
+                                'venda' => $l->id, // ID da venda
+                                'colo' => $colo
+                            ]);
+
+                            // Preenche com valores.
+                            $preenchido['total']++;
+                            $preenchido['criancas_colo']++;
+                        } else { // Os outros.
+                            array_push($temp1, [
+                                'id' => $c->id,
+                                'nome' => $c->nome,
+                                'faixa_etaria' => $c->faixa_etaria,
+                                'idade' => $c->idade,
+                                'cpf' => $cpf,
+                                'rg' => $rg,
+                                'cidade' => $c->cidade,
+                                'estado' => $c->estado,
+                                'titular' => $c->titular, // Código do titular (caso seja dependente)
+                                'venda' => $l->id, // ID da venda
+                                'colo' => $colo
+                            ]);
+                            // Preenche com valores.
+                            $preenchido['total']++;
+                            if($c->faixa_etaria != 'ADULTO' && $c->faixa_etaria != '60+' && $vendaAtual['criancas'] > 0) {
+                                // Se ainda houver espaço para criança, contabiliza como criança.
+                                $preenchido['criancas']++; // Incrementa na quantidade total do roteiro.
+                                $vendaAtual['criancas']--; // Subtrai da quantidade esperada na venda atual.
+                            } else {
+                                // Se não houver criança na venda, contabiliza como adulto.
+                                $preenchido['adultos']++;
+                                $vendaAtual['adultos']--; // Subtrai da quantidade esperada na venda atual.
+                            }
+                        }
+                        
+
+                        unset($clienteID, $colo);
                     }
 
                     unset($cliente, $c);
 
-                    // organiza array pelo nome
+                    // organiza array pelo nome.
                     usort($temp1, function($a, $b){
                         return strcmp($a["nome"], $b["nome"]);
                     });
-                    
+
                 }
             }
 
+            // Lança a criança de colo com seu responsável.
+            foreach($temp4 as $t4) {
+                $key = array_search($t4['venda'], array_column($temp1, 'venda'));
+                
+                if($key !== false) {
+                    array_splice($temp1, $key+1, 0, [$t4]);
+                }
+            }
+
+
+
+
             $retorno['tipo'] = 'PROVISORIO';
             $retorno['clientes'] = $temp1;
+            $retorno['lista'] = [
+                'total' => $esperado,
+                'ocupado' => $preenchido
+            ];
         }
 
         return $retorno;
     }
 
+    /**
+     * Retorna lista de coordenadores do roteiro.
+     * 
+     * @return array [success => TRUE|FALSE, mensagem => string, coordenadores => array]
+     */
+    public function getCoordenadoresLista()
+    {
+        if($this->dados == null) {
+            return [
+                'success' => false,
+                'mensagem' => 'Roteiro não encontrado ou não existe.',
+                'coordenadores' => []
+            ];
+        }
 
+        $retorno = [
+            'success' => true,
+            'mensagem' => '',
+            'coordenadores' => []
+        ];
+
+        $coordArr = json_decode($this->dados->coordenador);
+        if($coordArr === null) {
+            $coordArr = [];
+        }
+
+        if(empty($coordArr)) { // Lista de coordenador(es) vazia
+            return $retorno;
+        } else { // Carrega informações dos coordenadores.
+            $temp1 = [];
+            foreach($coordArr as $cID) {
+                $coordenador = new Coordenador($cID);
+                $cDados = $coordenador->getDados();
+
+                
+                if($cDados->cpf == ''){$cpf = '-';} else {$cpf = $cDados->cpf;}
+                if($cDados->rg == ''){$rg = '-';} else {$rg = $cDados->rg;}
+
+                array_push($temp1, [
+                    'id' => $cDados->id,
+                    'nome' => $cDados->nome,
+                    'cpf' => $cpf,
+                    'rg' => $rg,
+                ]);
+            }
+
+            // organiza array pelo nome
+            usort($temp1, function($a, $b){
+                return strcmp($a["nome"], $b["nome"]);
+            });
+
+            $retorno['coordenadores'] = $temp1;
+
+            return $retorno;
+        }
+    }
+
+    /**
+     * Retorna o JSON de uma lista anexa do roteiro.
+     * 
+     * @param int $id ID da lista.
+     * @return object|bool Em caso de sucesso, retorna a lista. Em caso de falha, retorna FALSE;
+     */
+    public function getLista(int $id)
+    {
+        $abc = $this->pdo->query("SELECT * FROM listas_roteiros WHERE id = $id AND roteiro_id = $this->id");
+        if($abc->rowCount() == 0) {
+            return false;
+        } else {
+            $reg = $abc->fetch(\PDO::FETCH_OBJ);
+            $reg->bin_pdf = \stripslashes($reg->bin_pdf);
+
+            return $reg;
+        }
+    }
+
+    /**
+     * Retorna todas as lista de hospedagem e transporte, anexas ao roteiro. Não retorna lista de coordenadores, clientes.
+     * 
+     * @return array
+     */
+    public function getTodasListas()
+    {
+        try {
+            $abc = $this->pdo->query("SELECT id, tipo, nome, data, atualizado_em FROM listas_roteiros WHERE roteiro_id = $this->id");
+            if($abc->rowCount() == 0) {
+                return [];
+            } else {
+                return $abc->fetchAll(\PDO::FETCH_OBJ);
+            }
+        } catch(\PDOException $e) {
+            \error_log($e->getMessage());
+            return false;
+        }
+    }
 
     /**
      * Adiciona uma nova entrada no histórico deste roteiro.
@@ -436,6 +642,171 @@ class Roteiro extends Master
             $abc->bindValue(':c', $this->dados->coordenador, \PDO::PARAM_STR);
             $abc->execute();
 
+            return true;
+        }
+    }
+
+    /**
+     * Cria uma nova lista para o roteiro.
+     * 
+     * @param string $tipo Tipo da lista. Ex.: hospedagem, transporte.
+     * @param array $dados Dados para configurar a lista.
+     * 
+     * @return string|int Em caso de falha, retorna string; em caso de sucesso, retorna a ID da lista.
+     */
+    public function setNovaLista(string $tipo = 'hospedagem', array $dados)
+    {
+        switch($tipo) {
+            /** HOSPEDAGEM */
+            case 'hospedagem':
+                $inst = []; // Instruções em JSON.
+                $quartos = [];
+                foreach($dados as $key => $val) {
+                    switch($key) {
+                        case 'individual': $quartos['individual'] = (int)$val; break;
+                        case 'duplo': $quartos['duplo'] = (int)$val; break;
+                        case 'triplo': $quartos['triplo'] = (int)$val; break;
+                        case 'quadruplo': $quartos['quadruplo'] = (int)$val; break;
+                        case 'quintuplo': $quartos['quintuplo'] = (int)$val; break;
+                        case 'sextuplo': $quartos['sextuplo'] = (int)$val; break;
+
+                        default: break;
+                    }
+                }
+                $inst['quartos_qtd'] = $quartos;
+
+                if(isset($dados['criancaColoIndividual']) && $dados['criancaColoIndividual'] == 'yes') {
+                    $inst['criancaColoIndividual'] = true;
+                } else {
+                    $inst['criancaColoIndividual'] = false;
+                }
+                $nome = $dados['nome'];
+                
+            break;
+
+            /** TRANSPORTE */
+            case 'transporte':
+                $inst = []; // Instruções em JSON.
+                $nome = $dados['nome'];
+                $inst['qtdClientesViagem'] = (int)$dados['clientesViagem'];
+
+                if(isset($dados['criancaColoIndividual']) && $dados['criancaColoIndividual'] == 'yes') {
+                    $inst['criancaColoIndividual'] = true;
+                } else {
+                    $inst['criancaColoIndividual'] = false;
+                }
+            break;
+
+
+            default: return 'Tipo de lista inválido.'; break;
+        }
+
+        // Persiste dados no BD.
+        $this->pdo->beginTransaction();
+        try {
+            $abc = $this->pdo->prepare("INSERT INTO listas_roteiros (id, roteiro_id, tipo, nome, data, instrucoes, dados, tamanho, atualizado_em) ".
+            "VALUES (NULL, $this->id, '$tipo', :nome, NOW(), :inst, '', 0, NOW())");
+
+            $abc->bindValue(':nome', $nome, \PDO::PARAM_STR);
+            $abc->bindValue(':inst', json_encode($inst), \PDO::PARAM_STR);
+
+            $abc->execute();
+            $id = (int)$this->pdo->lastInsertId();
+
+            $this->pdo->commit();
+            return $id;
+        } catch(PDOException $e) {
+            \error_log($e->getMessage());
+            $abc->rollBack();
+            return 'Houve um problema ao criar a lista. Informe ao desenvolvedor.';
+        }
+
+    }
+
+    /**
+     * Define os dados de uma lista do roteiro.
+     * 
+     * @param int $id ID da lista anexa.
+     * @param string $dados Dados em JSON para persistir no banco de dados.
+     * 
+     * @return bool
+     */
+    public function setListaDados(int $id, string $dados)
+    {
+        $abc = $this->pdo->prepare("UPDATE listas_roteiros SET dados = :dados, atualizado_em = NOW() WHERE id = $id AND roteiro_id = $this->id");
+        try {
+            $abc->bindValue(':dados', $dados, \PDO::PARAM_STR);
+            $abc->execute();
+
+            return true;
+        } catch(PDOException $e) {
+            \error_log($e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Define as instruções de uma lista do roteiro.
+     * 
+     * @param int $id ID da lista anexa.
+     * @param string $instrucoes Instruções/configurações para persistir no banco de dados.
+     * 
+     * @return bool
+     */
+    public function setListaConfig(int $id, string $instrucoes)
+    {
+        $abc = $this->pdo->prepare("UPDATE listas_roteiros SET instrucoes = :dados, atualizado_em = NOW() WHERE id = $id AND roteiro_id = $this->id");
+        try {
+            $abc->bindValue(':dados', $instrucoes, \PDO::PARAM_STR);
+            $abc->execute();
+
+            return true;
+        } catch(PDOException $e) {
+            \error_log($e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Salva o arquivo PDF gerado no banco de dados.
+     * 
+     * @param int $id ID da lista anexa.
+     */
+    public function setListaBinPDF(int $id, string $pdf)
+    {
+        $abc = $this->pdo->query("SELECT id FROM listas_roteiros WHERE id = $id AND roteiro_id = $this->id");
+        if($abc->rowCount() == 0) {
+            return false;
+        } else {
+            // Salva o PDF no banco.
+            try {
+                $abc = $this->pdo->prepare("UPDATE listas_roteiros SET bin_pdf = :pdf, bin_pdf_data = NOW(), tamanho = :tam WHERE id = $id AND roteiro_id = $this->id");
+                $abc->bindValue(':pdf', \addslashes($pdf), \PDO::PARAM_STR);
+                $abc->bindValue(':tam', strlen($pdf), \PDO::PARAM_INT);
+                $abc->execute();
+                return true;
+            } catch(PDOException $e) {
+                \error_log('Erro ao tentar salvar arquivo PDF no banco de dados.');
+                \error_log($e->getMessage());
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Remove lista anexa do roteiro.
+     * 
+     * @param int $id ID da lista anexa.
+     * 
+     * @return bool
+     */
+    public function setListaRemove(int $id)
+    {
+        $abc = $this->pdo->query("SELECT id FROM listas_roteiros WHERE id = $id AND roteiro_id = $this->id");
+        if($abc->rowCount() == 0) {
+            return false;
+        } else {
+            $abc = $this->pdo->query("DELETE FROM listas_roteiros WHERE id = $id AND roteiro_id = $this->id");
             return true;
         }
     }

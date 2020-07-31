@@ -248,4 +248,101 @@ class Robot extends Master
         // FIM
 
     }
+
+    public function enviaEmailAniversario()
+    {
+        $sgc = new SGCTUR();
+        $aniv = $sgc->getClienteAniversario(date('Y-m-d'));
+        $ano = date('Y');
+
+        // Teste forçado de execução.
+        /*
+        $aniv = [
+            'success' => true,
+            'hoje' => [
+                (object)['nome'=> 'Sandro Vitor Mendonça', 'email' => 'sandro_vitor@hotmail.com'],
+                (object)['nome'=> 'Vanessa Reis', 'email' => 'tonaestradaviagens@hotmail.com']
+            ]
+        ];
+        */
+
+        if($aniv['success'] == true && !empty($aniv['hoje'])) {
+            // Envia e-mails de aniversário para os clientes.
+            $lista = $aniv['hoje'];
+            $contaEmails = 0;
+            foreach($lista as $cliente) {
+
+                // Verifica se ele possui e-mail antes de enviar.
+                if(isset($cliente->email) && $cliente->email != '') {
+                    $cliente_nome = $cliente->nome;
+
+                    $from = 'nao-responda@'.DOBBIN_LINK_EXTERNO;
+                    $to = $cliente->email;
+                    $subject = 'Feliz aniversário!';
+                    $headers[] = 'MIME-Version: 1.0';
+                    $headers[] = 'Content-type: text/html; charset=utf-8';
+                    $headers[] = 'To: '.substr($cliente_nome, 0, \strpos($cliente_nome,' ')).' <'.$to.'>';
+                    $headers[] = 'From: Relacionamento To Na Estrada Viagens <'.$from.'>';
+                    $headers[] = 'Reply-To: '.substr($cliente_nome, 0, \strpos($cliente_nome,' ')).' <'.$to.'>';
+                    $headers[] = 'X-Mailer: PHP/'.phpversion();
+        
+                
+                $html = <<<DADOS
+                    <html>
+                        <head>
+                            <title>Feliz aniversário!</title>
+                        </head>
+                        <body style="background-color: rgb(233,233,233); font-size: 16px; font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;padding-top:1rem;">
+                            <div style="width:80%; max-width: 1080px; margin:0 auto;">
+                                <a href="https://tonaestradaviagens.com.br/" target="_blank" style="text-decoration:none;margin:0;">
+                                <div style="background-color:rgb(143,18,32); width:100%; padding: 2rem 0;">
+                                    <h1 style="font-weight:normal;margin:0; padding: 0 1rem 2rem; color: rgb(250, 251, 245);">Prezado(a) <strong style="text-transform:uppercase;">{$cliente_nome}</strong>,</h1>
+                                    <img style="text-align:center; max-width:100%;" src="https://tonaestradaviagens.com.br/media/images/AniversarioToNaEstrada.jpg">
+                                </div>
+                                </a>
+                                <div style="background-color: rgb(250, 251, 245); color: rgb(143,18,32); font-size: 1.5rem; padding: 2rem 1rem; box-sizing:border-box; text-align:center;">
+                                    Encontre sua nova parada:<br>
+                                    <a href="https://tonaestradaviagens.com.br/" style="text-decoration:none; color: rgb(143,18,32)">https://tonaestradaviagens.com.br/</a>
+                                </div>
+                                <div style="padding: 1rem 0; color: rgb(200,200,200);">
+                                    &copy;{$ano} To Na Estrada Viagens e Turismo
+                                </div>
+                            </div>
+                        </body>
+                    </html>
+DADOS;
+
+                    $contaEmails++;
+                    if($to != '') { // Envia e-mail, somente se o destinatário não estiver em branco.
+                        $send = mail($to, $subject, $html, implode("\r\n", $headers));
+                    }
+                    //sleep(2); // Espera 2 segundos para o servidor de e-mails disparar o e-mail e não congestionar.
+                    unset($headers);
+                }
+            }
+            /**
+             * LOG
+             */
+            $log = new LOG();
+            if($contaEmails == count($aniv['hoje'])) {
+                $log->novo('<b>Dobbin Robot:</b> "Enviei '.$contaEmails.' e-mails de aniversário hoje."',0,1);
+            } else {
+                $log->novo('<b>Dobbin Robot:</b> "Enviei '.$contaEmails.' e-mails de aniversário hoje. Alguns dos clientes não possuem e-mail cadastrado para enviar."',0,1);
+            }
+
+        } else if($aniv['success'] == false) {
+            /**
+             * LOG
+             */
+            $log = new LOG();
+            $log->novo('<b>Dobbin Robot:</b> "Não consegui recuperar os aniversariantes de hoje."',0,1);
+        } else if(empty($aniv['hoje'])) {
+            /**
+             * LOG
+             */
+            $log = new LOG();
+            $log->novo('<b>Dobbin Robot:</b> "Não temos aniversariantes de hoje."',0,1);
+        }
+        
+    }
 }

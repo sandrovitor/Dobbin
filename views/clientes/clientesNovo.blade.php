@@ -128,17 +128,6 @@
                     </div>
                     <div class="form-group row">
                         <div class="col-12 col-xl-6 mb-3">
-                            <label>Taxa extra casal (R$):</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <div class="input-group-text form-control-solid">R$</div>
-                                </div>
-                                <input type="text" class="form-control form-control-solid" name="taxa_extra_casal" placeholder="" dobbin-mask-money data-detalhes-taxaextracasal dobbin-validate-valor pattern="[0-9,]{0,10}">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <div class="col-12 col-xl-6 mb-3">
                             <label>Tipo sanguíneo:</label>
                             <select class="form-control form-control-solid" name="sangue">
                                 <option value="">Escolha:</option>

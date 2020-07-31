@@ -20,8 +20,10 @@
                             <li>Depois que concluir o download, abra o arquivo HTML com o navegador de sua preferência (recomendamos o Google Chrome, e desaconselhamos o Internet Explorer);</li>
                             <li>Nenhuma mudança pode ser realizada offline. Se for necessário corrigir qualquer informação, SOMENTE será realizada online, através dessa plataforma;</li>
                         </ol>
-                         
-                        
+                        @php
+                        //$robot->enviaEmailAniversario();
+
+                        @endphp
                     </div>
                 </div>
             </div>

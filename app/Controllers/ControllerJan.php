@@ -241,7 +241,7 @@ class ControllerJan
 
                     // Varre clientes adicionados
                     foreach($lista_cl_arr as $l) {
-                        $cliente = new Cliente((int)$l);
+                        $cliente = new Cliente((int)$l->id);
                         $c = $cliente->getDados();
 
                         $nascimento = new DateTime($c->nascimento);
@@ -252,6 +252,13 @@ class ControllerJan
                         } else {
                             $cpf = '-';
                         }
+                        
+                        if($l->colo == true) {
+                            //$colo = '<span class="text-success"><i class="fas fa-check"></i></span>';
+                            $colo = 'checked';
+                        } else {
+                            $colo = '';
+                        }
                         $lista_cl .= '
                         <tr>
                             <td>'.$c->id.'</td>
@@ -259,6 +266,12 @@ class ControllerJan
                             <td>'.$idade.' ANO(S)</td>
                             <td>'.$c->faixa_etaria.'</td>
                             <td>'.$cpf.'</td>
+                            <td class="text-center">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="colo'.$c->id.'" '.$colo.' onchange="vendaSetPassageiroColo('.$c->id.', this)" data-venda="'.$ret->id.'">
+                                    <label class="custom-control-label cursor-pointer" for="colo'.$c->id.'"></label>
+                                </div>
+                            </td>
                             <td><button type="button" class="btn btn-danger btn-sm" data-venda="'.$ret->id.'" onclick="vendaRemovePassageiroLista('.$c->id.', this)"><i class="fas fa-trash"></i></button></td>
                         </tr>
                         ';
@@ -270,6 +283,8 @@ class ControllerJan
                         } else {
                             $tipo_cl['IDOSO']--;
                         }
+
+                        unset($colo);
                     }
 
                     unset($cliente, $c);
@@ -361,6 +376,13 @@ class ControllerJan
                     $termosData = '<span class="badge badge-light py-1 px-2 ml-2">'.$x->format('d/m/Y H:i:s').'</span>';
                     unset($x);
                 }
+
+                /*
+                ob_start();
+                var_dump($ret);
+                $ob_vardump = ob_get_clean();
+                */
+                $ob_vardump = '';
 
                 // Constrói página com HEREDOC
                 $page = <<<PAGINA
@@ -467,7 +489,7 @@ class ControllerJan
                         </tbody>
                     </table>
                     <hr>
-                    <h4 class="font-weight-bold">Lista de passageiros <small>[Criança(s): $ret->criancas | Adulto(s): $ret->adultos]</small></h4>
+                    <h4 class="font-weight-bold">Lista de passageiros <small>[Criança(s): $ret->criancas | Adulto(s): $ret->adultos | Criança(s) de colo: $ret->criancas_colo]</small></h4>
                     $btn_cl_add
                     <table class="table table-bordered table-sm table-hover">
                         <thead>
@@ -477,6 +499,7 @@ class ControllerJan
                                 <th>Idade</th>
                                 <th>Faixa Etária</th>
                                 <th>CPF</th>
+                                <th><abbr data-toggle="tooltip" title="Criança de colo">Cri. Colo</abbr></th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -487,6 +510,7 @@ class ControllerJan
                     
                     <strong></strong> <br>
                     <strong></strong> <br>
+                    {$ob_vardump}
                 </div>
             </div>
 PAGINA;
@@ -841,7 +865,10 @@ TAB;
                                 let tabpane = alvo.parents('.tab-pane');
                                 let outro = {};
                                 outro.valor_estorno = Dobbin.converteRealEmCentavo(tabpane.find('[name=\'valor\']').val());
-                                if(outro.valor_estorno == 0) {
+                                
+                                if(outro.valor_estorno == parseInt(tabpane.find('[name=\'valor\']').prop('max'))) {
+                                    vendaAlteraSituacao(alvo.data('venda'), 'Devolvida', outro, alvo);
+                                } else if(outro.valor_estorno == 0) {
                                     alerta('O valor mínimo é <b>R$ 0,01</b>! Não é possível devolver R$ 0,00.','', 'danger');
                                 } else {
                                     vendaAlteraSituacao(alvo.data('venda'), 'Devolvida', outro, alvo);

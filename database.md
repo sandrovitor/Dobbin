@@ -42,7 +42,7 @@ CREATE TABLE `clientes` (
  `alergia` varchar(255) NOT NULL,
  `emergencia_nome` varchar(60) NOT NULL,
  `emergencia_tel` varchar(30) NOT NULL,
- `taxa_extra_casal` int(11) NOT NULL COMMENT 'Valor em centavos',
+ `credito` int(11) NOT NULL COMMENT 'Valor em centavos',
  `titular` mediumint(8) unsigned NOT NULL DEFAULT 0 COMMENT 'Se 0 é um TITULAR; se for DEPENDENTE armazena ID do titular.',
  `criado_em` datetime NOT NULL DEFAULT current_timestamp(),
  `atualizado_em` datetime NOT NULL DEFAULT current_timestamp(),
@@ -96,6 +96,24 @@ CREATE TABLE `historico_negoc` (
  `atualizado_em` datetime DEFAULT NULL,
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COMMENT='Histórico de negociações'
+```
+
+### TABELA: **listas_roteiros**
+```
+CREATE TABLE `listas_roteiros` (
+ `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+ `roteiro_id` smallint(5) unsigned NOT NULL,
+ `tipo` enum('hospedagem','transporte','') COLLATE utf8mb4_unicode_ci NOT NULL,
+ `nome` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+ `data` datetime NOT NULL DEFAULT current_timestamp(),
+ `instrucoes` text COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Dados em JSON de instruções para a página.',
+ `dados` text COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Dados em JSON com os valores das páginas.',
+ `tamanho` int(10) unsigned NOT NULL COMMENT 'Tamanho do arquivo em bytes.',
+ `atualizado_em` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Data da atualização da instrução ou dados.',
+ `bin_pdf` mediumblob DEFAULT NULL COMMENT 'Binário do PDF. Arquivo de até 16MB',
+ `bin_pdf_data` datetime DEFAULT NULL COMMENT 'Data do PDF.',
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Listas alternativas e complementares do roteiro.'
 ```
 
 ### TABELA: **lista_bancos**

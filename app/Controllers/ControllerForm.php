@@ -932,6 +932,115 @@ class ControllerForm
         return json_encode($retorno);
     }
 
+    static function roteirosNovaLista($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        $ret = $roteiro->setNovaLista($_POST['tipo'], $_POST);
+
+        if(is_int($ret)) {
+            $retorno['success'] = true;
+            $retorno['lista'] = $ret;
+        } else {
+            $retorno['mensagem'] = $ret;
+        }
+
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosListaSalvar($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        $ret = $roteiro->setListaDados($p['lid'], json_encode($_POST['dados']));
+
+        if($ret) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = 'Não foi possível salvar a lista. Houve algum problema no servidor.';
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosListaConfigSalvar($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        // Monta o array de configurações.
+        if($_POST['tipo'] == 'hospedagem') {
+            $config = [
+                'quartos_qtd' => [
+                    'individual' => $_POST['individual'],
+                    'duplo' => $_POST['duplo'],
+                    'triplo' => $_POST['triplo'],
+                    'quadruplo' => $_POST['quadruplo'],
+                    'quintuplo' => $_POST['quintuplo'],
+                    'sextuplo' => $_POST['sextuplo'],
+                ],
+                'criancaColoIndividual' => false
+            ];
+
+            
+        } else if($_POST['tipo'] == 'transporte') {
+            $config = [
+                'qtdClientesViagem' => (int)$_POST['clientesViagem'],
+                'criancaColoIndividual' => false
+            ];
+        }
+
+        // Configuração para todas as listas.
+        if(isset($_POST['criancaColoIndividual']) && $_POST['criancaColoIndividual'] == 'yes') {
+            $config['criancaColoIndividual'] = true;
+        }
+
+        $roteiro = new Roteiro($p['id']);
+        $ret = $roteiro->setListaConfig($p['lid'], json_encode($config));
+
+        if($ret) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = 'Não foi possível salvar as instruções/configurações da lista. Houve algum problema no servidor.';
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosListaApagar($p)
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        $ret = $roteiro->setListaRemove($p['lid']);
+
+        if($ret) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = 'Não foi possível apagar esta lista. Talvez ela já tenha sido apagada.';
+        }
+
+        return json_encode($retorno);
+    }
+
 
     /**
      * MINHA CONTA
@@ -1179,6 +1288,32 @@ class ControllerForm
         }
 
         return json_encode($retorno);
+    }
+
+    static function vendasColoCliente($p)
+    {
+        self::validaConexao(3);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $venda = new Venda($p['id']);
+        $v = $venda->getDados();
+
+        // Define o passageiro como criança de colo.
+        $res = $venda->alternaListaClienteColo($p['cid']);
+
+        if($res === false) {
+            $retorno['mensagem'] = 'Não foi possível definir esse cliente como criança de colo.';
+        } else if($res === true) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = $res;
+        }
+
+        return json_encode($retorno);
+        
     }
 
     static function vendasAlterarSituacao($p)

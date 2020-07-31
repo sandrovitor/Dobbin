@@ -68,8 +68,11 @@ class Cliente extends Master
                     } else {
                         $this->dados->faixa_etaria = '60+';
                     }
+
+                    $this->dados->idade = $idade->y;
                 }catch(Exception $e) {
                     $this->dados->faixa_etaria = '-';
+                    $this->dados->idade = '-';
                 }
                 
                 return true;
@@ -242,7 +245,7 @@ class Cliente extends Master
                 case 'estado_civil': $campos[] = 'ESTADO CIVIL'; break;
                 case 'emergencia_nome': $campos[] = 'CONTATO EMERGÊNCIA'; break;
                 case 'emergencia_tel': $campos[] = 'TELEFONE EMERGÊNCIA'; break;
-                case 'taxa_extra_casal': if($this->dados->taxa_extra_casal != (int)$val) {$campos[] = 'TAXA EXTRA (CASAL)';} break;
+                case 'credito': if($this->dados->credito != (int)$val) {$campos[] = 'CRÉDITO';} break;
             }
         }
 

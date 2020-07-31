@@ -614,6 +614,7 @@ class ControllerPrincipal
             'page' => $blade->run("roteiros.roteirosVer", array(
                 'roteiro' => $roteiro,
                 'lista_vendas' => $lista_vendas,
+                'lista_cortesias' => $rot->getCortesiasLista(),
                 'sgc' => new SGCTUR(),
                 'criado_por' => $criado_por
             ))
@@ -628,6 +629,15 @@ class ControllerPrincipal
 
         $rot = new Roteiro($p['id']);
         $retorno = $rot->getClientesLista();
+        return json_encode($retorno);
+    }
+
+    static function roteirosVerCoord($p) // Retorna JSON
+    {
+        self::validaConexao(2);
+
+        $rot = new Roteiro($p['id']);
+        $retorno = $rot->getCoordenadoresLista();
         return json_encode($retorno);
     }
 
@@ -648,6 +658,53 @@ class ControllerPrincipal
             $retorno['success'] = true;
             $retorno['estoque'] = $r->estoque;
         }
+        return json_encode($retorno);
+    }
+
+    static function roteirosVerListas($p) // Retorna JSON.
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => '',
+            'listas' => array()
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        $ret = $roteiro->getTodasListas();
+
+        if($ret === false) {
+            $retorno['mensagem'] = 'Houve um erro interno ao recuperar a(s) lista(s) deste roteiro.';
+        } else {
+            $retorno['listas'] = $ret;
+            $retorno['success'] = true;
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function roteirosLoadLista($p) // Retorna JSON.
+    {
+        self::validaConexao(2);
+        $retorno = [
+            'success' => false,
+            'mensagem' => '',
+            'lista' => array()
+        ];
+
+        $roteiro = new Roteiro($p['id']);
+        $ret = $roteiro->getLista($p['lid']);
+
+        if($ret === false) {
+            $retorno['mensagem'] = 'Lista não encontrada.';
+        } else {
+            // Remove o campo BLOB do retorno.
+            unset($ret->bin_pdf);
+
+            $retorno['lista'] = $ret;
+            $retorno['success'] = true;
+        }
+
         return json_encode($retorno);
     }
 
@@ -1474,6 +1531,27 @@ class ControllerPrincipal
 
         return json_encode($retorno);
     }
+    
+    /**
+     * 
+     * FINANCEIRO
+     * 
+     */
+    static function financeiroNovo($p)
+    {
+        self::validaConexao(5);
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-balance-scale"></i> Financeiro > Novo Balanço',
+            'description' => 'Crie um novo balanço financeiro mensal.',
+            'page' => $blade->run("financeiro.financeiroNovo", array(
+                
+            ))
+        );
+
+        return json_encode($retorno);
+    }
 
     /**
      * 
@@ -1539,6 +1617,7 @@ class ControllerPrincipal
             'description' => 'Acesse o banco de dados da plataforma offline.',
             'page' => $blade->run("offline", array(
                 'robot' => new Robot(),
+                'sgc' => new SGCTUR(),
             ))
         );
 
@@ -1672,5 +1751,33 @@ class ControllerPrincipal
         unlink($path.'temp/'.$temporario);
         exit();
         
+    }
+
+    /**
+     * 
+     * TESTES
+     * 
+     * 
+     */
+    static function teste($p)
+    {
+        ob_start();
+        $roteiro = new Roteiro(2);
+        var_dump($roteiro->getDados());
+
+        $res = ob_get_clean();
+        
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-cloud-download-alt"></i> TESTES',
+            'description' => 'Testes da plataforma.',
+            'page' => $blade->run("teste", array(
+                'robot' => new Robot(),
+                'sgc' => new SGCTUR(),
+                'roteiro' => $roteiro
+            ))
+        );
+
+        return json_encode($retorno);
     }
 }

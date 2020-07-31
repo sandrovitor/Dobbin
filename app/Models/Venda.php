@@ -89,9 +89,9 @@ class Venda extends Master
         }
 
         if(empty($lista_clientes)) {
-            array_push($lista_clientes, $cid);
+            array_push($lista_clientes, (object)['id' => $cid, 'colo' => false]);
         } else if(count($lista_clientes) < (int)$this->dados->clientes_total) {
-            array_push($lista_clientes, $cid);
+            array_push($lista_clientes, (object)['id' => $cid, 'colo' => false]);
         } else {
             return false;
         }
@@ -137,8 +137,16 @@ class Venda extends Master
         }
 
         if(!empty($lista_clientes)) {
+
+            /*
+            if(is_int($lista_clientes[0])) { // Busca em array com inteiros. OBSOLETO
+                $key = array_search($cid, $lista_clientes);
+            } else { // Busca em array com objeto.
+                $key = array_search($cid, array_column($lista_clientes,'id'));
+            }*/
+
+            $key = array_search($cid, array_column($lista_clientes,'id'));
             // Remove cliente
-            $key = array_search($cid, $lista_clientes);
             if($key === FALSE) {
                 return true; // cliente não encontrado. Não remove nada
             } else {
@@ -173,6 +181,81 @@ class Venda extends Master
             error_log($e->getMessage(), 0);
 
             return false;
+        }
+    }
+
+    /**
+     * Define passageiro como criança de colo. Se ele já for criança de colo, remove a definição.
+     * @param int $cid ID do cliente
+     * @return bool|string
+     */
+    public function alternaListaClienteColo(int $cid)
+    {
+        if($this->dados == null) {
+            return false;
+        }
+
+        $lista_clientes = $this->dados->lista_clientes;
+        $lista_clientes = json_decode($lista_clientes);
+
+        if($lista_clientes == null) { // Lista vazia. Não tem o que definir.
+            $lista_clientes = array();
+            return false;
+        }
+
+        // Conta o número de crianças de colo nesta lista.
+        $criancaColoArr = [];
+        foreach($lista_clientes as $key => $val) {
+            if($val->colo == true) {
+                array_push($criancaColoArr, $key);
+            }
+        }
+        unset($key, $val);
+
+        // Busca o cliente na lista
+        $key = array_search($cid, array_column((array)$lista_clientes, 'id'));
+
+        if($key === FALSE) {
+            // Não encontrado
+            return false;
+        } else {
+            // Encontrado
+            $l = $lista_clientes[$key];
+
+
+            if($l->colo === true) { // Define como FALSE
+                $lista_clientes[$key]->colo = false;
+            } else { // Define como TRUE
+
+                // Verifica se a quantidade de crianças de colo está dentro do limite.
+                if(count($criancaColoArr) >= (int)$this->dados->criancas_colo) {
+                    // Necessário remover uma criança de colo, para definir a nova criança de colo.
+                    if(!empty($criancaColoArr)) {
+                        $lista_clientes[$criancaColoArr[0]]->colo = false;
+                    } else {
+                        return false;
+                    }
+                }
+
+                $lista_clientes[$key]->colo = true;
+            }
+
+            $temp1 = [];
+            foreach($lista_clientes as $l) {
+                array_push($temp1, $l);
+            }
+            $lista_clientes = $temp1;
+
+            try {
+                $abc = $this->pdo->prepare("UPDATE vendas SET lista_clientes = :lc WHERE id = $this->id");
+                $abc->bindValue(':lc', json_encode($lista_clientes), \PDO::PARAM_STR);
+                $abc->execute();
+                return true;
+            } catch(PDOException $e) {
+                error_log($e->getMessage(), 0);
+    
+                return false;
+            }
         }
     }
 
@@ -492,14 +575,27 @@ class Venda extends Master
                     return false;
                 } else {
                     // Verifica se todas as informações necessárias foram enviadas.
+
                     if(
-                        !isset($outro['valor_estorno']) || $outro['valor_estorno'] == '' || (int)$outro['valor_estorno'] == 0
+                        !isset($outro['valor_estorno']) || $outro['valor_estorno'] === ''
                     ) {
                         return false;
                     }
+
+                    if((int)$outro['valor_estorno'] == 0 && ( (int)$this->dados->total_pago > 0 || (int)$this->dados->valor_total > 0 ))  {
+                        // Valor de estorno só pode 0,00, se o valor total e total_pago for igual a zero.
+                        return false;
+                    }
+                    
                     $valor = (int)$outro['valor_estorno'];
                     try{
-                        $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', parcelas_pagas = ".$this->dados->parcelas.", data_estorno = NOW(), valor_devolvido = $valor WHERE id = $this->id");
+                        $parcelas = $this->dados->parcelas;
+                        /*
+                        ob_start();
+                        var_dump($parcelas);
+                        error_log('- Informações da parcela:'.\ob_get_clean());
+                        */
+                        $abc = $this->pdo->query("UPDATE vendas SET status = '".$situacao."', parcelas_pagas = ".$parcelas.", data_estorno = NOW(), valor_devolvido = $valor WHERE id = $this->id");
                         /**
                          * LOG
                          */

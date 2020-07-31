@@ -217,7 +217,6 @@ class Coordenador extends Master
                 case 'estado_civil': $campos[] = 'ESTADO CIVIL'; break;
                 case 'emergencia_nome': $campos[] = 'CONTATO EMERGÊNCIA'; break;
                 case 'emergencia_tel': $campos[] = 'TELEFONE EMERGÊNCIA'; break;
-                case 'taxa_extra_casal': if($this->dados->taxa_extra_casal != (int)$val) {$campos[] = 'TAXA EXTRA (CASAL)';} break;
             }
         }
 

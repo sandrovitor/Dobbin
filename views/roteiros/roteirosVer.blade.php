@@ -33,6 +33,8 @@
                                 $receita = 0; // Soma de valores pagos até agora em todas as vendas. [TOTAL REAL]
                                 $receita_esperada = 0; // Valor total esperado com todas as vendas. [PROJETADA]
 
+                                
+
                             @endphp
                                 <table class="table table-bordered table-sm">
                                     <tbody>
@@ -51,7 +53,7 @@
                                             <td class="px-3 py-1"><strong>Poltronas livre:</strong> <span class="ml-2" data-poltrona-livre>{{(int)$roteiro->estoque['livre']}}</span></td>
                                         </tr>
                                         <tr>
-                                            <td class="px-3 py-1"><strong>Clientes (pagantes):</strong> <span class="ml-2">{{(int)$roteiro->passagens}}</span></td>
+                                            <td class="px-3 py-1"><strong>Clientes (pagantes e cortesias):</strong> <span class="ml-2">{{(int)$roteiro->passagens}}</span></td>
                                             <td class="px-3 py-1"><strong>Coordenadores (isentos):</strong> <span class="ml-2">{{(int)$roteiro->qtd_coordenador}}</span></td>
                                         </tr>
                                         <tr>
@@ -143,6 +145,7 @@
                                                 <th>Cliente</th>
                                                 <th>Pessoas</th>
                                                 <th>Crianças</th>
+                                                <th>Cri. Colo</th>
                                                 <th>Situação</th>
                                                 <th>Data Reserva/Venda</th>
                                             </tr>
@@ -190,6 +193,7 @@
                                                 <td><a href="javascript:void(0)" onclick="loadCliente({{$l->cliente_id}})">{{$l->cliente_nome == NULL ? 'Cliente desconhecido' : $l->cliente_nome}}</a></td>
                                                 <td>{{$l->clientes_total}}</td>
                                                 <td>{{$l->criancas}}</td>
+                                                <td>{{$l->criancas_colo}}</td>
                                                 <td>{!!$situ!!}</td>
                                                 <td>{{$temp->format('d/m/Y H:i:s')}}</td>
                                             </tr>
@@ -204,6 +208,53 @@
                                     </table>
                                 </div>
                                 <div class="mt-3" style="overflow-x:auto;">
+                                    <div class="border bloco-acord">
+                                        <div class="acord-header bg-light p-2 d-flex justify-content-between cursor-pointer">
+                                            <h6 class="font-weight-bold text-uppercase my-1 text-primary">VENDAS COM CORTESIAS <span class="ml-2 badge badge-primary badge-pill">{{count($lista_cortesias)}}</span></h6>
+                                        </div>
+                                        <div class="acord-body p-2 py-3 pt-0 border border-secondary border-bottom-0 border-left-0 border-right-0" style="display:none">
+                                            <div class="alert alert-info px-2 py-1 small">
+                                                <i class="fas fa-info-circle fa-fw"></i> As cortesias aqui listadas são: <strong>1)</strong> Venda onde o valor total é igual R$0,00; <strong>2)</strong> Venda que tenha um item com valor em R$0,00.   
+                                            </div>
+                                            <table class="table table-sm table-bordered small table-hover" id="tabelaVendasCortesia">
+                                                <thead class="thead-dark">
+                                                    <tr>
+                                                        <th>Venda</th>
+                                                        <th>Cliente</th>
+                                                        <th>Pessoas</th>
+                                                        <th>Crianças</th>
+                                                        <th>Situação</th>
+                                                        <th>Data Reserva/Venda</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                @if(empty($lista_cortesias))
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-2 font-italic">Sem cortesias</td>
+                                                </tr>
+                                                @else
+                                                @foreach($lista_cortesias as $l)
+                                                
+                                                @php
+                                                $temp = new DateTime($l->data_reserva);
+                                                @endphp
+                                                <tr>
+                                                    <td><a href="javascript:void(0)" onclick="getVenda({{$l->id}})">{{$l->id}}</a></td>
+                                                    <td><a href="javascript:void(0)" onclick="loadCliente({{$l->cliente_id}})">{{$l->cliente_nome == NULL ? 'Cliente desconhecido' : $l->cliente_nome}}</a></td>
+                                                    <td>{{$l->clientes_total}}</td>
+                                                    <td>{{$l->criancas}}</td>
+                                                    <td><span class="badge badge-secondary py-1 px-2">{{$l->status}}</span></td>
+                                                    <td>{{$temp->format('d/m/Y H:i:s')}}</td>
+                                                </tr>
+                                                    @php
+                                                    unset($temp);
+                                                    @endphp
+                                                @endforeach
+                                                @endif
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                     <div class="border bloco-acord">
                                         <div class="acord-header bg-light p-2 d-flex justify-content-between cursor-pointer">
                                             <h6 class="font-weight-bold text-uppercase my-1">Canceladas/Estornadas</h6>
@@ -253,12 +304,12 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-12 col-lg-6">
+                            <div class="col-12 col-lg-12">
                                 <div class="card rounded-0">
                                     <div class="card-header card-collapse text-dark px-2 py-1">
                                         CLIENTES/PASSAGEIROS
                                     </div>
-                                    <div class="card-body pt-3 pb-2 px-2" style="overflow-x:auto;">
+                                    <div class="card-body pt-3 pb-2 px-2" >
                                         <div class="row">
                                             <div class="col-12" id="passagDiv">
                                                 
@@ -273,30 +324,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-6">
-                                <div class="card rounded-0">
-                                    <div class="card-header card-collapse text-dark px-2 py-1">
-                                        COORDENADORES
-                                    </div>
-                                    <div class="card-body pt-3 pb-2 px-2" style="overflow-x:auto;">
-                                        <div class="row">
-                                            <div class="col-12">
-                                                <button type="button" class="btn btn-sm btn-primary mr-2" onclick="janCoordenadorSelect(this)" data-id="{{$roteiro->id}}">Adicionar coordenador</button>
-                                                <div id="listaCoord" class="mt-3">
-                                                    <ul class="list-group">
-                                                    @foreach($roteiro->coordenador as $coord)
-                                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 pl-3 pr-2">
-                                                        <a href="javascript:void(0)" onclick="loadCoordenador({{$coord['id']}})">{{$coord['nome']}}</a>
-                                                        <button type="button" class="btn btn-sm btn-light" data-id="{{$coord['id']}}" data-rid="{{$roteiro->id}}" onclick="roteiroRemoveCoordenador(this)"><i class="fas fa-times fa-fw"></i></button>
-                                                        </li>
-                                                    @endforeach
-                                                    </ul>
-                                                </div>
-                                                
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-12 col-lg-12">
+                                
                             </div>
                         </div>
                     </div>
@@ -471,9 +500,9 @@
                                             
                                         </tr>
                                         <tr>
-                                            <td>
+                                            <td colspan="2">
                                                 <strong>Receita (REAL):</strong>
-                                                R$ {{$sgc->converteCentavoParaReal($receita)}}
+                                                R$ {{$sgc->converteCentavoParaReal($receita)}}<br>
                                                 <span class="badge badge-pill badge-info mx-2" data-toggle="popover" title="Como é calculado?" data-trigger="hover" data-content="A <b>Receita (REAL)</b> corresponde aos valores das vendas 
                                                 que já entrou em caixa. Por exemplo, <br>
                                                 <ul> <li><strong>Reservas e Aguardando pagamento:</strong> valor ainda não foi pago. Não é contado como Receita (REAL) até a dívida do cliente ser quitada.</li>
@@ -485,9 +514,11 @@
                                                     <i class="fas fa-question-circle"></i>
                                                 </span>
                                             </td>
-                                            <td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
                                                 <strong>Receita (PROJETADA):</strong>
-                                                R$ {{$sgc->converteCentavoParaReal($receita_esperada)}}
+                                                R$ {{$sgc->converteCentavoParaReal($receita_esperada)}}<br>
                                                 <span class="badge badge-pill badge-info mx-2" data-toggle="popover" title="Como é calculado?" data-trigger="hover" data-content="A <b>Receita (PROJETADA)</b> corresponde aos valores TOTAIS
                                                 das vendas realizadas, mas que ainda não entraram em caixa. Por exemplo, <br>
                                                 <ul> <li><strong>Reservas e Aguardando pagamento:</strong> valor ainda não foi pago, mas o valor já é contabilizado como Receita (PROJETADA), somente aguardando
@@ -647,6 +678,49 @@
                                 @endif
                             </div>
                         </div>
+
+                        <div class="card rounded-0">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
+                                COORDENADORES
+                            </div>
+                            <div class="card-body pt-3 pb-2 px-2" style="overflow-x:auto;">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-sm btn-primary mr-2" onclick="janCoordenadorSelect(this)" data-id="{{$roteiro->id}}">Adicionar coordenador</button>
+                                        <div id="listaCoord" class="mt-3">
+                                            <ul class="list-group">
+                                            @foreach($roteiro->coordenador as $coord)
+                                                <li class="list-group-item d-flex justify-content-between align-items-center py-2 pl-3 pr-2">
+                                                <a href="javascript:void(0)" onclick="loadCoordenador({{$coord['id']}})">{{$coord['nome']}}</a>
+                                                <button type="button" class="btn btn-sm btn-light" data-id="{{$coord['id']}}" data-rid="{{$roteiro->id}}" onclick="roteiroRemoveCoordenador(this)"><i class="fas fa-times fa-fw"></i></button>
+                                                </li>
+                                            @endforeach
+                                            </ul>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card rounded-0">
+                            <div class="card-header card-collapse text-dark px-2 py-1">
+                                LISTAS
+                            </div>
+                            <div class="card-body pt-3 pb-2 px-2" style="overflow-x:auto;">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-sm btn-primary mr-2 mb-1" onclick="janNovaListaTransporte(this)" data-id="{{$roteiro->id}}">Nova lista de transporte</button>
+                                        <button type="button" class="btn btn-sm btn-primary mr-2 mb-1" onclick="janNovaListaHospede(this)" data-id="{{$roteiro->id}}">Nova lista de hóspedes</button>
+                                        <div id="listaListas" class="mt-3 d-flex flex-column">
+                                            
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
                 
@@ -691,7 +765,7 @@
 </div>
 
 <div class="modal fade" id="modalRoteiroTarifas">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 px-3 font-weight-bold">
                 Alterar Tarifas do Roteiro
@@ -708,7 +782,7 @@
                     <div class="col-12 mb-3">
                         <button type="button" class="btn btn-sm btn-info px-3" data-target="#ajudaModalRoteiroTarifas" data-toggle="collapse">Ajuda <i class="fas fa-question-circle"></i></button>
                         <div id="ajudaModalRoteiroTarifas" class="collapse border px-2 py-1 border-info bg-light">
-                        <strong>O que cada campo da tabela significa?</strong><br>
+                            <strong>O que cada campo da tabela significa?</strong><br>
                             <ul>
                                 <li><strong>Nome da tarifa:</strong> Especifique o nome da tarifa que irá aparecer na página de <a href="#vendas/novo" target="_blank">Vendas > Novo</a>. Não repita nomes;</li>
                                 <li><strong>Valor:</strong> Valor dessa tarifa. Os valores, é você quem define. Eles irão aparecer na página de <a href="#vendas/novo" target="_blank">Vendas > Novo</a>.</li>
@@ -788,12 +862,12 @@
                 <div class="row">
                     <div class="col-12">
                         <form method="post">
-                            <table class="table table-bordered table-sm">
+                            <table class="table table-bordered table-sm table-hover table-condensed">
                                 <tbody>
                                     <tr style="display:none;" data-example>
                                         <td>
                                             <label class="small">Nome da tarifa</label>
-                                            <input type="text" class="form-control form-control-sm form-control-solid" name="nome_tarifa" maxlength="15" placeholder="CASADINHA">
+                                            <input type="text" class="form-control form-control-sm form-control-solid" name="nome_tarifa" maxlength="15" placeholder="Ex.: CASADINHA">
                                         </td>
                                         <td>
                                             <label class="small">Valor</label>
@@ -822,6 +896,14 @@
                                                 <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_criancas" value="0" min="0" max="9" >
                                                 <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
                                             </div>
+
+                                            <div class="input-group input-group-sm mb-1">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text form-control-solid">CRIANÇAS DE COLO</span>
+                                                </div>
+                                                <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_colo" value="0" min="0" max="9" >
+                                                <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
+                                            </div>
                                         </td>
                                         <td style="vertical-align:middle;">
                                             <button type="button" class="btn btn-block btn-sm btn-danger" onclick="$(this).parents('tr').remove();"><i class="fas fa-trash"></i></button>
@@ -831,7 +913,7 @@
                                     <tr>
                                         <td>
                                             <label class="small">Nome da tarifa</label>
-                                            <input type="text" class="form-control form-control-sm form-control-solid" name="nome_tarifa" maxlength="15" value="Integral" placeholder="CASADINHA" required>
+                                            <input type="text" class="form-control form-control-sm form-control-solid" name="nome_tarifa" maxlength="15" value="Integral" placeholder="Ex.: CASADINHA" required>
                                         </td>
                                         <td>
                                             <label class="small">Valor</label>
@@ -860,15 +942,68 @@
                                                 <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_criancas" value="0" min="0" max="9" required>
                                                 <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
                                             </div>
+
+                                            <div class="input-group input-group-sm mb-1">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text form-control-solid">CRIANÇAS DE COLO</span>
+                                                </div>
+                                                <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_colo" value="0" min="0" max="9" >
+                                                <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
+                                            </div>
                                         </td>
                                         <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="small">Nome da tarifa</label>
+                                            <input type="text" class="form-control form-control-sm form-control-solid" name="nome_tarifa" maxlength="15" value="Criança de Colo" placeholder="Ex.: CASADINHA" required>
+                                        </td>
+                                        <td>
+                                            <label class="small">Valor</label>
+                                            <div class="input-group input-group-sm">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text form-control-solid">R$</span>
+                                                </div>
+                                                <input type="text" class="form-control form-control-sm form-control-solid" name="valor" placeholder="1234,99" value="{{$sgc->converteCentavoParaReal( ceil(($despesasTotal + $roteiro->lucro_previsto->lucroRateio) / $roteiro->qtd_rateio) )}}" dobbin-validate-valor required>
+                                                
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <label class="small">Quantidade de Clientes</label>
+                                            <div class="input-group input-group-sm mb-1">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text form-control-solid">ADULTOS</span>
+                                                </div>
+                                                <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_adultos" value="0" min="0" max="9" required>
+                                                <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
+                                            </div>
+                                            
+                                            <div class="input-group input-group-sm mb-1">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text form-control-solid">CRIANÇAS</span>
+                                                </div>
+                                                <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_criancas" value="0" min="0" max="9" required>
+                                                <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
+                                            </div>
+
+                                            <div class="input-group input-group-sm mb-1">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text form-control-solid">CRIANÇAS DE COLO</span>
+                                                </div>
+                                                <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_colo" value="1" min="0" max="9" >
+                                                <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
+                                            </div>
+                                        </td>
+                                        <td style="vertical-align:middle;">
+                                            <button type="button" class="btn btn-block btn-sm btn-danger" onclick="$(this).parents('tr').remove();"><i class="fas fa-trash"></i></button>
+                                        </td>
                                     </tr>
                                     @else
                                     @foreach($roteiro->tarifa as $t)
                                     <tr>
                                         <td>
                                             <label class="small">Nome da tarifa</label>
-                                            <input type="text" class="form-control form-control-sm form-control-solid" name="nome_tarifa" maxlength="15" value="{{$t->nome}}" placeholder="CASADINHA" required>
+                                            <input type="text" class="form-control form-control-sm form-control-solid" name="nome_tarifa" maxlength="15" value="{{$t->nome}}" placeholder="Ex.: CASADINHA" required>
                                         </td>
                                         <td>
                                             <label class="small">Valor</label>
@@ -897,9 +1032,17 @@
                                                 <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_criancas" value="{{$t->distr->criancas}}" min="0" max="9" required>
                                                 <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
                                             </div>
+
+                                            <div class="input-group input-group-sm mb-1">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text form-control-solid">CRIANÇAS DE COLO</span>
+                                                </div>
+                                                <input type="number" class="form-control form-control-sm form-control-solid" name="qtd_colo" value="{{isset($t->distr->colo) ? $t->distr->colo : '0'}}" min="0" max="9" >
+                                                <div class="invalid-feedback">Só permitido valores entre 0 e 9. </div>
+                                            </div>
                                         </td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteTarifaRoteiro(this)"><i class="fas fa-trash"></i></button>
+                                        <td style="vertical-align:middle;">
+                                            <button type="button" class="btn btn-block btn-sm btn-danger" onclick="$(this).parents('tr').remove();"><i class="fas fa-trash"></i></button>
                                         </td>
                                     </tr>
                                     @endforeach
@@ -945,7 +1088,31 @@
                             <tr>
                                 <td>{{$t->nome}}</td>
                                 <td>{{'R$ '.$sgc->converteCentavoParaReal($t->valor)}}</td>
-                                <td>ADULTOS: {{$t->distr->adultos}}<br>CRIANÇAS: {{$t->distr->criancas}}</td>
+                                <td>ADULTOS: 
+                                @if($t->distr->adultos > 0)
+                                    <span class="badge badge-primary px-2 py-1">{{$t->distr->adultos}}</span>
+                                @else
+                                    <span class="badge badge-secondary px-2 py-1">{{$t->distr->adultos}}</span>
+                                @endif
+                                <br>
+                                CRIANÇAS: 
+                                @if($t->distr->criancas > 0)
+                                    <span class="badge badge-primary px-2 py-1">{{$t->distr->criancas}}</span>
+                                @else
+                                    <span class="badge badge-secondary px-2 py-1">{{$t->distr->criancas}}</span>
+                                @endif
+                                <br>
+                                CRIANÇA DE COLO: 
+                                @if(isset($t->distr->colo))
+                                    @if($t->distr->colo > 0)
+                                    <span class="badge badge-primary px-2 py-1">{{$t->distr->colo}}</span>
+                                    @else
+                                    <span class="badge badge-secondary px-2 py-1">{{$t->distr->colo}}</span>
+                                    @endif
+                                @else
+                                <span class="badge badge-secondary px-2 py-1">0</span>
+                                @endif
+                                </td>
                             </tr>
                         @endforeach
                         @endif
@@ -996,6 +1163,400 @@
     </div>
 </div>
 
+<div class="modal fade" id="janNovaListaHospede">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3 font-weight-bold">
+                Nova Lista de Hóspedes
+                <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
+            </div>
+            <div class="modal-body">
+                <form action="" method="post" data-aftersubmit="ListaHospedesEditar">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Nome da Lista</label>
+                                <input type="text" name="nome" class="form-control form-control-sm emptyAfterSubmit" maxlength="40">
+                                <input type="hidden" name="roteiro_id" value="">
+                                <input type="hidden" name="tipo" value="hospedagem">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <h5>Quartos disponíveis</h5>
+                            <hr>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>Quartos individuais</label>
+                                <input type="number" name="individual" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>Quartos duplos</label>
+                                <input type="number" name="duplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>Quartos triplos</label>
+                                <input type="number" name="triplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>Quartos quádruplos</label>
+                                <input type="number" name="quadruplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>Quartos quíntuplos</label>
+                                <input type="number" name="quintuplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label>Quartos séxtuplos</label>
+                                <input type="number" name="sextuplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="form-check-input" name="criancaColoIndividual" value="yes">Criança de colo como cliente individual.
+                                    <i class="fas fa-question-circle fa-fw"title="O que significa?" data-toggle="popover" data-trigger="hover"
+                                    data-content="Define o comportamento da <b>criança de colo</b> na lista. Inicialmente a criança de colo não é incluída na lista, pois 
+                                    está implícito que ela estará com um dos responsáveis. Abaixo segue informação sobre as configurações:<br><br>
+
+                                    <ul>
+                                        <li><b>MARCADA</b>: a criança de colo nesta lista será considerada um passageiro/cliente individual, e será mostrada
+                                        na lista de clientes com a marcação (<span class='text-primary font-weight-bold'>*</span>) como diferencial dos outros clientes. Você precisará
+                                        alocar manualmente a criança na mesma viagem/quarto do responsável. <b>Ela poderá ocupar poltrona ou cama.</b></li>
+                                        <li><b>DESMARCADA</b>: a criança de colo não será exibida na lista. Ao gerar a lista a criança de colo será lançada junto com um dos responsáveis.
+                                        Nessa configuração <b>a criança de colo não poderá ocupar poltrona ou cama, pois estará no COLO</b>.</li>
+                                    </ul>
+                                    
+                                    "></i>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-right">
+                            <button type="submit" class="btn btn-success">Salvar lista</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="janListaHospede" data-lid="">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3 font-weight-bold">
+                <span></span>
+                <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
+            </div>
+            <div class="modal-body">
+                    <div class="card shadow-sm">
+                        <div class="card-header card-collapse font-weight-bold p-2">
+                            CONFIGURAÇÕES DA LISTA
+                        </div>
+                        <div class="card-body p-2" data-config style="display:none;">
+                            <form method="post" data-aftersubmit="ListaHospedesEditarRefresh">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label>Nome da Lista</label>
+                                            <input type="text" name="nome" class="form-control form-control-sm emptyAfterSubmit" maxlength="40" value="">
+                                            <input type="hidden" name="roteiro_id" value="">
+                                            <input type="hidden" name="id" value="">
+                                            <input type="hidden" name="tipo" value="hospedagem">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h5>Quartos disponíveis</h5>
+                                        <hr>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group">
+                                            <label>Quartos individuais</label>
+                                            <input type="number" name="individual" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group">
+                                            <label>Quartos duplos</label>
+                                            <input type="number" name="duplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group">
+                                            <label>Quartos triplos</label>
+                                            <input type="number" name="triplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group">
+                                            <label>Quartos quádruplos</label>
+                                            <input type="number" name="quadruplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group">
+                                            <label>Quartos quíntuplos</label>
+                                            <input type="number" name="quintuplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group">
+                                            <label>Quartos séxtuplos</label>
+                                            <input type="number" name="sextuplo" class="form-control form-control-sm emptyAfterSubmit" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" class="form-check-input" name="criancaColoIndividual" value="yes">Criança de colo como cliente individual.
+                                                <i class="fas fa-question-circle fa-fw"title="O que significa?" data-toggle="popover" data-trigger="hover"
+                                                data-content="Define o comportamento da <b>criança de colo</b> na lista. Inicialmente a criança de colo não é incluída na lista, pois 
+                                                está implícito que ela estará com um dos responsáveis. Abaixo segue informação sobre as configurações:<br><br>
+
+                                                <ul>
+                                                    <li><b>MARCADA</b>: a criança de colo nesta lista será considerada um passageiro/cliente individual, e será mostrada
+                                                    na lista de clientes com a marcação (<span class='text-primary font-weight-bold'>*</span>) como diferencial dos outros clientes. Você precisará
+                                                    alocar manualmente a criança na mesma viagem/quarto do responsável. <b>Ela poderá ocupar poltrona ou cama.</b></li>
+                                                    <li><b>DESMARCADA</b>: a criança de colo não será exibida na lista. Ao gerar a lista a criança de colo será lançada junto com um dos responsáveis.
+                                                    Nessa configuração <b>a criança de colo não poderá ocupar poltrona ou cama, pois estará no COLO</b>.</li>
+                                                </ul>
+                                                
+                                                "></i>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 text-right">
+                                        <button type="submit" class="btn btn-success btn-sm px-2">Salvar</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </form>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12 col-md-4"><!-- COLUNA 1 -->
+                            <h5 class="font-weight-bold">CLIENTES
+                            <i class="fas fa-question-circle" title="O que é?" data-toggle="popover" data-trigger="hover" data-content="Lista de passageiros, incluindo coordenadores."></i></h5>
+                            <div class="border p-2" data-clientesbox style="min-height: 60vh; border-width: 3px!important;"></div>
+                        </div>
+                        <div class="col-12 col-md-8"><!-- COLUNA 2 -->
+                            <h5 class="font-weight-bold">HOSPEDAGEM
+                            <i class="fas fa-question-circle" title="O que é?" data-toggle="popover" data-trigger="hover" data-content="Os quartos definidos para esta lista de hospedagem. Se precisar 
+                            a quantidade ou o tipo, use as <b>CONFIGURAÇÕES DA LISTA</b>. Os clientes dos quartos removidos, voltaram à lista de clientes, aguardando alocação.
+                            <br><br>A lista em PDF não exibirá os quartos vazios."></i></h5>
+                            <div class="border d-flex flex-wrap align-content-start p-2" data-hospedagembox style="min-height: 60vh;border-width: 3px!important;"></div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success btn-sm">Salvar</button>
+                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="janNovaListaTransporte">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3 font-weight-bold">
+                Nova Lista de Transporte
+                <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
+            </div>
+            <div class="modal-body">
+                <form action="" method="post" data-aftersubmit="ListaTransporteEditar">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Nome da Lista</label>
+                                <input type="text" name="nome" class="form-control form-control-sm emptyAfterSubmit" maxlength="40">
+                                <input type="hidden" name="roteiro_id" value="">
+                                <input type="hidden" name="tipo" value="transporte">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>
+                                    Quantidade máxima de clientes por viagem
+                                    <i class="fas fa-question-circle cursor-pointer fa-fw" data-toggle="popover" data-trigger="hover" title="O que é?" 
+                                    data-content="Informe o número de passageiros por viagem (inclui clientes, cortesias e coordenadores). <br><br>
+                                    Ex.:<br> 45 clientes + 3 cortesias + 2 coordenadores = <b>50 passageiros</b>."></i>
+                                </label>
+                                <input type="number" name="clientesViagem" class="form-control form-control-sm" min="1" value="1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="form-check-input" name="criancaColoIndividual" value="yes">Criança de colo como cliente individual.
+                                    <i class="fas fa-question-circle fa-fw"title="O que significa?" data-toggle="popover" data-trigger="hover"
+                                    data-content="Define o comportamento da <b>criança de colo</b> na lista. Inicialmente a criança de colo não é incluída na lista, pois 
+                                    está implícito que ela estará com um dos responsáveis. Abaixo segue informação sobre as configurações:<br><br>
+
+                                    <ul>
+                                        <li><b>MARCADA</b>: a criança de colo nesta lista será considerada um passageiro/cliente individual, e será mostrada
+                                        na lista de clientes com a marcação (<span class='text-primary font-weight-bold'>*</span>) como diferencial dos outros clientes. Você precisará
+                                        alocar manualmente a criança na mesma viagem/quarto do responsável. <b>Ela poderá ocupar poltrona ou cama.</b></li>
+                                        <li><b>DESMARCADA</b>: a criança de colo não será exibida na lista. Ao gerar a lista a criança de colo será lançada junto com um dos responsáveis.
+                                        Nessa configuração <b>a criança de colo não poderá ocupar poltrona ou cama, pois estará no COLO</b>.</li>
+                                    </ul>
+                                    
+                                    "></i>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12 text-right">
+                            <button type="submit" class="btn btn-success">Criar lista</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="janListaTransporte" data-lid="">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3 font-weight-bold">
+                <span></span>
+                <button type="button" class="btn btn-sm btn-danger fechar" data-dismiss="modal"><strong>&times;</strong></button>
+            </div>
+            <div class="modal-body">
+                <div class="card">
+                    <div class="card-header card-collapse font-weight-bold p-2">
+                        CONFIGURAÇÕES DA LISTA
+                    </div>
+                    <div class="card-body p-2" data-config style="display:none;">
+                        <form action="" method="post" data-aftersubmit="ListaTransporteEditarRefresh">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label>Nome da Lista</label>
+                                        <input type="text" name="nome" class="form-control form-control-sm emptyAfterSubmit" maxlength="40">
+                                        <input type="hidden" name="roteiro_id" value="">
+                                        <input type="hidden" name="id" value="">
+                                        <input type="hidden" name="tipo" value="transporte">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label>
+                                            Quantidade máxima de clientes por viagem
+                                            <i class="fas fa-question-circle cursor-pointer fa-fw" data-toggle="popover" data-trigger="hover" title="O que é?" 
+                                            data-content="Informe o número de passageiros por viagem (inclui clientes, cortesias e coordenadores). <br><br>
+                                            Ex.:<br> 45 clientes + 3 cortesias + 2 coordenadores = <b>50 passageiros</b>."></i>
+                                        </label>
+                                        <input type="number" name="clientesViagem" class="form-control form-control-sm" min="1" >
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input" name="criancaColoIndividual" value="yes">Criança de colo como cliente individual.
+                                            <i class="fas fa-question-circle fa-fw"title="O que significa?" data-toggle="popover" data-trigger="hover"
+                                            data-content="Define o comportamento da <b>criança de colo</b> na lista. Inicialmente a criança de colo não é incluída na lista, pois 
+                                            está implícito que ela estará com um dos responsáveis. Abaixo segue informação sobre as configurações:<br><br>
+
+                                            <ul>
+                                                <li><b>MARCADA</b>: a criança de colo nesta lista será considerada um passageiro/cliente individual, e será mostrada
+                                                na lista de clientes com a marcação (<span class='text-primary font-weight-bold'>*</span>) como diferencial dos outros clientes. Você precisará
+                                                alocar manualmente a criança na mesma viagem/quarto do responsável. <b>Ela poderá ocupar poltrona ou cama.</b></li>
+                                                <li><b>DESMARCADA</b>: a criança de colo não será exibida na lista. Ao gerar a lista a criança de colo será lançada junto com um dos responsáveis.
+                                                Nessa configuração <b>a criança de colo não poderá ocupar poltrona ou cama, pois estará no COLO</b>.</li>
+                                            </ul>
+                                            
+                                            "></i>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12 text-right">
+                                    <button type="submit" class="btn btn-success">Salvar lista</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <hr>
+                <div class="row">
+                    <div class="col-12 col-md-4"><!-- COLUNA 1 -->
+                        <h5 class="font-weight-bold">CLIENTES 
+                        <i class="fas fa-question-circle" title="O que é?" data-toggle="popover" data-trigger="hover" data-content="Lista de passageiros, incluindo coordenadores."></i></h5>
+                        <div class="border p-2" data-clientesbox style="min-height: 60vh; border-width: 3px!important;"></div>
+                    </div>
+                    <div class="col-12 col-md-8"><!-- COLUNA 2 -->
+                        <h5 class="font-weight-bold">TRANSPORTE 
+                            <i class="fas fa-question-circle" title="O que é?" data-toggle="popover" data-trigger="hover" data-content="Quantidade de viagens necessárias para transportar 
+                            todos os clientes, mais 1 viagem extra para imprevisto. <br><br>Se não precisar dessa viagem extra, só ignorar. A lista em PDF não exibirá as viagens vazias."></i></h5>
+                        <div class="border d-flex flex-wrap align-content-start p-2" data-transportebox style="min-height: 60vh;border-width: 3px!important;"></div>
+                    </div>
+                </div>
+            
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success btn-sm">Salvar</button>
+                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -1041,7 +1602,7 @@
             return false;
         }
 
-        if($(sender).siblings('table').find('tr:not([data-example])').length >= 6) {
+        if($(sender).siblings('table').find('tr:not([data-example])').length >= 10) {
             alerta('Limite de tarifas atingido!', 'Ops...', 'info');
             return false;
         }
@@ -1068,26 +1629,46 @@
             }
         }
 
+        let clientesVazios = [];
+
         // Varre cada linha para preencher array de tarifas
         for(let i = 0; i < form.find('tr:not([data-example])').length; i++) {
             if(
                 parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_adultos"]').val()) == 0 && 
-                parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_criancas"]').val()) == 0
+                parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_criancas"]').val()) == 0 &&
+                parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_colo"]').val()) == 0
             ) {
-                alerta('Você não informou a quantidade de clientes (ADULTO ou CRIANÇA) na tarifa "'+
+                clientesVazios.push(form.find('tr:not([data-example])').eq(i).find('[name="nome_tarifa"]').val());
+                /*
+                alerta('Você não informou a quantidade de clientes (ADULTO ou CRIANÇA ou CRIANÇA DE COLO) na tarifa "'+
                 form.find('tr:not([data-example])').eq(i).find('[name="nome_tarifa"]').val()+'".','Ainda tem algo faltando...', 'info');
                 return false;
+                */
             }
             tarifas.push({
                 nome: form.find('tr:not([data-example])').eq(i).find('[name="nome_tarifa"]').val(),
                 valor: Dobbin.converteRealEmCentavo(form.find('tr:not([data-example])').eq(i).find('[name="valor"]').val()),
                 distr: {
                     adultos: parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_adultos"]').val()),
-                    criancas: parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_criancas"]').val())
+                    criancas: parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_criancas"]').val()),
+                    colo: parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_colo"]').val())
                 },
-                qtd: parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_adultos"]').val()) + parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_criancas"]').val())
+                qtd: parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_adultos"]').val()) + parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_criancas"]').val())+
+                parseInt(form.find('tr:not([data-example])').eq(i).find('[name="qtd_colo"]').val())
             });
             form.find('tr:not([data-example])').eq(i)
+        }
+
+        if(clientesVazios.length > 0) {
+            // Se tem tarifas com quantidade de clientes VAZIO, emite uma mensagem de confirmação.
+            let confirma1 = confirm("Encontrei uma(s) tarifa(s) sem uma quantidade de clientes definida: \n"+
+            clientesVazios.join(', ')+
+            "\n\n> Se essa tarifa se aplicar a TAXAS EXTRAS no roteiro que não precisam de quantidade de clientes definida, clique em OK para continuar. "+
+            "\n> Se está com dúvida e quer revisar, clique em CANCELAR.");
+
+            if(confirma1 == false) {
+                return false;
+            }
         }
 
         console.log(tarifas);
@@ -1117,21 +1698,109 @@
                 
                 
                 if(res.tipo == 'DEFINITIVO') {
-                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Lista definitiva já foi arquivada."><i class="fas fa-circle text-danger mr-2"></i> DEFINITIVA</div>');
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Lista definitiva já foi arquivada."><i class="fas fa-circle text-danger mr-2"></i> DEFINITIVA'+
+                    '<a class="btn btn-primary btn-xs ml-3" href="/pdf/roteiros/'+roteiro.id+'/listapassageiros" target="_blank">Gerar PDF</a></div>');
                 } else if(res.tipo == 'PROVISORIO') {
-                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Alterações ainda são possíveis!"><i class="fas fa-circle text-success mr-2"></i> PROVISÓRIA</div>');
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Alterações ainda são possíveis!"><i class="fas fa-circle text-success mr-2"></i> PROVISÓRIA'+
+                    '<a class="btn btn-primary btn-xs ml-3" href="/pdf/roteiros/'+roteiro.id+'/listapassageiros" target="_blank">Gerar PDF</a></div>');
                 } else {
-                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Situação da lista é indefinida."><i class="fas fa-circle mr-2"></i> INDEFINIDA</div>');
+                    $('#passagDiv').append('<div class="border small px-2 py-1 mb-2" data-toggle="tooltip" title="Situação da lista é indefinida."><i class="fas fa-circle mr-2"></i> INDEFINIDA'+
+                    '<a class="btn btn-primary btn-xs ml-3" href="/pdf/roteiros/'+roteiro.id+'/listapassageiros" target="_blank">Gerar PDF</a></div>');
                 }
 
-                $('#passagDiv').append('<table class="table table-sm table-bordered small"><thead class="thead-dark"><tr> <th>#</th></tH> <th>Nome</th> <th>CPF</th> <th>Faixa etária</th> <th>Venda</th> </tr></thead><tbody></tbody></table>');
+                $('#passagDiv').append('<table class="table table-sm table-bordered small"><thead class="thead-dark"><tr> <th>#</th></tH> <th>Nome</th> <th>CPF</th> <th>Faixa etária</th> <th class="small">Criança de Colo</th> <th>Venda</th> </tr></thead><tbody></tbody></table>');
 
                 if(res.clientes.length > 0) {
+                    let colo;
+                    let contador = 1;
+                    let numero = '';
                     res.clientes.forEach(function(c, key){
-                        $('#passagDiv table tbody').append('<tr> <td>'+(key+1)+'</td> <td><a href="javascript:void(0)" onclick="loadCliente('+c.id+')">'+c.nome+'</a></td> '+
-                        '<td>'+c.cpf+'</td> <td>'+c.faixa_etaria+'</td> '+
+                        if(c.colo === true) {
+                            colo = '<span class="text-success"><i class="fas fa-check"></i></span>';
+                            numero = '';
+                            contador--;
+                        } else {
+                            colo = '-';
+                            numero = contador;
+                        }
+
+
+                        $('#passagDiv table tbody').append('<tr> <td>'+ numero +'</td> <td><a href="javascript:void(0)" onclick="loadCliente('+c.id+')">'+c.nome+'</a></td> '+
+                        '<td>'+c.cpf+'</td> <td>'+c.faixa_etaria+'</td> <td class="text-center">'+colo+'</td> '+
                         '<td><a href="javascript:void(0)" onclick="getVenda('+c.venda+')">#'+c.venda+'</a></td> </tr>');
+                        contador++;
                     });
+                    numero = undefined;
+
+                    // Informações extras.
+                    $('#passagDiv').append('<table class="table table-sm table-bordered small"><thead> <tr><th colspan="2">Reservado</th> <th colspan="2">Ocupado</th> </tr> </thead><tbody></tbody></table>');
+                    let diffQTD = {
+                        total: res.lista.total.total - res.lista.ocupado.total,
+                        criancas: res.lista.total.criancas - res.lista.ocupado.criancas,
+                        criancas_colo: res.lista.total.criancas_colo - res.lista.ocupado.criancas_colo,
+                        adultos: res.lista.total.adultos - res.lista.ocupado.adultos,
+                        total_str: '',
+                        criancas_str: '',
+                        criancas_colo_str: '',
+                        adultos_str: '',
+                    }
+
+                    
+                    if(diffQTD.total > 0) { // Faltando passageiros
+                        diffQTD.total_str = '<span class="badge badge-danger badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.total+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Falta(m) '+ (diffQTD.total)+' passageiro(s)."><i class="fas fa-question-circle"></i></span>';
+                    } else if(diffQTD.total < 0) { // Passageiros a mais
+                        diffQTD.total_str = '<span class="badge badge-primary badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.total+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Há '+(diffQTD.total  * (-1))+' passageiro(s) a mais."><i class="fas fa-question-circle"></i></span>';
+                    } else { // OK
+                        diffQTD.total_str = '<span class="badge badge-success badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.total+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Tudo OK!"><i class="fas fa-question-circle"></i></span>';
+                    }
+
+                    if(diffQTD.adultos > 0) { // Faltando passageiros
+                        diffQTD.adultos_str = '<span class="badge badge-danger badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.adultos+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Falta(m) '+ (diffQTD.adultos)+' adulto(s)."><i class="fas fa-question-circle"></i></span>';
+                    } else if(diffQTD.adultos < 0) { // Passageiros a mais
+                        diffQTD.adultos_str = '<span class="badge badge-primary badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.adultos+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Há '+(diffQTD.adultos * (-1))+' adulto(s) a mais."><i class="fas fa-question-circle"></i></span>';
+                    } else { // OK
+                        diffQTD.adultos_str = '<span class="badge badge-success badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.adultos+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Tudo OK!"><i class="fas fa-question-circle"></i></span>';
+                    }
+
+                    if(diffQTD.criancas > 0) { // Faltando passageiros
+                        diffQTD.criancas_str = '<span class="badge badge-danger badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.criancas+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Falta(m) '+ (diffQTD.criancas)+' criança(s)."><i class="fas fa-question-circle"></i></span>';
+                    } else if(diffQTD.criancas < 0) { // Passageiros a mais
+                        diffQTD.criancas_str = '<span class="badge badge-primary badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.criancas+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Há '+(diffQTD.criancas * (-1))+' criança(s) a mais."><i class="fas fa-question-circle"></i></span>';
+                    } else { // OK
+                        diffQTD.criancas_str = '<span class="badge badge-success badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.criancas+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Tudo OK!"><i class="fas fa-question-circle"></i></span>';
+                    }
+
+                    if(diffQTD.criancas_colo > 0) { // Faltando passageiros
+                        diffQTD.criancas_colo_str = '<span class="badge badge-danger badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.criancas_colo+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Falta(m) '+ (diffQTD.criancas_colo)+' criança(s) de colo."><i class="fas fa-question-circle"></i></span>';
+                    } else if(diffQTD.criancas_colo < 0) { // Passageiros a mais
+                        diffQTD.criancas_colo_str = '<span class="badge badge-primary badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.criancas_colo+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Há '+(diffQTD.criancas_colo * (-1))+' criança(s) de colo a mais."><i class="fas fa-question-circle"></i></span>';
+                    } else { // OK
+                        diffQTD.criancas_colo_str = '<span class="badge badge-success badge-pill" style="font-size:.7rem;">'+res.lista.ocupado.criancas_colo+'</span> '+
+                        '<span class="cursor-pointer" data-toggle="tooltip" title="Tudo OK!"><i class="fas fa-question-circle"></i></span>';
+                    }
+
+                    console.log(diffQTD);
+                    $('#passagDiv table:eq(1) tbody').append('<tr> <td class="text-right">Total<br>--<br>Adultos (poltronas)<br>Crianças (poltronas)<br>Crianças de Colo</td> '+
+                    '<td class="text-center">'+
+                    '<span class="badge badge-dark badge-pill" style="font-size:.7rem;">'+res.lista.total.total+'</span><br>--<br>'+
+                    '<span class="badge badge-dark badge-pill" style="font-size:.7rem;">'+res.lista.total.adultos+'</span><br>'+
+                    '<span class="badge badge-dark badge-pill" style="font-size:.7rem;">'+res.lista.total.criancas+'</span><br>'+
+                    '<span class="badge badge-dark badge-pill" style="font-size:.7rem;">'+res.lista.total.criancas_colo+'</span></td>'+
+                    '<td class="text-right">Total<br>--<br>Adultos (poltronas)<br>Crianças (poltronas)<br>Crianças de Colo</td>'+
+                    '<td class="text-center">'+diffQTD.total_str +'<br>--<br>'+
+                    diffQTD.adultos_str+'<br>'+diffQTD.criancas_str +'<br>'+diffQTD.criancas_colo_str +'</td>'+
+                    '</tr>')
                 } else {
                     $('#passagDiv table tbody').append('<tr> <td colspan="5" class="text-center font-italic py-2"><strong>Não há clientes para este roteiro.</strong><br><br>'+
                     'Uma venda foi realizada e o(s) passageiro(s) não aparece(m)? Acesse a venda correspondente e informe os clientes que serão passageiros.</td></tr>');
@@ -1169,6 +1838,67 @@
         fail(function(ev){nativePOSTFail(ev);});
     }
 
+    function getListas()
+    {
+        $.post('/roteiros/ver/'+roteiro.id+'/listas', function(res){
+            console.log(res);
+            if(res.success) {
+                let listaDIV = $('#listaListas');
+                listaDIV.html('');
+                if(res.listas.length == 0) {
+                    listaDIV.append('<div class="text-center py-3"><span class="badge badge-secondary px-2">SEM LISTAS</span></div>');
+                } else {
+                    res.listas.forEach(function(l) {
+                        let dataCriado = new Date(l.atualizado_em);
+                        let icone;
+                        if(l.tipo == 'hospedagem') {
+                            icone = 'fas fa-hotel';
+                            listaDIV.append(
+                                '<div class="mb-2 p-2 border rounded-sm d-flex flex-row justify-content-between">'+
+                                    '<div onclick="janListaHospede('+l.id+')" class="cursor-pointer flex-grow-1"><h5 class="mb-1">'+l.nome+'</h5> <span class="px-2 py-1 badge badge-secondary text-uppercase">'+
+                                    '<i class="'+icone+'"></i> &nbsp; '+l.tipo+'</span><br><span class="badge badge-light px-2">'+dataCriado.toLocaleDateString()+' '+dataCriado.toLocaleTimeString()+'</span></div>'+
+                                    '<div><button type="button" class="btn btn-danger btn-sm mb-1" data-toggle="tooltip" title="Apaga esta lista." onclick="deleteLista('+l.id+')"><i class="fas fa-fw fa-trash"></i></button><br>'+
+                                    '<a href="/pdf/roteiros/'+roteiro.id+'/lista/'+l.id+'/download" class="btn btn-primary btn-sm mb-1" data-toggle="tooltip" title="Baixar esta lista em PDF."><i class="fas fa-fw fa-file-pdf"></i></a></div>'+
+                                '</div>'
+                            );
+                        } else if(l.tipo == 'transporte') {
+                            icone = 'fas fa-shuttle-van';
+                            listaDIV.append(
+                                '<div class="mb-2 p-2 border rounded-sm d-flex flex-row justify-content-between">'+
+                                    '<div onclick="janListaTransporte('+l.id+')" class="cursor-pointer flex-grow-1"><h5 class="mb-1">'+l.nome+'</h5> <span class="px-2 py-1 badge badge-secondary text-uppercase">'+
+                                    '<i class="'+icone+'"></i> &nbsp; '+l.tipo+'</span><br><span class="badge badge-light px-2">'+dataCriado.toLocaleDateString()+' '+dataCriado.toLocaleTimeString()+'</span></div>'+
+                                    '<div><button type="button" class="btn btn-danger btn-sm mb-1" data-toggle="tooltip" title="Apaga esta lista." onclick="deleteLista('+l.id+')"><i class="fas fa-fw fa-trash"></i></button><br>'+
+                                    '<a href="/pdf/roteiros/'+roteiro.id+'/lista/'+l.id+'/download" class="btn btn-primary btn-sm mb-1" data-toggle="tooltip" title="Baixar esta lista em PDF."><i class="fas fa-fw fa-file-pdf"></i></a></div>'+
+                                '</div>'
+                            );
+                        } else {
+                            icone = '';
+                        }
+                    });
+                    restartTooltip();
+                }
+
+            } else {
+                alerta(res.mensagem, '', 'warning');
+            }
+        }, 'json').
+        fail(function(ev){nativePOSTFail(ev);});
+
+        return true;
+    }
+
+    function deleteLista(id)
+    {
+        $.post(PREFIX_POST+'roteiros/'+roteiro.id+'/lista/'+id+'/apagar',function(res){
+            if(res.success) {
+                alerta('Lista apagada.', 'Sucesso!', 'success');
+                getListas();
+            } else {
+                alerta(res.mensagem, 'Ops!', 'info');
+            }
+        }, 'json');
+    }
+
     function deleteTarifaRoteiro(sender)
     {
         if($(sender).parents('tbody').find('tr:not([data-example])').length > 1) {
@@ -1179,6 +1909,636 @@
         }
     }
 
+    function janNovaListaHospede(sender)
+    {
+        let alvo = $(sender);
+        let modal = $('#janNovaListaHospede');
+        modal.find('form')[0].reset();
+        modal.find('form').attr('action', 'roteiros/'+alvo.data('id')+'/novalista');
+        
+        modal.modal('show');
+    }
+
+    function janNovaListaTransporte(sender)
+    {
+        let alvo = $(sender);
+        let modal = $('#janNovaListaTransporte');
+        modal.find('form')[0].reset();
+        modal.find('form').attr('action', 'roteiros/'+alvo.data('id')+'/novalista');
+        
+        modal.modal('show');
+    }
+
+    function ativaDragListas()
+    {
+        let modal = $('#janListaHospede, #janListaTransporte');
+        
+        // DROPPABLE
+        setTimeout(function(){
+            modal.find('[data-clientesbox]').droppable({
+                activate: function(event, ui){
+                    let destino = $(event.target);
+                    let objeto = $(ui.draggable[0]);
+                },
+
+                drop: function(event, ui){
+                    let destino = $(event.target);
+                    let objeto = $(ui.draggable[0]);
+
+                    // Clona o objeto e destroi o original. Torna o objeto clonado arrastavel.
+                    objeto.clone().appendTo(destino).css({position:'relative', top:'auto', left:'auto'});
+                    objeto.remove();
+                    $('.arrastavel').draggable({
+                        cursor: 'grabbing',
+                        revert: 'invalid',
+                        revertDuration: 200,
+                    });
+
+                    for(let i = 0; i < modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').length; i++) {
+                        let maxTotal = parseInt(modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).parent().data('total'));
+                        let qtdAtual = modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).children('.arrastavel').length;
+                        
+                        
+                        if(qtdAtual >= maxTotal) {
+                            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).droppable('disable'); // Desativa o droppable.
+                            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).addClass('border border-danger');
+                        } else {
+                            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).droppable('enable'); // Reativa o droppable.
+                            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).removeClass('border border-danger');
+                        }
+                    }
+                }
+            });
+
+            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').droppable({
+                activate: function(event, ui){
+                    let destino = $(event.target);
+                    let objeto = $(ui.draggable[0]);
+                    
+                    // Definefundo
+                    destino.css({backgroundColor: 'rgba(130, 201, 174, .7)', border: 'solid 1px rgba(69, 161, 125, .5)'});
+                },
+                deactivate: function(event, ui){
+                    let destino = $(event.target);
+                    let objeto = $(ui.draggable[0]);
+
+                    // Reseta definição de fundo
+                    destino.css({backgroundColor: 'rgba(0, 0, 0, 0)', border: 'none'});
+                },
+                over: function(event, ui){
+                    let destino = $(event.target);
+                    let objeto = $(ui.draggable[0]);
+
+                    // Muda o fundo ao passar por cima.
+                    destino.css({backgroundColor: 'rgba(130, 201, 174, .2)'});
+                },
+                out: function(event, ui){
+                    let destino = $(event.target);
+                    let objeto = $(ui.draggable[0]);
+
+                    // Muda o fundo ao sair de cima.
+                    destino.css({backgroundColor: 'rgba(130, 201, 174, .7)'});
+                },
+                drop: function(event, ui){
+                    let destino = $(event.target);
+                    let objeto = $(ui.draggable[0]);
+
+                    // Muda cor ao sair de cima.
+                    destino.css({backgroundColor: 'rgba(0,0,0,0)',border: 'none'});
+
+                    // Clona o objeto e destroi o original. Torna o objeto clonado arrastavel.
+                    objeto.clone().appendTo(destino).css({position:'relative', top:'auto', left:'auto'});
+                    objeto.remove();
+                    $('.arrastavel').draggable({
+                        cursor: 'grabbing',
+                        revert: 'invalid',
+                        revertDuration: 200,
+                    });
+
+                    
+                    for(let i = 0; i < modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').length; i++) {
+                        let maxTotal = parseInt(modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).parent().data('total'));
+                        let qtdAtual = modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).children('.arrastavel').length;
+
+                        if(qtdAtual >= maxTotal) {
+                            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).droppable('disable'); // Desativa o droppable.
+                            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).addClass('border border-danger');
+                        } else {
+                            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).droppable('enable'); // Reativa o droppable.
+                            modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).removeClass('border border-danger');
+                        }
+                    }
+                }
+            });
+    
+
+            // Verifica se campos droppable precisam ser desativados.
+            for(let i = 0; i < modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').length; i++) {
+                let maxTotal = parseInt(modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).parent().data('total'));
+                let qtdAtual = modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).children('.arrastavel').length;
+
+                if(qtdAtual >= maxTotal) {
+                    modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).droppable('disable'); // Desativa o droppable.
+                    modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).addClass('border border-danger');
+                } else {
+                    modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).droppable('enable'); // Reativa o droppable.
+                    modal.find('[data-hospedagembox] .card-body, [data-transportebox] .card-body').eq(i).removeClass('border border-danger');
+                }
+            }
+
+            
+        }, 500);
+
+        // DRAGGABLE
+        setTimeout(function(){$('.arrastavel').draggable({
+            cursor: 'grabbing',
+            revert: 'invalid',
+            revertDuration: 200,
+        });
+        $('.arrastavel').css('zIndex', 1400);}, 400);
+    }
+
+    function janListaHospede(id)
+    {
+        $.post('/roteiros/ver/'+roteiro.id+'/lista/'+id, function(res){
+            if(debugEnabled == true) {console.log(res);}
+            if(res.success) {
+                if(res.lista.tipo == 'hospedagem') {
+                    let modal = $('#janListaHospede');
+                    modal.data('lid', id);
+                    let lista = res.lista;
+                    let data = new Date(lista.data);
+
+                    let controleEtapas = 0; // Controle de etapas, para forçar uma execução linear, sem multi-thread.
+
+                    modal.find('.modal-header span').html('LISTA: '+lista.nome+' <span class="badge badge-secondary px-2 text-uppercase"><i class="fas fa-hotel"></i> &nbsp; '+lista.tipo+'</span> '+
+                    '<small>('+data.toLocaleDateString()+')</small>');
+                    modal.find('[data-clientesbox]').html('');
+
+                    // Preenche o bloco de configurações da lista.
+                    //console.log(res);
+                    modal.find('[data-config] [name="nome"]').val(res.lista.nome); // Nome
+                    modal.find('[data-config] [name="roteiro_id"]').val(roteiro.id); // Roteiro ID
+                    modal.find('[data-config] [name="id"]').val(res.lista.id); // Roteiro ID
+                    let config = JSON.parse(lista.instrucoes);
+                    
+                    modal.find('[data-config] [name="individual"]').val(config.quartos_qtd.individual); // Individual
+                    modal.find('[data-config] [name="duplo"]').val(config.quartos_qtd.duplo); // Duplo
+                    modal.find('[data-config] [name="triplo"]').val(config.quartos_qtd.triplo); // Triplo
+                    modal.find('[data-config] [name="quadruplo"]').val(config.quartos_qtd.quadruplo); // Quádruplo
+                    modal.find('[data-config] [name="quintuplo"]').val(config.quartos_qtd.quintuplo); // Quíntuplo
+                    modal.find('[data-config] [name="sextuplo"]').val(config.quartos_qtd.sextuplo); // Séxtuplo
+
+                    // Criança colo individual.
+                    modal.find('[data-config] [name="criancaColoIndividual"]').prop('checked', config.criancaColoIndividual);
+                    
+
+                    // Configura o formulário de configurações.
+                    modal.find('[data-config] form').attr('action', 'roteiros/'+roteiro.id+'/lista/'+res.lista.id+'/configsalvar');
+                    modal.find('[data-config]').css({display:'none'});
+
+                    // Limpa as caixas de drag and drop.
+                    modal.find('[data-hospedagembox]').html('');
+
+                    // Escreve conteúdo das caixas drag and drop. Lado esquerdo: clientes e coordenadores. Lado direito: quartos.
+                    // Individual.
+                    for(let i = 0; i < config.quartos_qtd.individual; i++) {
+                        modal.find('[data-hospedagembox]').append('<div class="card mb-2 mr-1" data-total="1" style="width: 300px">'+
+                        '<div class="card-header px-2 py-1 bg-dark text-white">QUARTO INDIVIDUAL #'+(i+1)+'</div>'+
+                        '<div class="card-body" style="min-height: 100px;"></div>'+
+                        '</div>');
+                    }
+
+                    // Duplo.
+                    for(let i = 0; i < config.quartos_qtd.duplo; i++) {
+                        modal.find('[data-hospedagembox]').append('<div class="card mb-2 mr-1" data-total="2" style="width: 300px">'+
+                        '<div class="card-header px-2 py-1 bg-dark text-white">QUARTO DUPLO #'+(i+1)+'</div>'+
+                        '<div class="card-body" style="min-height: 100px;"></div>'+
+                        '</div>');
+                    }
+
+                    // Triplo.
+                    for(let i = 0; i < config.quartos_qtd.triplo; i++) {
+                        modal.find('[data-hospedagembox]').append('<div class="card mb-2 mr-1" data-total="3" style="width: 300px">'+
+                        '<div class="card-header px-2 py-1 bg-dark text-white">QUARTO TRIPLO #'+(i+1)+'</div>'+
+                        '<div class="card-body" style="min-height: 100px;"></div>'+
+                        '</div>');
+                    }
+
+                    // Quadruplo.
+                    for(let i = 0; i < config.quartos_qtd.quadruplo; i++) {
+                        modal.find('[data-hospedagembox]').append('<div class="card mb-2 mr-1" data-total="4" style="width: 300px">'+
+                        '<div class="card-header px-2 py-1 bg-dark text-white">QUARTO QUÁDRUPLO #'+(i+1)+'</div>'+
+                        '<div class="card-body" style="min-height: 100px;"></div>'+
+                        '</div>');
+                    }
+
+                    // Quintuplo.
+                    for(let i = 0; i < config.quartos_qtd.quintuplo; i++) {
+                        modal.find('[data-hospedagembox]').append('<div class="card mb-2 mr-1" data-total="5" style="width: 300px">'+
+                        '<div class="card-header px-2 py-1 bg-dark text-white">QUARTO QUÍNTUPLO #'+(i+1)+'</div>'+
+                        '<div class="card-body" style="min-height: 100px;"></div>'+
+                        '</div>');
+                    }
+
+                    // Sextuplo.
+                    for(let i = 0; i < config.quartos_qtd.sextuplo; i++) {
+                        modal.find('[data-hospedagembox]').append('<div class="card mb-2 mr-1" data-total="6" style="width: 300px">'+
+                        '<div class="card-header px-2 py-1 bg-dark text-white">QUARTO SÉXTUPLO #'+(i+1)+'</div>'+
+                        '<div class="card-body" style="min-height: 100px;"></div>'+
+                        '</div>');
+                    }
+
+
+                    //Recupera coordenadores
+                    $.post('/roteiros/ver/'+roteiro.id+'/coord', function(res){
+                        if(res.success && res.coordenadores.length > 0) {
+
+                            res.coordenadores.forEach(function(c){
+                                modal.find('[data-clientesbox]').append('<div class="border border-danger bg-light text-danger font-weight-bold mb-2 px-2 py-1 rounded-sm cursor-drag arrastavel" '+
+                                'style="z-index:1200; min-width: 150px; max-width:250px;" data-id="'+c.id+'">'+
+                                c.nome+'</div>');
+                            });
+                            
+                            controleEtapas++; // 0+1 = 1;
+
+                            // Ativa o drag and drop do JQUERY UI
+                            ativaDragListas();
+                        } else if(res.success) {
+                            alerta('Ainda não há coordenadores definidos.', '', 'info');
+                        } else {
+                            alerta(res.mensagem, 'Não deu para carregar a lista de coordenadores.','warning');
+                            controleEtapas = false;
+                        }
+                        //console.log(res);
+                    }, 'json');
+
+                    // Recupera clientes.
+                    $.post('/roteiros/ver/'+roteiro.id+'/clientes', function(res){
+                        if(res.success && res.clientes.length > 0) {
+
+                            res.clientes.forEach(function(c, keyC){
+                                
+                                // Verifica se criança de colo deve ser listado ou não.
+                                if(config.criancaColoIndividual === true) {
+                                    // Lista criança de colo
+                                    if(c.colo == false) { // ADULTO
+                                        modal.find('[data-clientesbox]').append('<div class="border border-dark bg-light mb-2 px-2 py-1 rounded-sm cursor-drag arrastavel" '+
+                                        'style="z-index:1200; min-width: 150px; max-width:250px;" data-id="'+c.id+'">'+
+                                        c.nome+'</div>');
+                                    } else { // CRIANÇA COLO
+                                        modal.find('[data-clientesbox]').append('<div class="border border-dark bg-light mb-2 px-2 py-1 rounded-sm cursor-drag arrastavel" '+
+                                        'style="z-index:1200; min-width: 150px; max-width:250px;" data-id="'+c.id+'" data-resp="'+res.clientes[(keyC-1)].id+'">'+
+                                        c.nome+' <span class="text-primary font-weight-bold">*</span></div>');
+                                    }
+                                    
+                                } else {
+                                    // Esconde criança de colo.
+                                    if(c.colo == false) { // ADULTO
+                                        modal.find('[data-clientesbox]').append('<div class="border border-dark bg-light mb-2 px-2 py-1 rounded-sm cursor-drag arrastavel" '+
+                                        'style="z-index:1200; min-width: 150px; max-width:250px;" data-id="'+c.id+'">'+
+                                        c.nome+'</div>');
+                                    }
+                                }
+                                
+                            });
+                            
+                            controleEtapas++; // 1+1 = 2;
+
+                            // Ativa o drag and drop do JQUERY UI
+                            ativaDragListas();
+                        } else if(res.success) {
+                            alerta('Ainda não há clientes na lista de passageiros.', '', 'info');
+                        } else {
+                            alerta(res.mensagem, 'Não deu para carregar a lista de passageiros.','warning');
+                            controleEtapas = false;
+                        }
+                        //console.log(res);
+                    }, 'json');
+
+                    if(controleEtapas === false) {
+                        return false;
+                        // Interrompe a execução.
+                    }
+
+                    if(lista.dados.length > 0) {
+                        // Lista já contém dados. Faz o ajuste dos dados.
+                        // 1) Caso um cliente ou coordenador tenha sido removido da lista, não adiciona ele ao quarto.
+                        // 2) Caso um quarto tenha sido removido da lista, não adiciona o quarto. Os ocupantes voltam
+                        // ao box de clientes e coordenadores, para serem alocados.
+                        let tentativas = 0;
+                        let cronFinal = setInterval(function(){
+                                if(tentativas >= 5) {
+                                    clearInterval(cronFinal);
+                                    alerta('O Dobbin demorou mais de 2,5s para responder e a operação foi interrompida. Se isso persistir, '+
+                                    'informe ao desenvolvedor o roteiro e a lista que apresentou esse comportamento.', 'ATENÇÃO!', 'warning');
+                                    return false;
+                                }
+
+                                if(controleEtapas == 2) {
+                                    // EXECUTA!
+                                    let dados = JSON.parse(lista.dados);
+                                    let qAtual = {
+                                        tipo: '',
+                                        indice: 0
+                                    }
+                                    //console.log(dados);
+                                    dados.quartos.forEach(function(q){
+                                        if(qAtual.tipo == '') { // Inicio do laço.
+                                            qAtual.tipo = q.total;
+                                        } else if(qAtual.tipo != q.total) { // Mudança do tipo do quarto.
+                                            qAtual.tipo = q.total;
+                                            qAtual.indice = 0;
+                                        } else { // Mesmo tipo de quarto.
+                                            qAtual.indice++;
+                                        }
+
+                                        // Adiciona as pessoas ao quarto
+                                        if(q.pessoas.length == 0) {
+                                            // Não há pessoas para adicionar ao quarto
+                                        } else {
+                                            // Há pessoas para adicionar ao quarto.
+                                            // Verifica se o quarto existe ou foi removido
+                                            if(modal.find('[data-hospedagembox] [data-total="'+qAtual.tipo+'"]').eq(qAtual.indice).length > 0) {
+                                                
+                                                // Quarto existe. Adiciona pessoas
+                                                let hBox = modal.find('[data-hospedagembox] [data-total="'+qAtual.tipo+'"]').eq(qAtual.indice).children('.card-body');
+                                                let cBox = modal.find('[data-clientesbox]');
+                                                
+                                                q.pessoas.forEach(function(p){
+                                                    if(p.tipo == 'coord') {
+                                                        // Coordenador.
+
+                                                        cBox.find('[data-id="'+p.id+'"].border-danger').clone().appendTo(hBox);
+                                                        cBox.find('[data-id="'+p.id+'"].border-danger').remove();
+                                                    } else if(p.tipo == 'cliente') {
+                                                        // Cliente
+
+                                                        cBox.find('[data-id="'+p.id+'"].border-dark').clone().appendTo(hBox);
+                                                        cBox.find('[data-id="'+p.id+'"].border-dark').remove();
+                                                    }
+                                                });
+                                            } else {
+                                                // O quarto não existe. Deixa as pessoas no CLIENTEBOX.
+                                            }
+                                        }
+                                    });
+
+                                    // Ativa o Drag And Drop.
+                                    ativaDragListas();
+                            
+                                    // Só mostra o modal depois de tudo preenchido.
+                                    modal.modal('show');
+
+                                    // FIM da execução!
+                                    controleEtapas = 3;
+                                    //console.log('Executado depois de '+tentativas+' tentativas.');
+                                    clearInterval(cronFinal);
+                                } else {
+                                    // Adia a tentativa.
+                                    tentativas++;
+                                }
+
+                        }, 500);
+                    } else {
+                        modal.modal('show');
+                    }
+
+                    // FIM
+                } else if(res.lista.tipo == 'transporte') {
+                    janListaTransporte(id);
+                } else {
+                    alerta('Tipo de lista desconhecida.','Interrompido!', 'warning');
+                }
+            } else {
+                alerta(res.mensagem, '', 'warning');
+            }
+            
+        }, 'json').
+        fail(function(ev){nativePOSTFail(ev);});
+
+        return true;
+    }
+
+    function janListaTransporte(id)
+    {
+        $.post('/roteiros/ver/'+roteiro.id+'/lista/'+id, function(res){
+            if(debugEnabled == true) {console.log(res);}
+            if(res.success) {
+                if(res.lista.tipo == 'transporte') {
+                    let modal = $('#janListaTransporte');
+                    modal.data('lid', id);
+                    let lista = res.lista;
+                    let data = new Date(lista.data);
+                    let controleEtapas = 0;
+
+                    modal.find('.modal-header span').html('LISTA: '+lista.nome+' <span class="badge badge-secondary px-2 text-uppercase"><i class="fas fa-shuttle-van"></i> &nbsp; '+lista.tipo+'</span> '+
+                    '<small>('+data.toLocaleDateString()+')</small>');
+                    modal.find('[data-transportebox], [data-clientesbox]').html('');
+                    
+
+                    // Preenche o bloco de configurações da lista.
+                    //console.log(res);
+                    modal.find('[data-config] [name="nome"]').val(res.lista.nome); // Nome
+                    modal.find('[data-config] [name="roteiro_id"]').val(roteiro.id); // Roteiro ID
+                    modal.find('[data-config] [name="id"]').val(res.lista.id); // Roteiro ID
+                    let config = JSON.parse(lista.instrucoes);
+                    console.log(config);
+                    
+                    modal.find('[data-config] [name="clientesViagem"]').val(config.qtdClientesViagem); // Quantidade de clientes por viagem
+                    
+                    // Criança colo individual.
+                    modal.find('[data-config] [name="criancaColoIndividual"]').prop('checked', config.criancaColoIndividual);
+
+                    // Configura o formulário de configurações.
+                    modal.find('[data-config] form').attr('action', 'roteiros/'+roteiro.id+'/lista/'+res.lista.id+'/configsalvar');
+                    modal.find('[data-config]').css({display:'none'});
+
+                    //Recupera coordenadores
+                    $.post('/roteiros/ver/'+roteiro.id+'/coord', function(res){
+                        if(res.success && res.coordenadores.length > 0) {
+
+                            res.coordenadores.forEach(function(c){
+                                modal.find('[data-clientesbox]').append('<div class="border border-danger bg-light text-danger font-weight-bold mb-2 px-2 py-1 rounded-sm cursor-drag arrastavel" '+
+                                'style="z-index:1200; min-width: 150px; max-width:250px;" data-id="'+c.id+'">'+
+                                c.nome+'</div>');
+                            });
+                            
+                            controleEtapas++; // 0+1 = 1;
+
+                            // Ativa o drag and drop do JQUERY UI
+                            ativaDragListas();
+                        } else if(res.success) {
+                            alerta('Ainda não há coordenadores definidos.', '', 'info');
+                        } else {
+                            alerta(res.mensagem, 'Não deu para carregar a lista de coordenadores.','warning');
+                            controleEtapas = false;
+                        }
+                        //console.log(res);
+                    }, 'json');
+
+                    // Recupera clientes.
+                    $.post('/roteiros/ver/'+roteiro.id+'/clientes', function(res){
+                        if(res.success && res.clientes.length > 0) {
+
+                            res.clientes.forEach(function(c, keyC){
+                                
+                                // Verifica se criança de colo deve ser listado ou não.
+                                if(config.criancaColoIndividual === true) {
+                                    // Lista criança de colo
+                                    if(c.colo == false) { // ADULTO
+                                        modal.find('[data-clientesbox]').append('<div class="border border-dark bg-light mb-2 px-2 py-1 rounded-sm cursor-drag arrastavel" '+
+                                        'style="z-index:1200; min-width: 150px; max-width:250px;" data-id="'+c.id+'">'+
+                                        c.nome+'</div>');
+                                    } else { // CRIANÇA COLO
+                                        modal.find('[data-clientesbox]').append('<div class="border border-dark bg-light mb-2 px-2 py-1 rounded-sm cursor-drag arrastavel" '+
+                                        'style="z-index:1200; min-width: 150px; max-width:250px;" data-id="'+c.id+'" data-resp="'+res.clientes[(keyC-1)].id+'">'+
+                                        c.nome+' <span class="text-primary font-weight-bold">*</span></div>');
+                                    }
+                                    
+                                } else {
+                                    // Esconde criança de colo.
+                                    if(c.colo == false) { // ADULTO
+                                        modal.find('[data-clientesbox]').append('<div class="border border-dark bg-light mb-2 px-2 py-1 rounded-sm cursor-drag arrastavel" '+
+                                        'style="z-index:1200; min-width: 150px; max-width:250px;" data-id="'+c.id+'">'+
+                                        c.nome+'</div>');
+                                    }
+                                }
+                                
+                            });
+                            
+                            controleEtapas++; // 1+1 = 2;
+
+                            // Ativa o drag and drop do JQUERY UI
+                            ativaDragListas();
+                        } else if(res.success) {
+                            alerta('Ainda não há clientes na lista de passageiros.', '', 'info');
+                        } else {
+                            alerta(res.mensagem, 'Não deu para carregar a lista de passageiros.','warning');
+                            controleEtapas = false;
+                        }
+                        //console.log(res);
+                    }, 'json');
+
+                    if(lista.dados.length > 0) {
+                        // Há dados salvos.
+
+                        let tentativas = 0;
+                        let cronFinal = setInterval(function(){
+                            if(tentativas >= 5) {
+                                clearInterval(cronFinal);
+                                alerta('O Dobbin demorou mais de 2,5s para responder e a operação foi interrompida. Se isso persistir, '+
+                                'informe ao desenvolvedor o roteiro e a lista que apresentou esse comportamento.', 'ATENÇÃO!', 'warning');
+                                return false;
+                            }
+
+                            if(controleEtapas == 2) {
+                                let passageiros = modal.find('[data-clientesbox] div').length;
+                                let qtdViagens = Math.ceil(passageiros / config.qtdClientesViagem) + 1;
+                                let dados = JSON.parse(lista.dados);
+                                //console.log(dados);
+
+                                for(let i = 0; i < qtdViagens; i++) {
+                                    modal.find('[data-transportebox]').append('<div class="card mb-2 mr-1" style="width:300px;" data-total="'+config.qtdClientesViagem+'">'+
+                                    '<div class="card-header px-2 py-1 bg-dark text-white">VIAGEM #'+(i+1)+'</div>'+
+                                    '<div class="card-body" style="min-height:100px;"></div>'+
+                                    '</div>');
+
+                                    // Lança os passageiros nas viagens.
+                                    if(dados[i] != undefined) {
+                                        dados[i].forEach(function(d){
+                                            if(d.tipo == 'coord') {
+                                                modal.find('[data-clientesbox] [data-id="'+d.id+'"].border-danger').clone().
+                                                appendTo(modal.find('[data-transportebox] .card-body').last());
+
+                                                modal.find('[data-clientesbox] [data-id="'+d.id+'"].border-danger').remove();
+                                            } else if(d.tipo == 'cliente') {
+                                                modal.find('[data-clientesbox] [data-id="'+d.id+'"].border-dark').clone().
+                                                appendTo(modal.find('[data-transportebox] .card-body').last());
+
+                                                modal.find('[data-clientesbox] [data-id="'+d.id+'"].border-dark').remove();
+                                            }
+                                            
+                                        });
+                                    }
+                                }
+
+
+                                // Ativa o drag and drop.
+                                ativaDragListas();
+
+                                // Só mostra o modal depois de tudo preenchido.
+                                modal.modal('show');
+
+                                // FIM da execução!
+                                controleEtapas = 3;
+                                //console.log('Executado depois de '+tentativas+' tentativas.');
+                                clearInterval(cronFinal);
+                            } else {
+                                // Adia a tentativa.
+                                tentativas++;
+                            }
+                        }, 500);
+                        
+
+                        modal.modal('show');
+                    } else {
+                        // Sem dados salvos.
+
+                        console.log('SEM DADOS SALVOS');
+                        
+                        let tentativas = 0;
+                        let cronFinal = setInterval(function(){
+                            if(tentativas >= 5) {
+                                clearInterval(cronFinal);
+                                alerta('O Dobbin demorou mais de 2,5s para responder e a operação foi interrompida. Se isso persistir, '+
+                                'informe ao desenvolvedor o roteiro e a lista que apresentou esse comportamento.', 'ATENÇÃO!', 'warning');
+                                return false;
+                            }
+
+                            if(controleEtapas == 2) {
+                                let passageiros = modal.find('[data-clientesbox] div').length;
+                                let qtdViagens = Math.ceil(passageiros / config.qtdClientesViagem) + 1;
+
+                                console.log(passageiros, config.qtdClientesViagem);
+
+                                for(let i = 0; i < qtdViagens; i++) {
+                                    modal.find('[data-transportebox]').append('<div class="card mb-2 mr-1" style="width:300px;" data-total="'+config.qtdClientesViagem+'">'+
+                                    '<div class="card-header px-2 py-1 bg-dark text-white">VIAGEM #'+(i+1)+'</div>'+
+                                    '<div class="card-body" style="min-height:100px;"></div>'+
+                                    '</div>');
+                                }
+
+                                // Ativa o drag and drop.
+                                ativaDragListas();
+
+                                // Só mostra o modal depois de tudo preenchido.
+                                modal.modal('show');
+
+                                // FIM da execução!
+                                controleEtapas = 3;
+                                //console.log('Executado depois de '+tentativas+' tentativas.');
+                                clearInterval(cronFinal);
+                            } else {
+                                // Adia a tentativa.
+                                tentativas++;
+                            }
+                        }, 500);
+                    }
+
+                    return true;
+                } else if(res.lista.tipo == 'hospedagem') {
+                    janListaHospede(id);
+                } else {
+                    alerta('Tipo de lista desconhecida.','Interrompido!', 'warning');
+                }
+            } else {
+                alerta(res.mensagem, '', 'warning');
+            }
+        },'json').
+        fail(function(ev){nativePOSTFail(ev);});
+    }
+
     $(document).ready(function(){
         //console.log(roteiro);
         @if($roteiro->tarifa == '')
@@ -1187,6 +2547,120 @@
         @endif
         $('#roteiroTitle').html(roteiro.nome+ ' <small>('+Dobbin.formataData(new Date(roteiro.data_ini), true)+' a '+Dobbin.formataData(new Date(roteiro.data_fim), true)+')</small>');
 
+        //SALVA LISTA DE HOSPEDAGEM
+        $(document).on('click','#janListaHospede .modal-footer button.btn-success', function(ev){
+            // Cria o JSON com os dados e salva.
+            let hosped = {
+                quartos: []
+            };
+
+            let modal = $('#janListaHospede');
+            let hBox = modal.find('.modal-body [data-hospedagembox]');
+            for(let i = 0; i < hBox.find('.card-body').length; i++) {
+                let quarto = {
+                    total: hBox.find('.card-body').eq(i).parent().data('total'),
+                    pessoas: []
+                }
+
+                for(let k = 0; k < hBox.find('.card-body').eq(i).find('div').length; k++) {
+                    // Busca clientes e coordenadores
+                    let pessoa = {
+                        id: hBox.find('.card-body').eq(i).find('div').eq(k).data('id'),
+                        tipo: ''
+                    }
+
+                    if(hBox.find('.card-body').eq(i).find('div').eq(k).hasClass('border-danger')) {
+                        // Coordenadores tem borda vermelha.
+                        pessoa.tipo = 'coord';
+                    } else {
+                        // Clientes tem borda preta.
+                        pessoa.tipo = 'cliente';
+                    }
+
+                    // Insere a pessoa na lista.
+                    quarto.pessoas.push(pessoa);
+                }
+
+                if(quarto.pessoas.length > 0) {
+                    // Insere o quarto na lista de quartos.
+                    hosped.quartos.push(quarto);
+                }
+                
+            }
+
+            //console.log('Quartos da hospedagem:');
+            //console.log(hosped);
+
+            // Envia os dados para o servidor.
+            $.post(PREFIX_POST+'roteiros/'+roteiro.id+'/lista/'+modal.data('lid')+'/salvar',{
+                dados: hosped
+            },function(res){
+                if(res.success) {
+                    alerta('Lista salva','','success');
+                    getListas();
+                } else {
+                    alerta(res.mensagem, 'Houve problemas ao salvar.', 'warning');
+                }
+            },'json').
+            fail(function(ev){nativePOSTFail(ev);});
+        });
         
+        $(document).on('click','#janListaTransporte .modal-footer button.btn-success', function(ev){
+            // Cria o JSON com os dados e salva.
+            let trans = [];
+
+            let modal = $('#janListaTransporte');
+            //console.log('ID da lista: '+modal.data('lid'));
+            let tBox = modal.find('.modal-body [data-transportebox]');
+
+            for(let i = 0; i < tBox.find('.card-body').length; i++) {
+                if(tBox.find('.card-body').eq(i).find('div').length > 0) {
+                    // Armazena os passageiros
+                    let viagem = [];
+                    for(let k = 0; k < tBox.find('.card-body').eq(i).find('div').length; k++) {
+                        let pessoa = {
+                            id: tBox.find('.card-body').eq(i).find('div').eq(k).data('id'),
+                            tipo: ''
+                        }
+
+                        if(tBox.find('.card-body').eq(i).find('div').eq(k).hasClass('border-danger')) {
+                            // Coordenadores tem borda vermelha.
+                            pessoa.tipo = 'coord';
+                        } else {
+                            // Clientes tem borda preta.
+                            pessoa.tipo = 'cliente';
+                        }
+
+                        // Adiciona a pessoa à viagem.
+                        viagem.push(pessoa);
+                        pessoa = undefined;
+                    }
+
+                    // Adiciona a viagem ao transporte.
+                    trans.push(viagem);
+                    viagem = undefined;
+                } else {
+                    // Não faz nada. Ignora viagem vazia.
+                }
+            }
+
+            // Salva dados.
+            //console.log(trans);
+
+            // Envia os dados para o servidor.
+            $.post(PREFIX_POST+'roteiros/'+roteiro.id+'/lista/'+modal.data('lid')+'/salvar',{
+                dados: trans
+            },function(res){
+                if(res.success) {
+                    alerta('Lista salva','','success');
+                    getListas();
+                } else {
+                    alerta(res.mensagem, 'Houve problemas ao salvar.', 'warning');
+                }
+            },'json').
+            fail(function(ev){nativePOSTFail(ev);});
+
+        });
+
     });
 </script>

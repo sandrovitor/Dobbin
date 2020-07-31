@@ -18,33 +18,30 @@ $router->map('GET', '/[:page]', function($p){
         default: header('Location: /'); break;
             
     }
-    /*
-    if($p['page'] == 'login') {
-        return ControllerPrincipal::login();
-    } else if($p['page'] == 'logout' || $p['page'] == 'sair') {
-        return ControllerPrincipal::logout();
-    } else if($p['page'] == 'offlineclient') {
-        return ControllerPrincipal::offlineDownloadFile($p);
-    } else if($p['page'] == 'lQ37zclzOy4dCR8Gxn1JpzLkiRQSBZIowpcrondiario'){ // ROBOT
-        include(__DIR__.'/../app/cronjob/wpcrondiario.php');
-    }else {
-        header('Location: /');
-    }
-    */
 });
 $router->map('GET', '/gera/[a:tipo]/[:codigo]/[a:opt]?', function($p){
-
+    // GERADOR DE COMPROVANTE.
     switch($p['tipo']) {
         case 'pdf':
-            return ConGerador::pdf($p);
+            return 'Essa página não está mais disponível!';
         break;
 
         default: die; break;
     }
 });
+$router->map('GET', '/pdf/[a:pagina]/[i:id]/[a:subpagina]/[download|:opt3]?/[:opt]?/[a:opt2]?', function($p){
+    switch($p['pagina']) {
+        case 'roteiros':
+            return ConGerador::roteiros($p);
+        break;
+
+        default: header('HTTP/1.1 404'); die; break;
+    }
+});
 
 // CHECA ATUALIZAÇÃO DO SISTEMA
 $router->map('POST', '/checkversion', 'ControllerPrincipal#checkversion');
+$router->map('POST', '/teste', 'ControllerPrincipal#teste'); // Página de teste de retorno.
 
 
 // LANDING PAGES via POST
@@ -74,7 +71,10 @@ $router->map('POST', '/roteiros/database', 'ControllerPrincipal#roteirosDatabase
 $router->map('POST', '/roteiros/simulacao', 'ControllerPrincipal#roteirosSimulacao');
 $router->map('POST', '/roteiros/ver/[i:id]', 'ControllerPrincipal#roteirosVer');
 $router->map('POST', '/roteiros/ver/[i:id]/clientes', 'ControllerPrincipal#roteirosVerClientes'); // JSON
+$router->map('POST', '/roteiros/ver/[i:id]/coord', 'ControllerPrincipal#roteirosVerCoord'); // JSON
 $router->map('POST', '/roteiros/ver/[i:id]/estoque', 'ControllerPrincipal#roteirosVerEstoque'); // JSON
+$router->map('POST', '/roteiros/ver/[i:id]/listas', 'ControllerPrincipal#roteirosVerListas'); // JSON
+$router->map('POST', '/roteiros/ver/[i:id]/lista/[i:lid]', 'ControllerPrincipal#roteirosLoadLista'); // JSON
 $router->map('POST', '/roteiros/load/[i:id]', 'ControllerPrincipal#roteirosLoad');
 $router->map('POST', '/roteiros/editar/[i:id]', 'ControllerPrincipal#roteirosEditar');
 $router->map('POST', '/roteiros/lixeira', 'ControllerPrincipal#roteirosLixeira');
@@ -111,6 +111,9 @@ $router->map('POST', '/usuarios/novo', 'ControllerPrincipal#usuariosNovo');
 $router->map('POST', '/usuarios/buscar', 'ControllerPrincipal#usuariosBuscar');
 $router->map('POST', '/usuarios/ver/[i:id]', 'ControllerPrincipal#usuariosVer');
 $router->map('POST', '/usuarios/database', 'ControllerPrincipal#usuariosDatabase');
+
+
+$router->map('POST', '/financeiro/novo', 'ControllerPrincipal#financeiroNovo');
 
 $router->map('POST', '/log', 'ControllerPrincipal#log');
 $router->map('POST', '/log/[i:qtd]', 'ControllerPrincipal#log');
@@ -179,6 +182,10 @@ $router->addRoutes(array(
     array('POST', $prefix.'roteiros/[i:id]/tarifa/editar', 'ControllerForm#roteirosTarifaEdita'),
     array('POST', $prefix.'roteiros/[i:id]/addcoordenador/[i:coord]', 'ControllerForm#roteiroAddCoordenador'),
     array('POST', $prefix.'roteiros/[i:id]/delcoordenador/[i:coord]', 'ControllerForm#roteiroRemoveCoordenador'),
+    array('POST', $prefix.'roteiros/[i:id]/novalista', 'ControllerForm#roteirosNovaLista'),
+    array('POST', $prefix.'roteiros/[i:id]/lista/[i:lid]/salvar', 'ControllerForm#roteirosListaSalvar'), // Salvar lista
+    array('POST', $prefix.'roteiros/[i:id]/lista/[i:lid]/configsalvar', 'ControllerForm#roteirosListaConfigSalvar'), // Salvar configurações da lista
+    array('POST', $prefix.'roteiros/[i:id]/lista/[i:lid]/apagar', 'ControllerForm#roteirosListaApagar'),
     array('POST', $prefix.'roteiros/salvar/[i:id]', 'ControllerForm#roteirosSalvar'),
     array('POST', $prefix.'roteiros/apagar/[i:id]', 'ControllerForm#roteirosApagar'),
     array('POST', $prefix.'roteiros/restaurar/[i:id]', 'ControllerForm#roteirosRestaurar'),
@@ -190,6 +197,7 @@ $router->addRoutes(array(
     array('POST', $prefix.'vendas/buscar', 'ControllerForm#vendasBuscar'),
     array('POST', $prefix.'vendas/[i:id]/clientes/add/[i:cid]', 'ControllerForm#vendasAddCliente'),
     array('POST', $prefix.'vendas/[i:id]/clientes/del/[i:cid]', 'ControllerForm#vendasDelCliente'),
+    array('POST', $prefix.'vendas/[i:id]/clientes/colo/[i:cid]', 'ControllerForm#vendasColoCliente'),
     array('POST', $prefix.'vendas/[i:id]/situacao/editar', 'ControllerForm#vendasAlterarSituacao'),
     array('POST', $prefix.'vendas/[i:id]/obs/editar', 'ControllerForm#vendasAlterarObservacao'),
     array('POST', $prefix.'vendas/[i:id]/definetermos/[i:opt]', 'ControllerForm#vendasDefineTermos'),

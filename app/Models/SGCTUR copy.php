@@ -1069,7 +1069,7 @@ DADOS;
      *      $email, $telefone, $endereco, $complemento,
      *      $ponto_referencia, $bairro, $cidade, $estado,
      *      $cep, $estado_civil, $alergia, $emergencia_nome,
-     *      $emergencia_tel, $dependente, $sangue]
+     *      $emergencia_tel, $taxa_extra_casal, $dependente, $sangue]
      * 
      * @return array [success => TRUE|FALSE, mensagem => STRING]
      */
@@ -1088,6 +1088,34 @@ DADOS;
         /**
          * VALIDA OS DADOS
          */
+
+        if(trim($dados['taxa_extra_casal']) === '') {
+            $taxaExtraCasal = 0;
+        } else if(\strrpos($dados['taxa_extra_casal'], ',') === false) {
+            // trata valor como real (adiciona dois zeros no final para converter em centavos).
+            $taxaExtraCasal = $dados['taxa_extra_casal'].'00';
+            $taxaExtraCasal = filter_var($taxaExtraCasal, \FILTER_VALIDATE_INT);
+            if($taxaExtraCasal === FALSE) {
+                $retorno['mensagem'] = Erro::getMessage(101);
+                return $retorno;
+            }
+        } else if (\strpos($dados['taxa_extra_casal'], ',') == \strrpos($dados['taxa_extra_casal'], ',')) {
+            // Há mais de uma vírgula.
+            $retorno['mensagem'] = Erro::getMessage(102);
+            return $retorno;
+        } else {
+            // Converte para reais e centavos.
+            //$taxaExtraCasal = str_replace(',', '', $dados['taxa_extra_casal']);
+            $x = explode(',', $dados['taxa_extra_casal']);
+            $taxaExtraCasal = $x[0].substr($x[1],0,2);
+
+            // Passa pelo filtro de validação.
+            $taxaExtraCasal = filter_var($taxaExtraCasal, \FILTER_VALIDATE_INT);
+            if($taxaExtraCasal === FALSE) {
+                $retorno['mensagem'] = Erro::getMessage(103);
+                return $retorno;
+            }
+        }
             
         
 
@@ -1102,10 +1130,10 @@ DADOS;
         // Lança cliente no Banco de Dados.
         $sql = "INSERT INTO clientes (id, nome, email, telefone, rg, cpf, nascimento, estado_civil, ".
             "endereco, complemento, ponto_referencia, bairro, cep, cidade, estado, sangue, alergia, emergencia_nome, ".
-            "emergencia_tel, credito, titular, criado_em, atualizado_em) ".
+            "emergencia_tel, taxa_extra_casal, titular, criado_em, atualizado_em) ".
         "VALUES (null, :nome, :email, :tel, :rg, :cpf, :nascimento, :estado_civil, :endereco, ".
             ":complemento, :ponto_referencia, :bairro, :cep, :cidade, :estado, :sangue, :alergia, ".
-            ":em_nome, :em_tel, 0, :titular, NOW(), NOW())";
+            ":em_nome, :em_tel, :taxa_extra, :titular, NOW(), NOW())";
         $abc = $this->pdo->prepare($sql);
         
         // Faz o TRIM nos dados

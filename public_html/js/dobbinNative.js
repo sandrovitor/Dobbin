@@ -205,6 +205,26 @@ const Dobbin = {
         if(cents < 10) {
             cents = '0'+cents;
         }
+
+        // Acrescenta divisor de milhar.
+        let reais = '';
+        if(real.length > 3) {
+            let i = real.length;
+            while(i >= 1){
+                if(i-3 > 0 && reais == '') {
+                    reais = real.slice(i-3, i);
+                } else if(i-3 > 0) {
+                    reais = real.slice(i-3, i)+'.'+reais;
+                } else {
+                    reais = real.slice(0, i)+'.'+reais;
+                }
+                
+                i = i-3;
+            }
+        } else {
+            reais = real;
+        }
+        real = reais;
     
         if(invert === false) {
             return real+','+cents;
@@ -218,14 +238,34 @@ const Dobbin = {
         if(Dobbin.isMoney(valor) == false) {
             return false;
         }
+        let negativo = false;
+
+        // Remove sinal de menos ou mais no inicio
+        if(valor.charAt(0) == '-') {
+            negativo = true;
+            valor = valor.replace('-', '');
+        }
+
+
+        // Remove ponto do separador de milhar.
+        
+        while(valor.indexOf('.') >= 0) {
+            valor = valor.replace('.', '');
+        }
     
         if(valor.search(',') >= 0) {
             // Tem vírgula. Remove virgula.
             valor = valor.replace(',', '');
-            return parseInt(valor);
+            valor = parseInt(valor);
         } else {
             // Não tem virgula. Multiplica por 100.
             valor = parseInt(valor)*100;
+            return valor;
+        }
+
+        if(negativo == true) {
+            return valor * (-1);
+        } else {
             return valor;
         }
     },
@@ -325,6 +365,7 @@ $(document).ready(function(){
             }
         }
         
+        // Acrescenta divisor de milhar.
         if(x[0].length > 3) {
             let i = x[0].length;
             while(i >= 1){
@@ -349,6 +390,22 @@ $(document).ready(function(){
 
         $(ev.currentTarget).val(reais+','+decimal);
         
+    });
+
+    $(document).on('change keyup', '[dobbin-mask-number]', function(ev){
+        let alvo = $(ev.currentTarget);
+
+        if(alvo.attr('min') != undefined) {
+            if(parseInt(alvo.val()) < parseInt(alvo.attr('min'))) {
+                alvo.val(parseInt(alvo.attr('min')));
+            }
+        }
+
+        if(alvo.attr('max') != undefined) {
+            if(parseInt(alvo.val()) > parseInt(alvo.attr('max'))) {
+                alvo.val(parseInt(alvo.attr('max')));
+            }
+        }
     });
 
     $(document).on('dblclick', '[dobbin-campo-edita]', function(ev){

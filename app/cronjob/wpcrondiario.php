@@ -43,4 +43,7 @@ $robot->checaLimiteBancoDados();
 // Gera lista de clientes definitiva no roteiro.
 $robot->geraListaClientesFixa();
 
+// Envia e-mails de aniversário.
+$robot->enviaEmailAniversario();
+
 exit();
