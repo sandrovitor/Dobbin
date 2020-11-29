@@ -1131,7 +1131,6 @@ DADOS;
         $abc->bindValue(':alergia', $dados['alergia'], \PDO::PARAM_STR);
         $abc->bindValue(':em_nome', $dados['emergencia_nome'], \PDO::PARAM_STR);
         $abc->bindValue(':em_tel', $dados['emergencia_tel'], \PDO::PARAM_STR);
-        $abc->bindValue(':taxa_extra', $taxaExtraCasal, \PDO::PARAM_INT);
         $abc->bindValue(':titular', $titular, \PDO::PARAM_INT);
 
         try {

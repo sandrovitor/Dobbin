@@ -10,6 +10,10 @@
  */
 define('DOBBIN_MAX_PARCELAS', 12);
 /**
+ * Dia máximo do vencimento.
+ */
+define('DOBBIN_MAX_VENCIMENTO_DIAS', 30);
+/**
  * Domínio ou endereço para clientes externos acessarem comprovantes.
  */
 define('DOBBIN_LINK_EXTERNO', 'tonaestradaviagens.com.br');
@@ -31,3 +35,8 @@ ini_set( 'log_errors', true );
 // Definindo UTF-8 como padrão
 mb_internal_encoding('UTF-8');
 mb_http_output('UTF-8');
+
+// LIMITES
+define('DOBBIN_LIM_QTD_MES_BALANCO_TOTAL', 6); // Inicial 6 meses.
+define('DOBBIN_LIM_QTD_MES_BALANCO_TOTAL_MAX', 25);
+define('DOBBIN_LIM_BALANCOS_EXPORTAR', true);

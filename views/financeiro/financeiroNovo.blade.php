@@ -2,21 +2,22 @@
     <div class="col-12">
         <div class="card" id="novoBalanco">
             <div class="card-body px-3 py-3">
-                <div class="alert alert-danger">
+                <!--<div class="alert alert-danger">
                     <strong><i class="fas fa-microscope"></i> ÁREA DE TESTE!</strong><br>
                     Por favor, essa área não está funcionando corretamente, ou os dados lançados aqui <strong>não são salvos</strong>.
                     Só interaja com essa página ou área se o programador lhe der permissão, ou lhe solicitar que o faça.
-                </div>
+                </div> -->
                 <form>
                     <div class="form-group">
                         <label class="font-weight-bold">Mês/ano do balanço</label>
-                        <input type="month" class="form-control form-control-sm form-control-solid">
+                        <input type="month" class="form-control form-control-sm form-control-solid" name="periodo" onchange="checkBalancoExiste()">
                     </div>
                     <hr>
                     <div class="bloco-acord border">
                         <div class="acord-header bg-light p-2 d-flex justify-content-between cursor-pointer">
                             <h6 class="font-weight-bold text-uppercase my-1">
                                 DESPESAS <small>[SAÍDAS/PAGAMENTOS]</small>
+                                <span id="qtdDespesa" class="badge badge-dark ml-4">0</span>
                             </h6>
                             <button class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
                         </div>
@@ -94,7 +95,10 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="addLinha(this)"><i class="fas fa-plus"></i> Nova linha de despesa</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="btnAddLinhaDespesa" onclick="addLinha(this)"><i class="fas fa-plus"></i> Nova linha de despesa</button>
+                                <button type="button" class="btn btn-primary btn-sm ml-2"
+                                    data-toggle="tooltip" title="Carregar despesas do mês anterior automaticamente." onclick="carregaDespesasAutomatico()">Carregar despesas</button>
+                                <button type="button" class="btn btn-warning btn-sm" onclick="delAllLinha(this)"><i class="fas fa-undo"></i> Resetar</button>
                             </div>
                         <!-- ./DESPESAS -->
                         </div>
@@ -104,6 +108,7 @@
                         <div class="acord-header bg-light p-2 d-flex justify-content-between cursor-pointer">
                             <h6 class="font-weight-bold text-uppercase my-1">
                                 RECEITAS <small>[ENTRADAS/RECEBÍVEIS]</small>
+                                <span id="qtdReceita" class="badge badge-dark ml-4">0</span>
                             </h6>
                             <button class="btn btn-transparent btn-sm text-dark"><i class="fas fa-angle-down"></i></button>
                         </div>
@@ -126,7 +131,12 @@
                                     <tbody>
                                         <tr data-example style="display:none;">
                                             <td>
-                                                <input type="text" class="form-control form-control-sm form-control-solid" name="nome" maxlength="40" placeholder="Nome da receita...">
+                                                <div class="input-group input-group-sm">
+                                                    <div class="input-group-prepend">
+                                                        
+                                                    </div>
+                                                    <input type="text" class="form-control form-control-sm form-control-solid" name="nome" maxlength="40" placeholder="Nome da receita...">
+                                                </div>
                                             </td>
                                             <td>
                                                 <input type="number" class="form-control form-control-sm form-control-solid" name="vencimento" min="1" max="31" placeholder="Data do vencimento">
@@ -145,7 +155,12 @@
                                         </tr>
                                         <tr>
                                             <td>
-                                                <input type="text" class="form-control form-control-sm form-control-solid" name="nome" maxlength="40" placeholder="Nome da receita...">
+                                                <div class="input-group input-group-sm">
+                                                    <div class="input-group-prepend">
+                                                        
+                                                    </div>
+                                                    <input type="text" class="form-control form-control-sm form-control-solid" name="nome" maxlength="40" placeholder="Nome da receita...">
+                                                </div>
                                             </td>
                                             <td>
                                                 <input type="number" class="form-control form-control-sm form-control-solid" name="vencimento" min="1" max="31" placeholder="Data do vencimento">
@@ -164,7 +179,10 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="addLinha(this)"><i class="fas fa-plus"></i> Nova linha de receita</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="btnAddLinhaReceita" onclick="addLinha(this)"><i class="fas fa-plus"></i> Nova linha de receita</button>
+                                <button type="button" class="btn btn-primary btn-sm ml-2"
+                                    data-toggle="tooltip" title="Listar todas as vendas no período automaticamente." onclick="carregaReceitasAutomatico()">Carregar vendas automaticamente</button>
+                                <button type="button" class="btn btn-warning btn-sm" onclick="delAllLinha(this)"><i class="fas fa-undo"></i> Resetar</button>
                             </div>
                         <!-- ./RECEITAS -->
                         </div>
@@ -205,75 +223,8 @@
         </div>
     </div>
 </div>
+<script src="/js/Financeiro.min.js"></script>
 <script>
-
-function addLinha(sender)
-{
-    let tabela = $(sender).prev().children('tbody');
-    
-    if(tabela.find('tr:not([data-example])').length < 1000) {
-        tabela.find('tr[data-example]').eq(0).clone().appendTo(tabela);
-        tabela.find('tr').last().show();
-        tabela.find('tr').last().removeAttr('data-example');
-    } else {
-        alerta('Limite de 1000 linhas de despesa alcançado. Para liberar mais entradas, consulte desenvolvedor.', '', 'warning');
-    }
-}
-
-function delLinha(sender)
-{
-    let tabela = $(sender).parents('tbody');
-
-    
-    if(tabela.find('tr:not([data-example])').length == 1) {
-        alerta('Não é possível excluir esta linha. Pelo menos uma linha (em branco ou não) deve aparecer.');
-    } else if(tabela.find('tr:not([data-example])').length > 1 && $(sender).parents('tr').is('[data-example]') == false) {
-        $(sender).parents('tr').remove();
-    }
-    
-
-}
-
-function calculaBalanco()
-{
-    let totalDespesa = 0;
-    let totalReceita = 0;
-
-    let linha;
-
-    for(let i = 0; i < $('#listaDespesas').find('tr:not([data-example])').length; i++) {
-        linha = $('#listaDespesas').find('tr:not([data-example])').eq(i);
-        if(linha.find('[name="valor"]').val() != '0,00') {
-            // Só calcula se o valor for diferente de 0,00.
-            totalDespesa = totalDespesa + Dobbin.converteRealEmCentavo(linha.find('[name="valor"]').val());
-        }
-
-    }
-
-    for(let i = 0; i < $('#listaReceitas').find('tr:not([data-example])').length; i++) {
-        linha = $('#listaReceitas').find('tr:not([data-example])').eq(i);
-        if(linha.find('[name="valor"]').val() != '0,00') {
-            // Só calcula se o valor for diferente de 0,00.
-            totalReceita = totalReceita + Dobbin.converteRealEmCentavo(linha.find('[name="valor"]').val());
-        }
-
-    }
-
-    // Escreve valor no resultado.
-    $('#resultadoBalanco').find('[data-despesa]').text('R$ '+ Dobbin.converteCentavoEmReal(totalDespesa) );
-    $('#resultadoBalanco').find('[data-receita]').text('R$ '+ Dobbin.converteCentavoEmReal(totalReceita) );
-    $('#resultadoBalanco').find('[data-diferenca]').text('R$ '+ Dobbin.converteCentavoEmReal(totalReceita - totalDespesa) );
-    if(totalReceita - totalDespesa < 0) {
-        $('#resultadoBalanco').find('[data-diferenca]').addClass('text-danger').removeClass('text-success');
-    } else {
-        $('#resultadoBalanco').find('[data-diferenca]').addClass('text-success').removeClass('text-danger');
-    }
-
-    balanco.entrada = totalReceita;
-    balanco.saida = totalDespesa;
-    balanco.saldo = totalReceita - totalDespesa;
-}
-
 function salvarBalanco()
 {
     let form = $('#novoBalanco');
@@ -308,34 +259,62 @@ function salvarBalanco()
         }
         
     }
+
+    // Receitas!
+    for(let i = 0; i < lRec.find('tr:not([data-example])').length; i++) {
+        let linha = lRec.find('tr:not([data-example])').eq(i);
+
+        if(
+            linha.find('[name="nome"]').val().trim() != '' &&
+            linha.find('[name="vencimento"]').val().trim() != '' &&
+            linha.find('[name="valor"]').val().trim() != ''
+        ) {
+            balanco.folha.push(
+                {
+                    nome: linha.find('[name="nome"]').val().trim(),
+                    vencimento: linha.find('[name="vencimento"]').val(),
+                    categoria: null,
+                    tipo: 'ENTRADA',
+                    valor: linha.find('[name="valor"]').val(),
+                    obs: ''
+                }
+            );
+        } else {
+            // Caso outros campos da linha estejam preenchidos, mostra linha em aberto. Interrompe a execução! 
+            // Caso todos os campos da linha estiverem em branco, só conta as linhas em branco e continua a execução.
+        }
+        
+    }
+
+    if(form.find('[name="periodo"]').val() == '') {
+        alert("O campo 'Mês/ano do balanço' precisa ser informado.");
+        form.find('[name="periodo"]').focus();
+        return false;
+    } else {
+        let periodo = form.find('[name="periodo"]').val().split('-');
+        balanco.ano = periodo[0];
+        balanco.mes = periodo[1];
+    }
+
     console.log(balanco);
+    
+    $.post(PREFIX_POST+'financeiro/novo', {
+        balanco: JSON.stringify(balanco)
+    }, function(res){
+        console.log(res);
+        if(res == "1") {
+            // Salvo
+            alerta("Folha salva...", "Sucesso!", "success");
+            
+        } else {
+            // Salvo
+            alerta("Não foi possível salvar.", "Falha!", "warning");
+        }
+    }).fail(function(ev){nativePOSTFail(ev);});
+    
 }
 
 $(document).ready(function(){
-    if(typeof balanco == undefined) {
-        let balanco = {
-            'folha': [],
-            'mes': '',
-            'ano': '',
-            'obs': '',
-            'entrada': '',
-            'saida': '',
-            'saldo': ''
-        };
-    } else {
-        balanco = {
-            'folha': [],
-            'mes': '',
-            'ano': '',
-            'obs': '',
-            'entrada': '',
-            'saida': '',
-            'saldo': ''
-        };
-    }
     
-    $(document).on('blur', '[dobbin-mask-money]', function(){
-        setTimeout(200, calculaBalanco());
-    })
 });
 </script>

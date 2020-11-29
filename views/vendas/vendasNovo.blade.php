@@ -139,7 +139,7 @@
                                         <label class="font-weight-bold">Parcelas</label>
                                         <select class="form-control form-control-sm" name="parcelas" onchange="parcelasChange()">
                                             <option value="1">1x - À vista</option>
-                                            @for($i = 2; $i <= 12; $i++)
+                                            @for($i = 2; $i <= DOBBIN_MAX_PARCELAS; $i++)
                                             <option value="{{$i}}">{{$i}}x</option>
                                             @endfor
                                         </select>
@@ -147,7 +147,7 @@
                                     <div class="form-group mr-md-3" style="display:none">
                                         <label class="font-weight-bold">Vencimento</label>
                                         <select class="form-control form-control-sm" name="vencimento">
-                                            @for($i = 1; $i <= 28; $i++)
+                                            @for($i = 1; $i <= DOBBIN_MAX_VENCIMENTO_DIAS; $i++)
                                             <option value="{{$i}}">{{$i}}</option>
                                             @endfor
                                         </select>

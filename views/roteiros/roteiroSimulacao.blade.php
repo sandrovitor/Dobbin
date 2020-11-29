@@ -424,7 +424,7 @@ function calcular()
                 // Descrição do cálculo.
                 calc_desc.push('<span class="text-uppercase">'+form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val() + '</span> - '+
                     form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val());
-                calc_valor.push('<strong>R$'+ converteCentavoEmReal(temp1)+'</strong>');
+                calc_valor.push('<strong>R$'+ Dobbin.converteCentavoEmReal(temp1)+'</strong>');
                 calc_oper.push('<span class="text-primary">+</span>');
                 break;
 
@@ -446,7 +446,7 @@ function calcular()
                 // Descrição do cálculo.
                 calc_desc.push('<span class="text-uppercase">'+form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val() + '</span> - '+
                     form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val());
-                calc_valor.push('R$'+ converteCentavoEmReal(temp1)+ ' (x '+passagens+' passageiros) = <br> <strong>R$ '+ converteCentavoEmReal(temp1*passagens) +'</strong>');
+                calc_valor.push('R$'+ Dobbin.converteCentavoEmReal(temp1)+ ' (x '+passagens+' passageiros) = <br> <strong>R$ '+ Dobbin.converteCentavoEmReal(temp1*passagens) +'</strong>');
                 calc_oper.push('<span class="text-primary">+</span>');
 
                 
@@ -489,7 +489,7 @@ function calcular()
                 // Descrição do cálculo.
                 calc_desc.push('<span class="text-uppercase">'+form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val() + '</span> - '+
                     form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val());
-                calc_valor.push('R$'+ converteCentavoEmReal(temp1)+ ' (x '+temp2+' dia(s)) = <br> <strong>R$ '+ converteCentavoEmReal(temp1*temp2) +'</strong>');
+                calc_valor.push('R$'+ Dobbin.converteCentavoEmReal(temp1)+ ' (x '+temp2+' dia(s)) = <br> <strong>R$ '+ Dobbin.converteCentavoEmReal(temp1*temp2) +'</strong>');
                 calc_oper.push('<span class="text-primary">+</span>');
 
                 break;
@@ -527,7 +527,7 @@ function calcular()
                 // Descrição do cálculo.
                 calc_desc.push('<span class="text-uppercase">'+form.find('tr:not([data-example])').eq(i).find('[name="tipo_despesa"] :selected').val() + '</span> - '+
                     form.find('tr:not([data-example])').eq(i).find('[name="nome_despesa"]').val());
-                calc_valor.push('R$'+ converteCentavoEmReal(temp1)+ ' (x '+temp2+' dia(s)) (x '+passagens+' passageiros) = <br> <strong>R$ '+ converteCentavoEmReal(temp1*temp2*passagens) +'</strong>');
+                calc_valor.push('R$'+ Dobbin.converteCentavoEmReal(temp1)+ ' (x '+temp2+' dia(s)) (x '+passagens+' passageiros) = <br> <strong>R$ '+ Dobbin.converteCentavoEmReal(temp1*temp2*passagens) +'</strong>');
                 calc_oper.push('<span class="text-primary">+</span>');
                 break;
         }
@@ -537,10 +537,10 @@ function calcular()
     temp1 = Math.ceil(despesa_total/rateio_qtd);
     
 
-    $('[simu-total-despesa]').text('R$ '+converteCentavoEmReal(despesa_total));
-    $('[simu-desc-despesa]').html('R$ '+converteCentavoEmReal(temp1)+' <small>(sem lucro)</small>');
+    $('[simu-total-despesa]').text('R$ '+Dobbin.converteCentavoEmReal(despesa_total));
+    $('[simu-desc-despesa]').html('R$ '+Dobbin.converteCentavoEmReal(temp1)+' <small>(sem lucro)</small>');
     // Com lucro
-    $('[simu-desc-despesa-lucro]').html('R$ '+converteCentavoEmReal( Math.ceil((despesa_total * 1.3)/rateio_qtd) ) +' <small>(lucro 30%)</small>');
+    $('[simu-desc-despesa-lucro]').html('R$ '+Dobbin.converteCentavoEmReal( Math.ceil((despesa_total * 1.3)/rateio_qtd) ) +' <small>(lucro 30%)</small>');
 
     if(result.siblings('table').length > 0) {
         result.siblings('table').remove();
@@ -550,11 +550,11 @@ function calcular()
     calc_desc.forEach(function(val, key){
         $('[simu-table-calculo]').find('tbody').append('<tr><td>'+val+'</td> <td>'+calc_valor[key]+'</td> <td>'+calc_oper[key]+'</td></tr>');
     });
-    $('[simu-table-calculo]').find('tbody').append('<tr class="p-2"><td colspan="3">&nbsp;</td></tr> <tr><td><strong>TOTAL DAS DESPESAS</strong></td> <td>R$ '+converteCentavoEmReal(despesa_total)+'</td> <td><span class="text-success">=</span></td></tr>');
+    $('[simu-table-calculo]').find('tbody').append('<tr class="p-2"><td colspan="3">&nbsp;</td></tr> <tr><td><strong>TOTAL DAS DESPESAS</strong></td> <td>R$ '+Dobbin.converteCentavoEmReal(despesa_total)+'</td> <td><span class="text-success">=</span></td></tr>');
     $('[simu-table-calculo]').find('tbody').append('<tr><td><label class="small">LUCRO NO RATEIO (%)</label><div class="input-group input-group-sm">'+
     '<input type="number" class="form-control form-control-sm form-control-solid" name="lucro" value="30" min="0" data-despesa-total="'+despesa_total+'" data-rateio="'+rateio_qtd+'" data-clientes="'+clientes+'" onchange="lucroCalculo(this)">'+
     '<div class="input-group-append"><span class="input-group-text form-control-solid form-control-sm">%</span></div></div></td> '+
-    '<td>R$ '+converteCentavoEmReal(despesa_total)+'</td> <td><span class="text-info">%</span></td></tr>');
+    '<td>R$ '+Dobbin.converteCentavoEmReal(despesa_total)+'</td> <td><span class="text-info">%</span></td></tr>');
 
     $('[simu-table-calculo]').find('[name="lucro"]').trigger('change');
 
@@ -571,14 +571,14 @@ function lucroCalculo(sender)
     let lucPoltronaLivre = Math.ceil((valor*margem)/rateio_qtd) * (clientes - rateio_qtd);
     let lucRateio = (valor*margem) - valor;
     
-    $(sender).parents('tr').eq(0).children('td:eq(1)').html('R$ '+converteCentavoEmReal(valor*margem)+' [LUCRO DO RATEIO: <span class="text-success">R$ '+converteCentavoEmReal(lucRateio)+'</span> ]'+
-    '<br>Valor p/ cliente: <strong>R$ '+converteCentavoEmReal(Math.ceil((valor*margem)/rateio_qtd))+'</strong> (x'+rateio_qtd+' cliente(s))');
+    $(sender).parents('tr').eq(0).children('td:eq(1)').html('R$ '+Dobbin.converteCentavoEmReal(valor*margem)+' [LUCRO DO RATEIO: <span class="text-success">R$ '+Dobbin.converteCentavoEmReal(lucRateio)+'</span> ]'+
+    '<br>Valor p/ cliente: <strong>R$ '+Dobbin.converteCentavoEmReal(Math.ceil((valor*margem)/rateio_qtd))+'</strong> (x'+rateio_qtd+' cliente(s))');
 
     if(rateio_qtd < clientes) {
         // Calcula o valor de lucro das poltronas livres.
-        $(sender).parents('tr').eq(0).children('td:eq(1)').append('<hr> <span class="text-success">+ R$ '+converteCentavoEmReal( lucPoltronaLivre ) + '</span> &nbsp; '+
+        $(sender).parents('tr').eq(0).children('td:eq(1)').append('<hr> <span class="text-success">+ R$ '+Dobbin.converteCentavoEmReal( lucPoltronaLivre ) + '</span> &nbsp; '+
         '<small>(LUCRO POLTRONAS LIVRES: <span class="font-weight-bold">'+(clientes - rateio_qtd)+'</span>)</small>'+
-        '<br><span class="text-primary font-weight-bold">= R$ '+ converteCentavoEmReal( lucPoltronaLivre + lucRateio) +'</span> &nbsp; <small>(LUCRO TOTAL PREVISTO)</small>');
+        '<br><span class="text-primary font-weight-bold">= R$ '+ Dobbin.converteCentavoEmReal( lucPoltronaLivre + lucRateio) +'</span> &nbsp; <small>(LUCRO TOTAL PREVISTO)</small>');
     }
 
 }

@@ -35,6 +35,10 @@ $router->map('GET', '/pdf/[a:pagina]/[i:id]/[a:subpagina]/[download|:opt3]?/[:op
             return ConGerador::roteiros($p);
         break;
 
+        case 'venda':
+            return ConGerador::vendas($p);
+        break;
+
         default: header('HTTP/1.1 404'); die; break;
     }
 });
@@ -97,6 +101,7 @@ $router->map('POST', '/vendas/database/get/devolvidas', 'ControllerPrincipal#ven
 $router->map('POST', '/vendas/database/get/estornadas', 'ControllerPrincipal#vendasDatabaseDevolvidas'); // JSON
 $router->map('POST', '/vendas/database/load/venda/[i:vid]', 'ControllerJan#vendasLoad');
 $router->map('POST', '/vendas/database/load/venda/[i:vid]/situacao', 'ControllerJan#vendasMudarSituacao');
+$router->map('POST', '/vendas/database/load/venda/[i:vid]/multas', 'ControllerJan#vendasMudarMultas');
 
 
 $router->map('POST', '/parceiros', 'ControllerPrincipal#parceiros');
@@ -113,7 +118,11 @@ $router->map('POST', '/usuarios/ver/[i:id]', 'ControllerPrincipal#usuariosVer');
 $router->map('POST', '/usuarios/database', 'ControllerPrincipal#usuariosDatabase');
 
 
+$router->map('POST', '/financeiro', 'ControllerPrincipal#financeiro');
 $router->map('POST', '/financeiro/novo', 'ControllerPrincipal#financeiroNovo');
+$router->map('POST', '/financeiro/listar', 'ControllerPrincipal#financeiroListar', 'financeiroListar');
+$router->map('POST', '/financeiro/ver/[i:ano]/[i:mes]/[a:name]', 'ControllerPrincipal#financeiroVer', 'financeiroVer');
+$router->map('POST', '/financeiro/relatorio', 'ControllerPrincipal#financeiroRelatorio');
 
 $router->map('POST', '/log', 'ControllerPrincipal#log');
 $router->map('POST', '/log/[i:qtd]', 'ControllerPrincipal#log');
@@ -201,7 +210,19 @@ $router->addRoutes(array(
     array('POST', $prefix.'vendas/[i:id]/situacao/editar', 'ControllerForm#vendasAlterarSituacao'),
     array('POST', $prefix.'vendas/[i:id]/obs/editar', 'ControllerForm#vendasAlterarObservacao'),
     array('POST', $prefix.'vendas/[i:id]/definetermos/[i:opt]', 'ControllerForm#vendasDefineTermos'),
+    array('POST', $prefix.'vendas/[i:id]/setmulta', 'ControllerForm#vendasSetMulta'),
 
+    
+    // FINANCEIRO!
+    array('POST', $prefix.'financeiro/novo', 'ControllerForm#financeiroNovo'),
+    array('POST', $prefix.'financeiro/check', 'ControllerForm#financeiroCheck'),
+    array('POST', $prefix.'financeiro/salvar', 'ControllerForm#financeiroSalvar'),
+    array('POST', $prefix.'financeiro/fechar', 'ControllerForm#financeiroFechar'),
+    array('POST', $prefix.'financeiro/apagar', 'ControllerForm#financeiroApagar'),
+    array('POST', $prefix.'financeiro/relatorio', 'ControllerForm#financeiroRelatorio'),
+    array('POST', $prefix.'financeiro/loadListaReceita', 'ControllerForm#financeiroLoadListaReceita'),
+    array('POST', $prefix.'financeiro/loadListaDespesa', 'ControllerForm#financeiroLoadListaDespesa'),
+    array('POST', $prefix.'financeiro/loadVendaInfo', 'ControllerForm#financeiroLoadVendaInfo'),
     
 
 ));

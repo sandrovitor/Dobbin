@@ -349,135 +349,177 @@ class Venda extends Master
                         return false;
                     }
 
-                    // Verifica quantidade de parcelas.
-                    // Se for última parcela, o TOTAL_PAGO + VALOR_PARCELA precisa ser igual ao VALOR_TOTAL
-                    if((int)$this->dados->parcelas - (int)$this->dados->parcelas_pagas == 1) {
-                        if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] < (int)$this->dados->valor_total) {
-                            // O valor não pode ser menor.
-                            return 'Valor da parcela é baixo. Na última (ou única) parcela, o valor da parcela precisa cobrir o valor restante do total da compra.';
-                        } else if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] > (int)$this->dados->valor_total) {
-                            // O valor pago é maior que o esperado.
-                            return 'Valor da parcela é alto. O valor da parcela extrapolou o valor da compra. Não permitido.';
-                        }
+                    // ############################################ reescrita
 
-                        // Organiza os dados para persistir no banco O ÚLTIMO PAGAMENTO.
-                        $detalhes = json_decode($this->dados->detalhes_pagamento);
-                        if($detalhes == NULL) {
-                            $detalhes = [];
-                        }
-
-                        array_push($detalhes, [
-                            'valor' => (int)$outro['valor_parcela'],
-                            'parcela' => (int)$this->dados->parcelas_pagas+1,
-                            'data' => date('Y-m-d H:i:s')
-                        ]);
-
-                        // Persiste
-                        try{
-                            $abc = $this->pdo->prepare("UPDATE vendas SET status = :status, parcelas_pagas = :parc, ".
-                            "total_pago = :t_pag, detalhes_pagamento = :d_pag, data_pagamento = NOW() WHERE id = $this->id");
-                            $abc->bindValue(':status', 'Paga', \PDO::PARAM_STR); // Concluiu o pagamento.
-                            $abc->bindValue(':parc', (int)$this->dados->parcelas_pagas+1, \PDO::PARAM_INT);
-                            $abc->bindValue(':t_pag', (int)$this->dados->total_pago + (int)$outro['valor_parcela'], \PDO::PARAM_INT);
-                            $abc->bindValue(':d_pag', json_encode($detalhes), \PDO::PARAM_STR);
-                            $abc->execute();
-                            /**
-                             * LOG
-                             */
-                            $log = new LOG();
-                            $log->novo('Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>Paga</b>.', $_SESSION['auth']['id'], 2);
-                            /**
-                             * ./LOG
-                             */
-                            return true;
-                        } catch(\PDOException $e) {
-                            error_log($e->getMessage(), 0);
-                            return false;
-                        }
-
-                    } else if((int)$this->dados->parcelas - (int)$this->dados->parcelas_pagas <= 0) {
+                    // Verifica a quantidade de parcelas
+                    if((int)$this->dados->parcelas - (int)$this->dados->parcelas_pagas <= 0) { // TODA PARCELAS PAGAS
                         // ERRO: A quantidade de parcelas extrapolou.
                         return 'A quantidade de parcelas já extrapolou. Não é possível mais fazer pagamentos. Solicite que o desenvolvedor '.
                         'aumente a quantidade de parcelas manualmente no Banco de Dados.';
-                    } else {
-                        // Ainda restam parcelas.
-
-                        $detalhes = json_decode($this->dados->detalhes_pagamento);
-                        if($detalhes == NULL) {
-                            $detalhes = [];
+                    } else if((int)$this->dados->parcelas - (int)$this->dados->parcelas_pagas == 1) { // ÚLTIMA PARCELA
+                        if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] < ( (int)$this->dados->valor_total + (int)$this->dados->multas )) {
+                            // O valor não pode ser menor.
+                            return 'Valor da parcela é baixo. Na última (ou única) parcela, o valor da parcela precisa cobrir o valor restante do total da compra (e possíveis multas).';
                         }
+                    } else { // DEMAIS PARCELAS: PRIMEIRA ATÉ PENÚLTIMA
+                        // Continua. Nada de diferente
+                    }
 
-                        // Verifica se a parcela paga cobre todo o valor da compra:
-                        // TOTAL_PAGO + VALOR_PARCELA é maior ao VALOR_TOTAL
-                        if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] > (int)$this->dados->valor_total) {
-                            // O valor pago é maior que o esperado.
-                            return 'Valor da parcela é alto. O valor da parcela extrapolou o valor da compra. Não permitido.';
-                        } else if((int)$this->dados->total_pago + (int)$outro['valor_parcela'] == (int)$this->dados->valor_total) {
-                            // O valor da parcela cobriu todo o valor.
-                            // A venda deve ser definida como PAGA;
-                            // O campo PARCELAS_PAGAS deve ser igual a PARCELAS;
+                    /**
+                     * Fluxo de pagamento:
+                     * O valor total da compra deve ser QUITADO; em seguida, o valor da multa deve ser QUITADO.
+                     * Por último, o excedente deve ser transformado em créditos.
+                     * 
+                     * Variáveis:
+                     *      $vParcela (Valor da parcela recebida),
+                     *      $vCompra (destinado a cobrir o valor da compra),
+                     *      $vMulta (destinado a cobrir o valor da multa), 
+                     *      $vExc (destinado ao crédito do cliente).
+                     * 
+                     * Ordem de verificação:
+                     * 1) VALOR TOTAL == VALOR PAGO
+                     *      Não há nada a cobrar. Valor destinado à multa e crédito.
+                     * 2) VALOR TOTAL - VALOR PAGO >= VALOR DA PARCELA:
+                     *      Paga o valor integral da parcela. Multa Paga = 0; Credito = 0.
+                     * 3) VALOR TOTAL - VALOR PAGO < VALOR DA PARCELA: 
+                     *      Separa o valor da parcela.
+                     *      
+                     * 
+                     * 4) VALOR DA PARCELA > 0 && MULTAS > MULTAS PAGO:
+                     *      Há multas para pagar
+                     *      4.1) VALOR DA PARCELA > ( MULTAS - MULTAS PAGO )
+                     *          Separa o valor da multa e deixa o excedente.
+                     *      3.2) VALOR DA PARCELA <= ( MULTAS - MULTAS PAGO )
+                     *          Separa o valor da multa. Excedente em 0.
+                     * 
+                     */
+                    
+                    $vParcela = (int)$outro['valor_parcela'];
+                    $vMulta = 0;
+                    $vExc = 0;
 
-                            // Organiza dados para persistir no banco.
-                            
-
-                            array_push($detalhes, [
-                                'valor' => (int)$outro['valor_parcela'],
-                                'parcela' => (int)$this->dados->parcelas_pagas+1,
-                                'data' => date('Y-m-d H:i:s')
-                            ]);
-
-                            // Adiciona informação zerada nas parcelas seguintes.
-                            for($i = (int)$this->dados->parcelas_pagas+2; $i <= (int)$this->dados->parcelas; $i++) {
-                                array_push($detalhes, [
-                                    'valor' => 0,
-                                    'parcela' => $i,
-                                    'data' => date('Y-m-d H:i:s')
-                                ]);
-                            }
-
-                            $parcPagas = (int)$this->dados->parcelas; // PARCELAS_PAGAS
-                            $situ = 'Paga'; // STATUS
-                            $dataPagamento = ', data_pagamento = NOW() ';
-                            $logStr = 'Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>Paga</b>.'; // MENSAGEM DO LOG
-                        } else {
-                            // Pagamento de uma parcela normalmente.
-                            // Valor mínimo: R$ 0,01 ou (1 centavo).
-
-                            array_push($detalhes, [
-                                'valor' => (int)$outro['valor_parcela'],
-                                'parcela' => (int)$this->dados->parcelas_pagas+1,
-                                'data' => date('Y-m-d H:i:s')
-                            ]);
-
-                            $parcPagas = (int)$this->dados->parcelas_pagas+1; // PARCELAS_PAGAS
-                            $situ = 'Pagando'; // STATUS
-                            $dataPagamento = '';
-                            $logStr = 'Lançou pagamento de parcela (<b>'.$parcPagas.'</b> de <b>'.$this->dados->parcelas.'</b>) da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b>.'; // MENSAGEM DO LOG
-                        }
-
-                        // Persiste
-                        try{
-                            $abc = $this->pdo->prepare("UPDATE vendas SET status = :status, parcelas_pagas = :parc, ".
-                            "total_pago = :t_pag, detalhes_pagamento = :d_pag $dataPagamento WHERE id = $this->id");
-                            $abc->bindValue(':status', $situ, \PDO::PARAM_STR); // Concluiu o pagamento.
-                            $abc->bindValue(':parc', $parcPagas, \PDO::PARAM_INT);
-                            $abc->bindValue(':t_pag', (int)$this->dados->total_pago + (int)$outro['valor_parcela'], \PDO::PARAM_INT);
-                            $abc->bindValue(':d_pag', json_encode($detalhes), \PDO::PARAM_STR);
-                            $abc->execute();
-                            /**
-                             * LOG
-                             */
-                            $log = new LOG();
-                            $log->novo('', $_SESSION['auth']['id'], 2);
-                            /**
-                             * ./LOG
-                             */
-                            return true;
-                        } catch(\PDOException $e) {
-                            error_log($e->getMessage(), 0);
-                            return false;
+                    if( (int)$this->dados->valor_total == (int)$this->dados->total_pago ) { // 1)
+                        $vCompra = 0;
+                    } else if((int)$this->dados->valor_total - (int)$this->dados->total_pago >= $vParcela) { // 2)
+                        $vCompra = (int)$outro['valor_parcela'];
+                        $vParcela = 0;
+                    } else if((int)$this->dados->valor_total - (int)$this->dados->total_pago < $vParcela) { // 3)
+                        $vCompra = ( (int)$this->dados->valor_total - (int)$this->dados->total_pago );
+                        $vParcela = $vParcela - $vCompra;
+                    }
+                    
+                    if($vParcela > 0 && (int)$this->dados->multas > (int)$this->dados->multas_pago) { // 4)
+                        if($vParcela > ( (int)$this->dados->multas - (int)$this->dados->multas_pago )) { // 4.1)
+                            $vMulta = (int)$this->dados->multas - (int)$this->dados->multas_pago;
+                            $vExc = $vParcela - $vMulta; // Excedente.
+                        } else if($vParcela <= ( (int)$this->dados->multas - (int)$this->dados->multas_pago )) { // 4.2)
+                            $vMulta = $vParcela;
+                            $vParcela = 0; // Sem excedente. Parcela esgotou.
                         }
                     }
+
+
+                    // Organiza os dados para persistir no banco O ÚLTIMO PAGAMENTO.
+                    $detalhes = json_decode($this->dados->detalhes_pagamento);
+                    if($detalhes == NULL) {
+                        $detalhes = [];
+                    }
+
+                    array_push($detalhes, [
+                        'valor' => (int)$outro['valor_parcela'], // Informa o valor integral da parcela paga.
+                        'parcela' => (int)$this->dados->parcelas_pagas+1,
+                        'data' => date('Y-m-d H:i:s')
+                    ]);
+
+                    /**
+                     * Verifica se esse pagamento cobre todas as outras parcelas.
+                     * Se SIM, adiciona informação zerada nas parcelas seguintes.
+                     */
+
+                    if( ((int)$this->dados->total_pago + (int)$this->dados->multas_pago) + (int)$outro['valor_parcela'] >= ((int)$this->dados->valor_total + (int)$this->dados->multas)) {
+                        // COBRINDO TODAS AS PARCELAS
+                        for($i = (int)$this->dados->parcelas_pagas+2; $i <= (int)$this->dados->parcelas; $i++) {
+                            array_push($detalhes, [
+                                'valor' => 0,
+                                'parcela' => $i,
+                                'data' => date('Y-m-d H:i:s')
+                            ]);
+                        }
+
+                        $parcPagas = (int)$this->dados->parcelas; // PARCELAS_PAGAS
+                        $situ = 'Paga'; // STATUS
+                        $dataPagamento = 'data_pagamento = NOW(), ';
+                        $logStr = 'Alterou a situação da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b> para <b>Paga</b>.'; // MENSAGEM DO LOG
+                    } else {
+                        $parcPagas = (int)$this->dados->parcelas_pagas+1; // PARCELAS_PAGAS
+                        $situ = 'Pagando'; // STATUS
+                        $dataPagamento = '';
+                        $logStr = 'Lançou pagamento de parcela (<b>'.$parcPagas.'</b> de <b>'.$this->dados->parcelas.'</b>) da venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a>: <b>'.\strtoupper($atual).'</b>.'; // MENSAGEM DO LOG
+                    }
+                    
+
+                    // Persiste
+                    $this->pdo->beginTransaction();
+
+                    try{
+                        /**  
+                         * Persiste a parcela paga, multa paga e excedente, se houver.
+                         * 
+                        */
+                        
+                        $abc = $this->pdo->prepare("UPDATE vendas SET status = :status, parcelas_pagas = :parc, ".
+                        "total_pago = :t_pag, detalhes_pagamento = :d_pag, $dataPagamento".
+                        "multas_pago = :m_pag WHERE id = :id");
+                        $abc->bindValue(':id', $this->id, \PDO::PARAM_INT);
+                        $abc->bindValue(':status', $situ, \PDO::PARAM_STR); // Situação da venda: Pagando ou Paga
+                        $abc->bindValue(':parc', $parcPagas, \PDO::PARAM_INT);
+                        //$abc->bindValue(':t_pag', (int)$this->dados->total_pago + (int)$outro['valor_parcela'], \PDO::PARAM_INT);
+                        $abc->bindValue(':t_pag', (int)$this->dados->total_pago + $vCompra, \PDO::PARAM_INT); // TOTAL PAGO
+                        $abc->bindValue(':m_pag', (int)$this->dados->multas_pago + $vMulta, \PDO::PARAM_INT); // MULTA PAGO
+                        $abc->bindValue(':d_pag', json_encode($detalhes), \PDO::PARAM_STR);
+                        $abc->execute();
+                        /**
+                         * LOG
+                         */
+                        $log = new LOG();
+                        /**
+                         * ./LOG
+                         */
+
+
+                        // Adiciona créditos ao cliente, se houver.
+                        if($vExc > 0) {
+                            // Há créditos para adicionar ao cliente.
+                            $abc = $this->pdo->query("SELECT * FROM clientes WHERE id = ".$this->dados->cliente_id);
+                            if($abc->rowCount() == 0) {
+                                // Cliente não existe. Faz um RollBack no banco de dados e retorna erro.
+                                $this->pdo->rollBack();
+
+                                $log->novo('O cliente de ID: '.$this->dados->cliente_id.' não foi encontrado, por isso não pode receber créditos. '.
+                                'A venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">#'. $this->id.'.</a> não poderá receber valor a mais.',$_SESSION['auth']['id'], 2);
+
+                                return false;
+                            } else {
+                                // Cliente existe. Lança créditos no cliente.
+                                $abc = $this->pdo->query("UPDATE clientes SET credito = credito + $vExc WHERE id = ".$this->dados->cliente_id);
+
+                            }
+                        }
+
+                        
+
+                         
+                        $log->novo($logStr, $_SESSION['auth']['id'], 2); // LOG
+                        $this->pdo->commit();
+                        return true;
+                    } catch(\PDOException $e) {
+                        error_log('Erro ao definir situação da venda (#'.$this->id.'): '.$e->getMessage(), 0);
+                        $this->pdo->rollBack();
+                        return false;
+                    }
+
+                    // ############################################ ./reescrita
+
                 }
             break;
 
@@ -612,6 +654,38 @@ class Venda extends Master
                 }
             break;
 
+            /**
+             * caso especial
+             */
+            case 'PagarCredito':
+                if($atual == 'Cancelada' || $atual == 'Devolvida' || $atual == 'Paga') {
+                    return false;
+                } else {
+                    // Faz o pagamento com o crédito do cliente.
+                    $ret = $this->pagarComCredito();
+
+                    if($ret === true) {
+                        // Recarrega os dados da venda e verifica se é necessário definir a venda como PAGA.
+                        $this->loadInfoBD();
+
+                        $valorRestante = (int)$this->dados->valor_total - (int)$this->dados->total_pago;
+                        $valorRestante += ((int)$this->dados->multas - (int)$this->dados->multas_pago);
+
+                        if($valorRestante > 0) {
+                            // Ainda há valor pendente. Altera situação "Pagando".
+                            $abc = $this->pdo->query("UPDATE vendas SET status = 'Pagando' WHERE id = $this->id");
+                        } else {
+                            // Não há pendências. Altera situação para "Paga".
+                            $abc = $this->pdo->query("UPDATE vendas SET status = 'Paga' WHERE id = $this->id");
+                        }
+
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            break;
+
             default:
                 return false;
             break;
@@ -663,5 +737,141 @@ class Venda extends Master
         }
 
         return true;
+    }
+
+    /**
+     * Define o valor da multa para a venda.
+     * 
+     * @param int $valor Valor em centavos da multa.
+     * 
+     * @return bool
+     */
+    public function setMulta(int $valor = 0)
+    {
+        if($this->dados == null) {
+            return false;
+        }
+
+        if($valor < 0) {
+            return false;
+        } else {
+            try {
+                $abc = $this->pdo->query("UPDATE vendas SET multas = $valor WHERE id = $this->id");
+                return true;
+            } catch(\PDOException $e) {
+                error_log('Tentativa de definir multa em venda, retorno erro: '.$e->getMessage());
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Paga venda com crédito do cliente.
+     * 
+     * @return bool Se o pagamento foi realizado com sucesso, retorna TRUE; caso contrário, retorna FALSE.
+     */
+    protected function pagarComCredito()
+    {
+        if($this->dados == null) {
+            return false;
+        }
+
+        $cl = new Cliente($this->dados->cliente_id);
+        $cliente = $cl->getDados();
+
+        if((int)$cliente->credito == 0) {
+            // Cliente não tem crédito.
+            return false;
+        } else {
+            // Cliente tem crédito
+            $credito = (int)$cliente->credito;
+
+            // Inicia transação no banco de dados.
+            $this->pdo->beginTransaction();
+            try {
+                $detAtual = [
+                    'valor' => 0,
+                    'parcela' => 0,
+                    'data' => date('Y-m-d'),
+                    'forma' => 'CreditoConta'
+                ];
+
+                // Verifica o valor restante da venda para ser quitado com o crédito.
+                $valorRestante = (int)$this->dados->valor_total - (int)$this->dados->total_pago;
+                if($valorRestante == 0) {
+                    // Não há nada para pagar.
+                } else {
+                    // Há valor pendente.
+                    if($credito >= $valorRestante) {
+                        // O crédito cobre o valor restante.
+                        $abc = $this->pdo->prepare("UPDATE vendas SET total_pago = :tPago WHERE id = $this->id");
+                        $abc->bindValue(':tPago', (int)$this->dados->total_pago + $valorRestante, \PDO::PARAM_INT);
+                        $abc->execute();
+
+                        $credito -= $valorRestante;
+                        $detAtual['valor'] += $valorRestante;
+
+                    } else {
+                        // O crédito não cobre todo o valor restante.
+                        $abc = $this->pdo->prepare("UPDATE vendas SET total_pago = :tPago WHERE id = $this->id");
+                        $abc->bindValue(':tPago', (int)$this->dados->total_pago + $credito, \PDO::PARAM_INT);
+                        $abc->execute();
+
+                        $detAtual['valor'] += $credito;
+                        $credito = 0;
+                    }
+                }
+
+
+                // Verifica se há multas e se há crédito para quitar a divida.
+                if($credito > 0 && (int)$this->dados->multas - (int)$this->dados->multas_pago > 0) {
+                    // Há crédito disponível e há multa pendente de quitação.
+                    $valorRestante = (int)$this->dados->multas - (int)$this->dados->multas_pago;
+
+                    if($credito >= $valorRestante) {
+                        // O crédito cobre o valor restante.
+                        $abc = $this->pdo->prepare("UPDATE vendas SET multas_pago = :mPago WHERE id = $this->id");
+                        $abc->bindValue(':mPago', (int)$this->dados->multas_pago + $valorRestante, \PDO::PARAM_INT);
+                        $abc->execute();
+
+                        $credito -= $valorRestante;
+                        $detAtual['valor'] += $valorRestante;
+                    } else {
+                        // O crédito não cobre todo o valor restante.
+                        $abc = $this->pdo->prepare("UPDATE vendas SET multas_pago = :mPago WHERE id = $this->id");
+                        $abc->bindValue(':mPago', (int)$this->dados->multas_pago + $credito, \PDO::PARAM_INT);
+                        $abc->execute();
+
+                        $detAtual['valor'] += $credito;
+                        $credito = 0;
+                    }
+                }
+
+                // Salva o detalhes do pagamento, informação de crédito.
+                $detalhes = json_decode($this->dados->detalhes_pagamento);
+                if($detalhes == NULL) {
+                    $detalhes = [];
+                }
+
+                array_push($detalhes, $detAtual);
+                $abc = $this->pdo->prepare("UPDATE vendas SET detalhes_pagamento = :det WHERE id = $this->id");
+                $abc->bindValue(':det', json_encode($detalhes), \PDO::PARAM_STR);
+                $abc->execute();
+
+                $abc = $this->pdo->query("UPDATE clientes SET credito = $credito WHERE id = ".$this->dados->cliente_id);
+
+                $log = new LOG();
+                $log->novo('A venda <a href="javascript:void(0)" onclick="getVenda('.$this->id.')">(#'.$this->id.')</a> recebeu um pagamento com o crédito do cliente.', $_SESSION['auth']['id'], 2);
+
+
+                $this->pdo->commit();
+                return true;
+            } catch(\PDOException $e) {
+                error_log("Não foi possível pagar venda (#$this->id) com crédito: $e->getMessage()");
+                $this->pdo->rollBack();
+                return false;
+            }
+            
+        }
     }
 }

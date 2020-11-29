@@ -420,7 +420,9 @@ $(document).ready(function(){
 
         switch(tipo) {
             case 'textarea':
-                alvo.after('<textarea class="form-control form-control-sm" rows="2" dobbin-editor-campo>'+alvo.text().trim()+'</textarea>');
+                alvo.after('<textarea class="form-control form-control-sm" rows="2" dobbin-editor-campo>'+alvo.text().trim()+'</textarea>'+
+                '<button type="button" class="btn btn-success btn-sm mr-1 mt-1" dobbin-editor-salva>Salvar</button>'+
+                '<button type="button" class="btn btn-secondary btn-sm mr-1 mt-1" dobbin-editor-cancela>Cancelar</button>');
                 alvo.slideUp('fast');
                 break;
 
@@ -444,45 +446,67 @@ $(document).ready(function(){
 
         if(ev.which == 13) { // Enter
             // Salva novo valor
-            let dest = alvo.prev();
-
-            if(dest.attr('dobbin-url-form') != undefined && dest.attr('dobbin-url-form') != '') {
-                // Foi definido um formulário para salvar o valor no BD.
-                let obj = {};
-                if(dest.attr('dobbin-campo-nome') != undefined && dest.attr('dobbin-campo-nome') != '') {
-                    // Foi definido um nome do campo para envio do formulário.
-                    obj[dest.attr('dobbin-campo-nome')] = alvo.val();
-                } else {
-                    // Não foi definido nome do campo. Usa o padrão "valor".
-                    obj['valor'] = alvo.val();
-                }
-
-                // Envia a variável para o formulário via POST (utiliza o PREFIX POST).
-                $.post(PREFIX_POST+dest.attr('dobbin-url-form'), obj, function(res){
-                    if(res.success) {
-                        alvo.prev().text(alvo.val());
-                        alvo.prev().fadeIn('fast');
-                        alvo.remove();
-                    } else {
-                        alerta(res.mensagem+'<br>Aperte ESC para encerrar a edição.', 'Não foi possível salvar.', 'warning');
-                        alvo.focus();
-                    }
-                },'json').
-                fail(function(evento){nativePOSTFail(evento);});
-            } else {
-                // Não precisa enviar dados para formulário.
-                alvo.prev().text(alvo.val());
-                alvo.prev().fadeIn('fast');
-                alvo.remove();
-            }
+            alvo.next(); // Botão de salvar.
             
         } else if(ev.which == 27) { // ESC ou Escape
             // Retorna valor default
-            alvo.prev().text( alvo[0].defaultValue );
-            alvo.prev().fadeIn('fast');
-            alvo.remove();
-
+            alvo.next().next(); // Botão de cancelar.
         }
+    });
+
+    $(document).on('click', '[dobbin-editor-salva]', function(ev){
+        let alvo = $(ev.currentTarget).siblings('[dobbin-editor-campo]');
+        let valor;
+
+        let dest = alvo.prev();
+
+        if(dest.attr('dobbin-url-form') != undefined && dest.attr('dobbin-url-form') != '') {
+            // Foi definido um formulário para salvar o valor no BD.
+            let obj = {};
+            if(dest.attr('dobbin-campo-nome') != undefined && dest.attr('dobbin-campo-nome') != '') {
+                // Foi definido um nome do campo para envio do formulário.
+                obj[dest.attr('dobbin-campo-nome')] = alvo.val();
+            } else {
+                // Não foi definido nome do campo. Usa o padrão "valor".
+                obj['valor'] = alvo.val();
+            }
+
+            // Envia a variável para o formulário via POST (utiliza o PREFIX POST).
+            $.post(PREFIX_POST+dest.attr('dobbin-url-form'), obj, function(res){
+                if(res.success) {
+                    alvo.prev().text(alvo.val());
+                    alvo.prev().fadeIn('fast');
+                    alvo.next().next().remove();
+                    alvo.next().remove();
+                    alvo.remove();
+                } else {
+                    alerta(res.mensagem+'<br>Aperte ESC para encerrar a edição.', 'Não foi possível salvar.', 'warning');
+                    alvo.focus();
+                }
+            },'json').
+            fail(function(evento){nativePOSTFail(evento);});
+        } else {
+            // Não precisa enviar dados para formulário.
+            alvo.prev().text(alvo.val());
+            alvo.prev().fadeIn('fast');
+            
+            alvo.next().next().remove();
+            alvo.next().remove();
+            alvo.remove();
+        }
+    });
+
+    $(document).on('click', '[dobbin-editor-cancela]', function(ev){
+        let alvo = $(ev.currentTarget).siblings('[dobbin-editor-campo]');
+        let valor;
+
+        alvo.prev().text( alvo[0].defaultValue );
+        alvo.prev().fadeIn('fast');
+
+        alvo.next().next().remove();
+        alvo.next().remove();
+        alvo.remove();
+
     });
 
 });

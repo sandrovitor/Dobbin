@@ -9,6 +9,7 @@ Use SGCTUR\Usuario;
 Use SGCTUR\Cryptor;
 Use SGCTUR\LOG;
 Use SGCTUR\Erro;
+use SGCTUR\Financeiro;
 Use SGCTUR\Parceiro;
 Use SGCTUR\Roteiro;
 Use SGCTUR\Venda;
@@ -1537,6 +1538,22 @@ class ControllerPrincipal
      * FINANCEIRO
      * 
      */
+    static function financeiro($p)
+    {
+        self::validaConexao(5);
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-balance-scale"></i> Financeiro',
+            'description' => 'Monitore a saúde financeira de sua agência.',
+            'page' => $blade->run("financeiro.financeiro", array(
+                
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
     static function financeiroNovo($p)
     {
         self::validaConexao(5);
@@ -1549,6 +1566,86 @@ class ControllerPrincipal
                 
             ))
         );
+
+        return json_encode($retorno);
+    }
+
+    static function financeiroListar($p)
+    {
+        self::validaConexao(5);
+
+        $financeiro = new Financeiro();
+        $folhas = $financeiro->getAllFolhas();
+
+        $blade = self::bladeStart();
+
+        $retorno = array(
+            'title' => '<i class="fas fa-balance-scale"></i> Financeiro > Listar',
+            'description' => 'Encontre os balanços financeiros da sua empresa.',
+            'page' => $blade->run("financeiro.financeiroListar", array(
+                'folhas' => $folhas,
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function financeiroVer($p)
+    {
+        self::validaConexao(5);
+        $financeiro = new Financeiro();
+
+        $folha = $financeiro->getFolha((int)$p['ano'], (int)$p['mes'], $p['name']);
+
+        if($folha === false) {
+            // Folha não encontrada. Redireciona.
+            header('Location: '. self::router()->generate('financeiroListar'));
+            die;
+        }
+
+        // Resgata o arquivo.
+        if(file_exists(__DIR__ . '/../../storage/financeiro/' . $folha->nomearq)) {
+            $hand = fopen(__DIR__ . '/../../storage/financeiro/' . $folha->nomearq,"r");
+            $content = fread($hand, filesize(__DIR__ . '/../../storage/financeiro/' . $folha->nomearq));
+            fclose($hand);
+
+            $folhaContent = json_decode($content);
+        } else {
+            header('HTTP/1.1 404');
+            http_response_code(404);
+            exit();
+        }
+        
+
+        $blade = self::bladeStart();
+
+        $retorno = array(
+            'title' => '<i class="fas fa-balance-scale"></i> Financeiro > Ver > Folha '.
+                $folha->ano.'-'.$folha->mes,
+            'description' => 'Encontre os balanços financeiros da sua empresa.',
+            'page' => $blade->run("financeiro.financeiroVer", array(
+                'fDados' => $folha,
+                'folha' => $folhaContent,
+                'folhaJson' => $content
+            ))
+        );
+
+        return json_encode($retorno);
+    }
+
+    static function financeiroRelatorio($p)
+    {
+        self::validaConexao(5);
+
+        $blade = self::bladeStart();
+        $retorno = array(
+            'title' => '<i class="fas fa-balance-scale"></i> Financeiro > Relatório por período',
+            'description' => 'Relatório financeiro por período.',
+            'page' => $blade->run("financeiro.financeiroRelatorio", array(
+                
+            ))
+        );
+
 
         return json_encode($retorno);
     }

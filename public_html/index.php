@@ -16,6 +16,9 @@ require_once('../app/Controllers/ControllerJan.php');
 require_once('../app/Controllers/ConGerador.php');
 @session_start(); // Inicia sessão em todas as páginas/requisições.
 
+// CONSTANTES
+define('DIR_FINANCEIRO', __DIR__.'/../storage/financeiro/');
+
 date_default_timezone_set('America/Bahia');
 
 // Inicia o roteador

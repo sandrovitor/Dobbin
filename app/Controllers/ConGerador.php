@@ -137,6 +137,40 @@ class ConGerador
 
     }
 
+    static function vendas($p)
+    {
+        self::validaConexao(3);
+        //var_dump($p);
+
+        // Verifica tipo de documento.
+        if($p['subpagina'] == 'comprovante')
+        {
+            // Recupera vendas
+            $venda = new Venda($p['id']);
+            $v = $venda->getDados();
+            
+            if($v === false) {
+                header('HTTP/1.1 404'); die;
+            }
+
+            // Gera o documento do comprovante.
+            $blade = self::bladeStart();
+            $documento = $blade->run("documentos.comprovante", array('v' => $v, 'venda' => $venda, 'system' => $venda->system));
+            $documentoNome = 'COMPROVANTE '.$v->id;
+
+            if(isset($p['opt3']) && $p['opt3'] == 'download') {
+                // Envia para download
+                return self::downloadPDF($documento, $documentoNome);
+            } else {
+                // Envia para exibição em tela
+                return self::mostraPDF($documento, $documentoNome);
+            }
+
+        } else {
+            header('HTTP/1.1 404'); die;
+        }
+    }
+
     static function roteiros($p)
     {
         self::validaConexao(2);

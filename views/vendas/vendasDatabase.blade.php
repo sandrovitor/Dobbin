@@ -44,10 +44,10 @@
                 BASE DE DADOS - Vendas
             </div>
             <div class="card-body database" style="overflow-x:auto;">
-            @php
-            $hoje = new DateTime();
+                @php
+                $hoje = new DateTime();
 
-            @endphp
+                @endphp
                 <div class="mb-3">
                     <div class="alert alert-info small py-1 px-2 mb-2">
                         <strong>OBS:</strong> As últimas 1000 vendas serão exibidas (50 por página). Para ver vendas mais antigas, consulte informações de um <a href="#clientes">cliente</a> ou de um <a href="#roteiros">roteiro</a>.<br>
@@ -87,7 +87,7 @@
                         @php
                         $pagina++;
                         $itensPagina = 50;
-                        @endphp;
+                        @endphp
                         @endif
 
 

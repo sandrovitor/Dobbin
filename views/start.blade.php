@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
     <link rel="stylesheet" href="/css/geral.css?v{{$sistema->version}}">
     <link rel="stylesheet" href="/css/alert.css?v{{$sistema->version}}">
+    <link rel="stylesheet" href="/lib/dhtmlx/codebase/suite.min.css">
     <link rel="icon" href="/media/images/logo64i.png">
     
 </head>
@@ -140,6 +141,8 @@
                         <button class="btn btn-dropdown btn-sm"><i class="fas fa-angle-right fa-fw"></i></button>
                         <ul style="display:none;">
                             <li><a class="nav-link" href="#financeiro/novo">Novo Balanço</a></li>
+                            <li><a class="nav-link" href="#financeiro/listar">Listar Balanços</a></li>
+                            <li><a class="nav-link" href="#financeiro/relatorio">Relatório p/ período</a></li>
                         </ul>
                     </li>
                     <li class="nav-item"><a class="nav-link" href="#log"><i class="fas fa-info-circle fa-fw"></i> LOG</a></li>
@@ -1394,6 +1397,17 @@
     <script src="/js/popper.min.js"></script>
     <script src="/js/bootstrap-4.3.1.min.js"></script>
     <script src="/js/alert.min.js?v{{$sistema->version}}"></script>
+    <script src="/lib/dhtmlx/codebase/suite.min.js"></script>
+    <script src="/lib/highcharts/highcharts.js"></script>
+
+    @if(DOBBIN_LIM_BALANCOS_EXPORTAR == true)
+    <script src="/lib/highcharts/modules/exporting.js"></script>  
+    <script src="/lib/highcharts/modules/offline-exporting.js"></script>  
+    <script src="/lib/highcharts/modules/export-data.js"></script>
+    @endif
+
     <script src="/js/scripts.min.js?v{{$sistema->version}}"></script>
     <script src="/js/dobbinNative.min.js?v{{$sistema->version}}"></script>
+    <script src="/js/Financeiro.min.js?v{{$sistema->version}}"></script>
+    
 </body>

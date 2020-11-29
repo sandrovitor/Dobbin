@@ -8,6 +8,7 @@ Use SGCTUR\Coordenador;
 Use SGCTUR\Usuario;
 Use SGCTUR\LOG;
 Use SGCTUR\Erro;
+use SGCTUR\Financeiro;
 Use SGCTUR\Parceiro;
 Use SGCTUR\Roteiro;
 Use SGCTUR\Venda;
@@ -1272,8 +1273,16 @@ class ControllerForm
             $temp1 = json_decode($v->lista_clientes);
 
         }
+
         // Busca cliente na lista.
-        if(array_search($p['cid'], $temp1) !== FALSE) {
+        $chave = false;
+        foreach($temp1 as $key => $val) {
+            if((int)$val->id == (int)$p['cid']) {
+                $chave = $key;
+                break;
+            }
+        }
+        if($chave !== FALSE) {
             // Remove cliente e salva.
             $res = $venda->setListaClienteRemove($p['cid']);
 
@@ -1400,4 +1409,277 @@ class ControllerForm
 
         return json_encode($retorno);
     }
+
+    static function vendasSetMulta($p)
+    {
+        self::validaConexao(3);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        if(!isset($_POST['valor']) || $_POST['valor'] == '') {
+            $retorno['mensagem'] = 'Valor inválido.';
+        } else {
+            $venda = new Venda($p['id']);
+            $ret = $venda->setMulta((int)$_POST['valor']);
+
+            if($ret === true) {
+                $retorno['success'] = true;
+            } else {
+                $retorno['mensagem'] = 'Não foi possível executar esta operação.';
+            }
+        }
+
+        return json_encode($retorno);
+    }
+
+    /**
+     * FINANCEIRO
+     */
+    static function financeiroNovo($p)
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        if(!isset($_POST['balanco']) || $_POST['balanco'] == '') {
+            $retorno['mensagem'] = 'Nada foi enviado.';
+            return json_encode($retorno);
+        }
+
+        $balanco = json_decode($_POST['balanco']);
+        if($balanco === null) {
+            // Não foi possível decodificar o JSON.
+            $retorno['mensagem'] = 'Dados inválidos...';
+            return json_encode($retorno);
+        }
+
+        // Instancia classe Financeiro e cria a folha.
+        $financeiro = new Financeiro();
+        $ret = $financeiro->novo($balanco);
+        return $ret;
+
+    }
+    
+    static function financeiroCheck($p)
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        $mes = (int)$_POST['mes'];
+        $ano = (int)$_POST['ano'];
+
+        if($mes <= 0 || $mes >= 13) {
+            $retorno['mensagem'] = "O mês deve estar entre 1 e 12.";
+            
+        } else if($ano <= 1990) {
+            $retorno['mensagem'] = "O ano deve ser maior que 1990. Use o ano com 4 dígitos.";
+        } else {
+            $fin = new Financeiro();
+            $ret = $fin->checkExiste($ano, $mes);
+
+            $retorno['success'] = true;
+            if($ret == false) {
+                // Não existe.
+                $retorno['folha'] = false;
+            } else {
+                // Existe
+                $retorno['folha'] = $ret;
+            }
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function financeiroSalvar()
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        if(!isset($_POST['balanco']) || $_POST['balanco'] == '') {
+            $retorno['mensagem'] = 'Nada foi enviado.';
+            return json_encode($retorno);
+        }
+
+        $balanco = json_decode($_POST['balanco']);
+        if($balanco === null) {
+            // Não foi possível decodificar o JSON.
+            $retorno['mensagem'] = 'Dados inválidos...';
+            return json_encode($retorno);
+        }
+
+        // Instancia classe Financeiro e cria a folha.
+        $financeiro = new Financeiro();
+        $ret = $financeiro->salvaFolha($balanco->id, $balanco);
+        return json_encode($ret);
+    }
+
+    static function financeiroApagar($p)
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        if(!isset($_POST['arq']) ||$_POST['arq'] == '') {
+            $retorno['mensagem'] = 'Dados inválidos.';
+            return json_encode($retorno);
+        }
+
+        $arq = $_POST['arq'];
+
+        $fin = new Financeiro();
+        $ret = $fin->apagarByArquivo($arq);
+        if($ret == true) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = 'Ocorreu um erro e não foi possível excluir o balanço.';
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function financeiroFechar()
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+
+        if(!isset($_POST['id']) || $_POST['id'] == '') {
+            $retorno['mensagem'] = 'Não foi enviado o identificador da folha.';
+            return json_encode($retorno);
+        }
+
+        // Instancia classe Financeiro e cria a folha.
+        $financeiro = new Financeiro();
+        $ret = $financeiro->fecharFolha((int)$_POST['id']);
+        if($ret == true) {
+            $retorno['success'] = true;
+        } else {
+            $retorno['mensagem'] = 'Não foi possível fechar a folha. Erro interno no servidor.';
+        }
+        return json_encode($retorno);
+    }
+
+    static function financeiroRelatorio()
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+        if(!isset($_POST['inicio']) || $_POST['inicio'] == '') {
+            $retorno['mensagem'] = 'Período de inicio indefinido.';
+            return json_encode($retorno);
+        }
+        if(!isset($_POST['fim']) || $_POST['fim'] == '') {
+            $retorno['mensagem'] = 'Período de inicio indefinido.';
+            return json_encode($retorno);
+        }
+
+        $inicio = explode('-', $_POST['inicio']);
+        $fim = explode('-', $_POST['fim']);
+
+        // Chama a model do relatório.
+        $financeiro = new Financeiro();
+        $ret = $financeiro->relatorio($inicio, $fim);
+
+        return json_encode($ret);
+    }
+
+    static function financeiroLoadListaReceita()
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+        if(!isset($_POST['periodo']) ||$_POST['periodo'] == '') {
+            $retorno['mensagem'] = 'Período inválido.';
+        } else {
+            $periodo = explode('-', $_POST['periodo']);
+            $dataPeriodo = new \DateTime();
+            $dataPeriodo->setDate((int)$periodo[0], (int)$periodo[1], 1);
+
+            $fin = new Financeiro();
+            $receitas = $fin->getListaReceitas($dataPeriodo);
+
+
+            $retorno = $receitas;
+        }
+        
+        return json_encode($retorno);
+    }
+
+    static function financeiroLoadListaDespesa()
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+        if(!isset($_POST['periodo']) ||$_POST['periodo'] == '') {
+            $retorno['mensagem'] = 'Período inválido.';
+        } else {
+            $periodo = explode('-', $_POST['periodo']);
+            $dataPeriodo = new \DateTime();
+            $dataPeriodo->setDate((int)$periodo[0], (int)$periodo[1], 1);
+
+            $fin = new Financeiro();
+            $receitas = $fin->getListaDespesas($dataPeriodo);
+
+
+            $retorno = $receitas;
+        }
+
+        return json_encode($retorno);
+    }
+
+    static function financeiroLoadVendaInfo()
+    {
+        self::validaConexao(5);
+        $retorno = [
+            'success' => false,
+            'mensagem' => ''
+        ];
+        if(!isset($_POST['periodo']) ||$_POST['periodo'] == '') {
+            $retorno['mensagem'] = 'Período inválido.';
+        } else if(!isset($_POST['id']) ||$_POST['id'] == '') {
+            $retorno['mensagem'] = 'ID da venda inválido.';
+        } else {
+            $periodo = explode('-', $_POST['periodo']);
+            $dataPeriodo = new \DateTime();
+            $dataPeriodo->setDate((int)$periodo[0], (int)$periodo[1], 1);
+
+            $id = $_POST['id'];
+
+            $fin = new Financeiro();
+            $receitas = $fin->getDadosVenda($id, $dataPeriodo);
+
+            if(!empty($receitas)) {
+                $retorno['success'] = true;
+            } else {
+                $retorno['mensagem'] = 'VENDA#'.$_POST['id'].' não localizada.';
+            }
+
+            $retorno['venda'] = $receitas;
+        }
+        
+        return json_encode($retorno);
+    }
+
+
+
 }

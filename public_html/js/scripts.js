@@ -256,7 +256,7 @@ function converteRealEmCentavo(valor = '0,00') {
 
 function sidebarAutoHide()
 {
-    if($('body').outerWidth() > 576) {
+    if($('body').outerWidth() >= 992) {
         // Tela grandes, verifica se é pra ocultar ou exibir.
         
         if(sidebarAlwaysShow == true) {
@@ -503,6 +503,8 @@ function janDinamicaGatilhos()
     $('span[dobbin-campo-editavel], div[dobbin-campo-editavel]').after(
         ' <button type="button" class="btn btn-xs btn-secondary mr-md-2"><i class="fas fa-pen"></i></button> '
     );
+
+    restartTooltip();
 }
 
 function loadCoordenador(id)
@@ -2531,29 +2533,34 @@ function vendaAddPassageiroLista(c, sender, colo)
     }
 
     // Verifica se está dentro da faixa etária permitida.
+    /*
+        ###### CANCELA A VERIFICAÇÃO. ESTÁ CAUSANDO MUITOS PROBLEMAS COM O USUÁRIO.
+        ###### Usuário não está cadastrando a idade das crianças.
+    */
     if(
         ( (c.faixa_etaria == '0-5' || c.faixa_etaria == '6-12') && faixa.find(function(f){return f == 'CRIANCA'}) ) || // Só crianças
         ( c.faixa_etaria == '60+' && faixa.find(function(f){return f == 'IDOSO'}) ) || // Só idosos
         ( faixa.find(function(f){return f == 'ADULTO'}) ) // Todos como adultos
     ) {
-        // Envia informação do cliente para a plataforma.
-        $.post(PREFIX_POST+'vendas/'+venda+'/clientes/add/'+c.id, {colo: colo}, function(res){
-            if(res.success == true) {
-                // Verifica se é janela dinâmica.
-                if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
-                    getVenda(venda); // Atualiza janela dinâmica.
-                }
-
-                alerta('Cliente adicionado.', 'Sucesso!', 'success');
-            } else {
-                alerta(res.mensagem, 'Falha...', 'warning');
-            }
-        },'json').
-        fail(function(ev){nativePOSTFail(ev);});
+        // Não faz nada
     } else {
-        alerta('A faixa etária deste cliente não corresponde à vaga.', 'Escolha outro cliente.', 'warning');
-        $(sender).val('');
+        alerta('A faixa etária deste cliente não corresponde à vaga, mas o cliente será aceito.', 'Alerta Dobbin:', 'warning');
     }
+
+    // Envia informação do cliente para a plataforma.
+    $.post(PREFIX_POST+'vendas/'+venda+'/clientes/add/'+c.id, {colo: colo}, function(res){
+        if(res.success == true) {
+            // Verifica se é janela dinâmica.
+            if($(sender).parents('.modal').length == 1 && $(sender).parents('.modal').attr('id') == 'janDinamica') {
+                getVenda(venda); // Atualiza janela dinâmica.
+            }
+
+            alerta('Cliente adicionado.', 'Sucesso!', 'success');
+        } else {
+            alerta(res.mensagem, 'Falha...', 'warning');
+        }
+    },'json').
+    fail(function(ev){nativePOSTFail(ev);});
 }
 
 /**
@@ -2664,6 +2671,36 @@ function vendaGetSituacao(id, sender)
 
             // AJUSTA TITULO DA JANELA DINÂMICA 2
             $('#janDinamica2').find('.tituloModal').text('Alterar situação - Venda #'+venda.id);
+            $('#janDinamica2').find('.modal-body').html(res.page);
+            
+            setTimeout(function(){$('#janDinamica2').modal('show');
+            restartTooltip();}, 400);
+            $('#janDinamica2').find('.modal-dialog').removeClass('modal-sm').addClass('modal-lg');
+            $('#janDinamica2').find('ul.nav-pills a.nav-link:not(.disabled)').eq(0).trigger('click');
+            janDinamicaGatilhos(); // Dispara gatilhos na janela dinâmica.
+        } else {
+            alerta(res.mensagem, 'Falha.', 'info');
+        }
+    },'json').
+    fail(function(ev){nativePOSTFail(ev);});
+}
+
+/**
+ * 
+ * @param {int} id ID da venda
+ * @param {Element} sender Elemento que disparou a função.
+ */
+function vendaGetMultas(id, sender)
+{
+    $.post('vendas/database/load/venda/'+id+'/multas', function(res){
+        if(res.success) {
+            if(debugEnabled === true) {
+                console.log(res.venda);
+            }
+            let venda = res.venda;
+
+            // AJUSTA TITULO DA JANELA DINÂMICA 2
+            $('#janDinamica2').find('.tituloModal').text('Alterar multas - Venda #'+venda.id);
             $('#janDinamica2').find('.modal-body').html(res.page);
             
             setTimeout(function(){$('#janDinamica2').modal('show');
@@ -3106,6 +3143,11 @@ $(document).ready(function(){
                                 case 'ListaTransporteEditarRefresh':
                                     sender.parents('.modal').modal('hide');
                                     setTimeout(function(){janListaTransporte(sender.find('[name="id"]').val());}, 300);
+                                break;
+
+                                case 'VendaMultaDefinir':
+                                    sender.parents('.modal').modal('hide');
+                                    getVenda(sender.data('venda'));
                                 break;
 
                                 default: break;
