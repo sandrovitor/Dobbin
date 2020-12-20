@@ -40,3 +40,16 @@ mb_http_output('UTF-8');
 define('DOBBIN_LIM_QTD_MES_BALANCO_TOTAL', 6); // Inicial 6 meses.
 define('DOBBIN_LIM_QTD_MES_BALANCO_TOTAL_MAX', 25);
 define('DOBBIN_LIM_BALANCOS_EXPORTAR', true);
+
+
+define('DOBBIN_LIM_CLIENTES', 2000);            // Inicial: 2 mil
+define('DOBBIN_LIM_PARCEIROS', 100);            // Inicial: 100
+define('DOBBIN_LIM_ROTEIROS', 200);             // Inicial: 200
+define('DOBBIN_LIM_VENDAS', 5000);            // Inicial: 5 mil
+define('DOBBIN_LIM_USUARIOS', 10);             // Inicial: 10
+
+define('DOBBIN_LIM_CLIENTES_MAX', 300000);      // 300 MIL
+define('DOBBIN_LIM_PARCEIROS_MAX', 10000);      // 10 MIL
+define('DOBBIN_LIM_ROTEIROS_MAX', 50000);       // 50 MIL
+define('DOBBIN_LIM_VENDAS_MAX', 500000);        // 500 MIL
+define('DOBBIN_LIM_USUARIOS_MAX', 250);         // 250

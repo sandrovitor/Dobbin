@@ -6,11 +6,11 @@ use \stdClass as stdClass;
 class SGCTUR extends Master 
 {
     private $limites = [
-        'clientes' => 300000,   // 300 mil
-        'parceiros' => 10000,   // 10 mil
-        'roteiros' => 50000,    // 50 mil
-        'vendas' => 500000,     // 500 mil
-        'usuarios' => 250,      // 250
+        'clientes' => DOBBIN_LIM_CLIENTES,   // 300 mil
+        'parceiros' => DOBBIN_LIM_PARCEIROS,   // 10 mil
+        'roteiros' => DOBBIN_LIM_ROTEIROS,    // 50 mil
+        'vendas' => DOBBIN_LIM_VENDAS,     // 500 mil
+        'usuarios' => DOBBIN_LIM_USUARIOS,      // 250
     ];
     const ORDER_ASC = 1;
     const ORDER_DESC = 0;

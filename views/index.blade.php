@@ -81,6 +81,11 @@
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-12">
+                    * Os limites poderão ser aumentados. Consulte disponibilidade técnica.
+                    </div>
+                </div>
             </div>
         </div>
     </div>
